@@ -103,6 +103,36 @@ There is no backend Dockerfile; `docker-compose.yml` only provisions Postgres fo
 local development. Run the backend with `./node/start.sh production` (runs
 migrations then starts the server) or your own process manager.
 
+### Cloudflare Pages Frontend
+
+When Cloudflare Pages serves the frontend, `/api/*` is proxied by the Pages
+Function in `frontend/functions/api/[[path]].js`. Configure the Pages project
+with:
+
+```bash
+Build command: npm run build
+Build output directory: build
+Root directory: frontend
+```
+
+Set this Cloudflare Pages variable for both production and preview environments
+as needed:
+
+```bash
+BACKEND_ORIGIN=https://ec2-18-188-72-11.us-east-2.compute.amazonaws.com
+```
+
+`BACKEND_ORIGIN` must include `http://` or `https://` and should not include
+`/api`. In production, prefer a real backend domain with a valid TLS certificate
+(for example `https://api.example.com`) over the default EC2 hostname.
+
+On the backend EC2 instance, set `CORS_ORIGINS` to the exact Cloudflare frontend
+origins users visit, not to the backend origin:
+
+```bash
+CORS_ORIGINS=https://your-cloudflare-pages-domain.pages.dev,https://app.example.com
+```
+
 ## Production Notes
 
 - `node/index.js` loads `node/.env` if present, but real environment variables

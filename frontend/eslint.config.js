@@ -56,5 +56,11 @@ export default tseslint.config(
       globals: globals.node,
     },
   },
+  {
+    files: ["functions/**/*.js"],
+    languageOptions: {
+      globals: globals.worker,
+    },
+  },
   prettier,
 );
