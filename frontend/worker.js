@@ -8,6 +8,12 @@ const getBackendOrigin = (env) => {
   return backendOrigin;
 };
 
+const getBackendTimeoutMs = (env) => {
+  const timeoutMs = Number(env.BACKEND_TIMEOUT_MS);
+
+  return Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : 10000;
+};
+
 const proxyApiRequest = async (request, env) => {
   const backendOrigin = getBackendOrigin(env);
 
@@ -21,8 +27,25 @@ const proxyApiRequest = async (request, env) => {
   }
 
   const requestUrl = new URL(request.url);
+  const backendOriginUrl = new URL(backendOrigin);
+
+  if (backendOriginUrl.host === requestUrl.host) {
+    return Response.json(
+      {
+        error:
+          "BACKEND_ORIGIN must point to the backend origin, not this frontend Worker domain.",
+      },
+      { status: 500 },
+    );
+  }
+
   const backendUrl = new URL(requestUrl.pathname, backendOrigin);
   const headers = new Headers(request.headers);
+  const abortController = new AbortController();
+  const timeout = setTimeout(
+    () => abortController.abort(),
+    getBackendTimeoutMs(env),
+  );
 
   backendUrl.search = requestUrl.search;
   headers.delete("host");
@@ -37,16 +60,22 @@ const proxyApiRequest = async (request, env) => {
         headers,
         method: request.method,
         redirect: "manual",
+        signal: abortController.signal,
       }),
     );
-  } catch {
+  } catch (error) {
     return Response.json(
       {
-        error: "Unable to reach backend origin.",
+        error:
+          error.name === "AbortError"
+            ? "Backend origin timed out."
+            : "Unable to reach backend origin.",
         backend_origin: backendOrigin,
       },
-      { status: 502 },
+      { status: error.name === "AbortError" ? 504 : 502 },
     );
+  } finally {
+    clearTimeout(timeout);
   }
 };
 
