@@ -1,0 +1,272 @@
+/* NetWorth module. Chart primitives come from ../dashboard.shared.module.css. */
+
+.netWorthSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.netWorthTopRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  align-items: flex-end;
+}
+
+.netWorthSummary {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.sectionLabel {
+  margin: 0 0 var(--space-2xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.totalBalance {
+  display: block;
+  color: var(--color-ink);
+  font-size: var(--text-6xl);
+  line-height: 1.1;
+}
+
+.netWorthChartHeader {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.netWorthChartHeader h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+
+.netWorthArea {
+  opacity: 0.32;
+}
+
+.netWorthLine {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.netWorthHoverTarget {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.netWorthTooltip {
+  pointer-events: none;
+}
+
+.netWorthHoverLine {
+  stroke: var(--color-ink);
+  stroke-dasharray: 2 2;
+  stroke-width: 0.45;
+  opacity: 0.5;
+}
+
+.netWorthHoverDot {
+  fill: var(--color-ink);
+  stroke: var(--color-surface);
+  stroke-width: 0.7;
+}
+
+.netWorthTooltipBox {
+  fill: var(--color-scrim);
+  stroke: var(--color-border);
+  stroke-width: 0.45;
+}
+
+.netWorthTooltipTitle {
+  fill: var(--color-ink);
+  font-weight: 800;
+}
+
+.netWorthTooltipTotal {
+  fill: var(--color-ink);
+  font-weight: 800;
+}
+
+.netWorthTooltipText {
+  fill: var(--color-ink);
+  font-weight: 800;
+}
+
+.netWorthTooltipValue {
+  fill: var(--color-ink);
+  font-weight: 800;
+}
+
+.netWorthTooltipTitle {
+  font-size: 0.4rem;
+}
+
+.netWorthTooltipTotal {
+  font-size: 0.4rem;
+}
+
+.netWorthTooltipText {
+  font-size: 0.3rem;
+}
+
+.netWorthTooltipValue {
+  font-size: 0.3rem;
+}
+
+.netWorthTooltipTotal {
+  text-anchor: end;
+}
+
+.netWorthTooltipValue {
+  text-anchor: end;
+}
+
+.netWorthTable {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.netWorthTableHeader {
+  display: grid;
+  width: max-content;
+  min-width: 100%;
+  gap: var(--space-lg);
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.netWorthCategoryRow {
+  display: grid;
+  width: max-content;
+  min-width: 100%;
+  gap: var(--space-lg);
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.netWorthAccountRow {
+  display: grid;
+  width: max-content;
+  min-width: 100%;
+  gap: var(--space-lg);
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.netWorthTableHeader {
+  background: var(--color-canvas);
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.netWorthCategoryRow {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.netWorthCategoryButton {
+  min-width: 100%;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.netWorthCategoryButton:hover {
+  background: var(--color-canvas);
+}
+
+.netWorthCategoryRow:first-of-type {
+  border-top: 0;
+}
+
+.netWorthStickyCell {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 0;
+  background: inherit;
+  padding-left: var(--space-xs);
+}
+
+.netWorthTableHeader .netWorthStickyCell {
+  z-index: 2;
+}
+
+.netWorthCategoryRow .netWorthStickyCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.netWorthAccountRow .netWorthStickyCell {
+  padding-left: var(--space-3xl);
+}
+
+.netWorthBalanceCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.netWorthAccountRow {
+  border-top: 1px solid var(--color-surface-muted);
+  color: var(--color-text);
+  font-size: var(--text-md);
+}
+
+.netWorthAccountRow small {
+  display: block;
+  margin-top: var(--space-3xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.netWorthCategoryRow strong {
+  color: var(--color-ink);
+  text-align: right;
+}
+
+.netWorthAccountRow .netWorthBalanceCell {
+  color: var(--color-ink);
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .netWorthSection {
+      grid-template-columns: 1fr;
+    }
+
+  .netWorthTopRow {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+  .netWorthChartHeader {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+  .totalBalance {
+      font-size: var(--text-5xl);
+    }
+}

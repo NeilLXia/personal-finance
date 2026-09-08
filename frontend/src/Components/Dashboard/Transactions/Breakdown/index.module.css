@@ -1,0 +1,207 @@
+/* Transactions/Breakdown (spending pie + summaries). */
+
+.chartSection h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-2xl);
+  line-height: 1.3;
+}
+
+.chartSection {
+  width: min(100%, 112rem);
+  height: 48rem;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(18rem, 24rem) 1fr;
+  gap: var(--space-4xl);
+  align-items: stretch;
+  align-self: center;
+  border-top: 1px solid var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-surface-muted);
+  padding: var(--space-3xl) 0;
+}
+
+.pieChart {
+  width: 100%;
+  max-width: 24rem;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+}
+
+.pieChart svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.emptyPieChart {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-circle);
+  background: var(--color-border);
+  box-shadow:
+    inset 0 0 0 2.8rem var(--color-surface),
+    0 0 0 1px var(--color-border);
+}
+
+.pieSlice {
+  cursor: pointer;
+  opacity: 0.9;
+  outline: none;
+  stroke: var(--color-surface);
+  stroke-width: 1;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+  transform-origin: center;
+}
+
+.pieSlice:focus {
+  outline: none;
+}
+
+.pieSlice:focus-visible {
+  stroke: var(--color-ink);
+  stroke-width: 1.8;
+}
+
+.pieSliceActive {
+  opacity: 1;
+  transform: scale(1.03);
+}
+
+.pieSliceMuted {
+  opacity: 0.25;
+}
+
+.legend {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.summaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.summaryHeader h2 {
+  margin: 0;
+}
+
+.legendRows {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: var(--space-xs);
+}
+
+.legendRow {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr) minmax(8.8rem, auto) 5.6rem;
+  gap: var(--space-sm);
+  align-items: center;
+  min-height: 2.8rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  padding: var(--space-2xs) var(--space-xs);
+  text-align: left;
+}
+
+.legendRowActive {
+  background: var(--color-canvas);
+}
+
+.legendRowPassive {
+  cursor: default;
+}
+
+.legendRowMuted {
+  opacity: 0.42;
+}
+
+.legendGroupRow {
+  grid-template-columns: 1.6rem minmax(0, 1fr) minmax(8.8rem, auto) 5.6rem;
+  font-weight: 800;
+}
+
+.legendChildRow {
+  padding-left: var(--space-3xl);
+}
+
+.legendSwatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: var(--radius-circle);
+}
+
+.legendCategoryText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+}
+
+.legendCategoryText small {
+  color: var(--color-text-subtle);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.summaryAmount {
+  display: contents;
+}
+
+.summaryAmountValue {
+  color: var(--color-ink);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.summaryAmountPercent {
+  color: var(--color-text-faint);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.monthLabel {
+  margin: -0.4rem 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+}
+
+.expenseTotal {
+  color: var(--color-ink);
+  font-size: var(--text-4xl);
+  line-height: 1.2;
+}
+
+@media (max-width: 720px) {
+  .chartSection {
+      grid-template-columns: 1fr;
+    }
+
+  .chartSection {
+      height: auto;
+      align-items: start;
+    }
+
+  .legendRows {
+      max-height: 30rem;
+    }
+}

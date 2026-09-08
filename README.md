@@ -1,271 +1,125 @@
-# Plaid quickstart
+# Personal Finance
 
-This repository accompanies Plaid's [**quickstart guide**][quickstart].
+A personal finance dashboard with Google login, Plaid account linking, transaction categorization, income tracking, historical balances, and real estate equity tracking.
 
-Here you'll find full example integration apps using our [**client libraries**][libraries].
+## Project Structure
 
-This is the main Plaid Quickstart and is designed to show as many products and configurations as possible, including all five officially supported client libraries and multiple Plaid APIs, against a React frontend. 
+- `frontend/` - React and Vite dashboard.
+- `node/` - Express API, Plaid integration, auth, migrations, and data services.
+- `scripts/` - Local setup and deployment helper scripts.
 
-## Additional Quickstarts
+## Setup
 
-If you prefer a non-React frontend platform, or a more minimal backend in one language with one endpoint, see the [Tiny Quickstart](https://github.com/plaid/tiny-quickstart), which shows a simpler backend and is available for JavaScript, Next.js, React, and React Native frontends.
+Use Node `v26.7.0` or newer. Both `node/.nvmrc` and `frontend/.nvmrc` pin the
+version used during local development.
 
-For the Going.Plaid .NET SDK, see [Plaid Quickstart Blazor (Community)](https://github.com/jcoliz/PlaidQuickstartBlazor).
-
-For Identity Verification, see the [Identity Verification Quickstart](https://github.com/plaid/idv-quickstart). 
-
-For Plaid Check (CRA) products, see the [Credit Quickstart](https://github.com/plaid/credit-quickstart).
-
-For a more in-depth Transfer Quickstart, see the [Transfer Quickstart](https://github.com/plaid/transfer-quickstart).
-
-For a more in-depth Transactions tutorial, see the [Transactions tutorial](https://github.com/plaid/tutorial-resources/tree/main/transactions).
-
-For legacy (non-CRA) Income, see the [Income sample app](https://github.com/plaid/income-sample). 
-
-![Plaid quickstart app](/assets/quickstart.jpeg)
-
-## Table of contents
-
-<!-- toc -->
-
-- [1. Clone the repository](#1-clone-the-repository)
-  - [Special instructions for Windows](#special-instructions-for-windows)
-- [2. Set up your environment variables](#2-set-up-your-environment-variables)
-- [3. Run the quickstart](#3-run-the-quickstart)
-  - [Pre-requisites](#pre-requisites)
-  - [1. Running the backend](#1-running-the-backend)
-    - [Node](#node)
-    - [Python](#python)
-    - [Ruby](#ruby)
-    - [Go](#go)
-    - [Java](#java)
-    - [.NET](#net) (community support only)
-  - [2. Running the frontend](#2-running-the-frontend)
-- [Test credentials](#test-credentials)
-- [Troubleshooting](#troubleshooting)
-- [Testing OAuth](#testing-oauth)
-
-<!-- tocstop -->
-
-## 1. Clone the repository
-
-Using https:
-
-```bash
-git clone https://github.com/plaid/quickstart
-cd quickstart
-```
-
-Alternatively, if you use ssh:
-
-```bash
-git clone git@github.com:plaid/quickstart.git
-cd quickstart
-```
-
-#### Special instructions for Windows
-
-Note - because this repository makes use of symbolic links, to run this on a Windows machine, make sure you have checked the "enable symbolic links" box when you download Git to your local machine. Then you can run the above commands to clone the quickstart. Otherwise, you may open your Git Bash terminal as an administrator and use the following command when cloning the project
-
-```bash
-git clone -c core.symlinks=true https://github.com/plaid/quickstart
-```
-
-## 2. Set up your environment variables
+Copy the example environment files and fill in local values:
 
 ```bash
 cp .env.example .env
+cp node/.env.example node/.env
+cp frontend/.env.example frontend/.env
 ```
 
-Copy `.env.example` to a new file called `.env` and fill out the environment variables inside. At
-minimum `PLAID_CLIENT_ID` and `PLAID_SECRET` must be filled out. Get your Client ID and secrets from
-the dashboard: [https://dashboard.plaid.com/developers/keys](https://dashboard.plaid.com/developers/keys)
-
-> NOTE: `.env` files are a convenient local development tool. Never run a production application
-> using an environment file with secrets in it.
-
-## 3. Run the Quickstart
-
-### Pre-requisites
-
-- The language you intend to use is installed on your machine and available at your command line.
-  This repo should generally work with active LTS versions of each language such as node >= 18,
-  python >= 3.9, ruby >= 3.0, etc.
-- Your environment variables populated in `.env`
-- [npm](https://www.npmjs.com/get-npm)
-- If using Windows, a command line utility capable of running basic Unix shell commands
-
-#### 1. Running the backend
-
-Once started with one of the commands below, the quickstart will be running on http://localhost:8000 for the backend. Enter the additional commands in step 2 to run the frontend which will run on http://localhost:3000.
-
-##### Node
+Install dependencies:
 
 ```bash
-$ cd ./node
-$ npm install
-$ ./start.sh
+./scripts/install-backend.sh
+./scripts/install-frontend.sh
 ```
 
-##### Python
-
-**:warning: As `python2` has reached its end of life, only `python3` is supported.**
+Start local Postgres:
 
 ```bash
-cd ./python
-
-# If you use virtualenv
-# virtualenv venv
-# source venv/bin/activate
-
-pip3 install -r requirements.txt
-./start.sh
+docker compose up -d db
 ```
 
-If you get this error message:
-
-```txt
-ssl.SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:749)
-```
-
-You may need to run the following command in your terminal for your particular version of python in order to install SSL certificates:
+Run database migrations:
 
 ```bash
-# examples:
-open /Applications/Python\ 3.9/Install\ Certificates.command
-# or
-open /Applications/Python\ 3.6/Install\ Certificates.command
+cd node
+npm run db:migrate
 ```
 
-##### Ruby
+Run the app locally:
 
 ```bash
-cd ./ruby
-bundle
-./start.sh
+./node/start.sh
 ```
-
-##### Go
-
-```bash
-cd ./go
-go build
-./start.sh
-```
-
-##### Java
-
-```bash
-cd ./java
-mvn clean package
-./start.sh
-```
-
-##### .NET
-
-A community-supported implementation of the Plaid Quickstart using the [Going.Plaid](https://github.com/viceroypenguin/Going.Plaid) client library can be found at [PlaidQuickstartBlazor](https://github.com/jcoliz/PlaidQuickstartBlazor). Note that Plaid does not provide first-party support for .NET client libraries and that this Quickstart and client library are not created, reviewed, or supported by Plaid. 
-
-#### 2. Running the frontend
-
-```bash
-cd ./frontend
-npm ci
-npm start
-```
-
-## Test credentials
-
-In Sandbox, you can log in to any supported institution using `user_good` as the username and `pass_good` as the password. If prompted to enter a 2-factor authentication code, enter `1234`. In Production, use real-life credentials.
-
-### Transactions test credentials
-For Transactions, you will get the most realistic results using a non-OAuth test institution such as First Platypus Bank with `user_transactions_dynamic` as the username, and any non-blank string as the password. For more details on the special capabilities of this test user, see the [docs](https://plaid.com/docs/transactions/transactions-data/#testing-pending-and-posted-transactions).
-
-### Credit test credentials
-For credit and underwriting products like Assets and Statements, you will get the most realistic results using one of the [credit and underwriting test credentials](https://plaid.com/docs/sandbox/test-credentials/#credit-and-income-testing-credentials), like `user_bank_income` / `{}`.
-
-## Troubleshooting
-
-### Link fails in Production with "something went wrong" / `INVALID_SERVER_ERROR` but works in Sandbox
-
-If Link works in Sandbox but fails in Production, the error is most likely one of the following:
-1) You need to set a use case for Link, which you can do in the Plaid Dashboard under [Link -> Customization -> Data Transparency Messaging](https://dashboard.plaid.com/link/data-transparency-v5).
-2) You don't yet have OAuth access for the institution you selected. This is especially common if the institution is Chase or Charles Schwab, which have longer OAuth registration turnarounds. To check your OAuth registration status and see if you have any required action items, see the [US OAuth Institutions page](https://dashboard.plaid.com/activity/status/oauth-institutions) in the Dashboard.
-   
-### Can't get a link token, or API calls are 400ing
-
-View the server logs to see the associated error message with detailed troubleshooting instructions. If you can't view logs locally, view them via the [Dashboard activity logs](https://dashboard.plaid.com/activity/logs). 
-
-### Works only when `PLAID_REDIRECT_URI` is not specified
-Make sure to add the redirect URI to the Allowed Redirect URIs list in the [Plaid Dashboard](https://dashboard.plaid.com/team/api).
-
-### "Connectivity not supported"
-
-If you get a "Connectivity not supported" error after selecting a financial institution in Link, you probably specified some products in your .env file that the target financial institution doesn't support. Remove the unsupported products and try again.
-
-### "You need to update your app" or "institution not supported"
-
-If you get a "You need to update your app" or "institution not supported" error after selecting a financial institution in Link, you're probably running the Quickstart in Production and attempting to link an institution, such as Chase or Wells Fargo, that requires an OAuth-based connection. In order to make OAuth connections to US-based institutions in Production, you must have full Production access approval, and certain institutions may also require additional approvals before you can be enabled. To use this institution, [apply for full Production access](https://dashboard.plaid.com/overview/production) and see the [OAuth institutions page](https://dashboard.plaid.com/activity/status/oauth-institutions) for any other required steps and to track your OAuth enablement status.
-
-### "oauth uri does not contain a valid oauth_state_id query parameter"
-
-If you get the console error "oauth uri does not contain a valid oauth_state_id query parameter", you are attempting to initialize Link with a redirect uri when it is not necessary to do so. The `receivedRedirectUri` should not be set when initializing Link for the first time. It is used when initializing Link for the second time, after returning from the OAuth redirect.
-
-### Testing OAuth with a redirect URI (optional)
-
-To test the OAuth flow in Sandbox with a [redirect URI](https://www.plaid.com/docs/link/oauth/#create-and-register-a-redirect-uri), you should set `PLAID_REDIRECT_URI=http://localhost:3000/` in `.env`. You will also need to register this localhost redirect URI in the
-[Plaid dashboard under Developers > API > Allowed redirect URIs][dashboard-api-section]. It is not required to configure a redirect URI in the .env file to use OAuth with the Quickstart, since redirect URIs are only needed for mobile clients (recommended for best conversion on mobile web, and required when using a Plaid mobile SDK). 
-
-#### Instructions for using https with localhost
-
-If you want to test OAuth in Production with a redirect URI, you need to use https and set `PLAID_REDIRECT_URI=https://localhost:3000/` in `.env`. In order to run your localhost on https, you will need to create a self-signed certificate and add it to the frontend root folder. You can use the following instructions to do this. Note that self-signed certificates should be used for testing purposes only, never for actual deployments.
-
-In your terminal, change to the frontend folder:
 
 ```bash
 cd frontend
+npm start
 ```
 
-Use homebrew to install mkcert:
+The backend runs on `http://localhost:8001` by default (`APP_PORT`). The frontend dev server runs on `http://localhost:3000` and proxies `/api` to the backend.
+
+## Health Checks
+
+- `GET /health` — liveness. Returns `200 {"status":"ok"}` whenever the process is serving. No auth, no rate limit, no I/O.
+- `GET /health/ready` — readiness. Returns `200 {"status":"ready"}` when the database is reachable, `503 {"status":"unavailable"}` otherwise. Point your load balancer / orchestrator health check here.
+
+## Plaid Sandbox
+
+In Sandbox, use `user_good` as the username and `pass_good` as the password. If prompted for a two-factor code, use `1234`.
+
+For richer Transactions test data, use a Transactions sandbox institution with `user_transactions_dynamic` and any non-empty password.
+
+## Token Encryption
+
+Plaid access tokens can be encrypted at rest with AWS KMS. Add the KMS configuration to `node/.env`:
 
 ```bash
-brew install mkcert
+AWS_REGION=us-east-1
+AWS_KMS_KEY_ID=your-kms-key-id-or-arn
 ```
 
-Then create your certificate for localhost:
+Use a symmetric KMS key. In AWS, prefer an EC2/task role with `kms:Encrypt` and `kms:Decrypt` permissions for that key. For local development, use your normal AWS CLI/profile credentials rather than committing access keys.
+
+After setting the key, encrypt any existing plaintext Plaid tokens:
 
 ```bash
-mkcert -install
-mkcert localhost
+cd node
+npm run plaid:encrypt-existing-tokens
 ```
 
-This will create a certificate file localhost.pem and a key file localhost-key.pem inside your client folder.
+## Deployment
 
-Then in `frontend/vite.config.ts`, add the `https` option to the `server` config:
+The backend (`node/`) only serves `/api` and `/health` — it does **not** serve the
+frontend. Build the frontend (`cd frontend && npm run build`) and serve the
+static `frontend/build/` directory from your web server, CDN, or object store.
 
-```ts
-import fs from "fs";
+The session cookie is `HttpOnly; SameSite=Lax; Secure`. `SameSite=Lax` means the
+browser will not attach it to cross-**site** API calls, so the frontend and the
+API must be served from the same site:
 
-// inside the server config:
-server: {
-  port: 3000,
-  https: {
-    cert: fs.readFileSync("localhost.pem"),
-    key: fs.readFileSync("localhost-key.pem"),
-  },
-  // ... existing proxy config
-},
-```
+- same origin (e.g. `app.example.com` serves the SPA and reverse-proxies `/api`
+  to the backend), or
+- sibling subdomains of one registrable domain (e.g. `app.example.com` +
+  `api.example.com`).
 
-After starting up the Quickstart, you can now view it at https://localhost:3000. If you are on Windows, you
-may still get an invalid certificate warning on your browser. If so, click on "advanced" and proceed. Also on Windows, the frontend may still try to load http://localhost:3000 and you may have to access https://localhost:3000 manually.
+A frontend and API on unrelated domains will not stay logged in. List every
+frontend origin you deploy in `CORS_ORIGINS` (exact scheme + host + port).
 
-[quickstart]: https://plaid.com/docs/quickstart
-[libraries]: https://plaid.com/docs/api/libraries
-[payment-initiation]: https://plaid.com/docs/payment-initiation/
-[node-example]: /node
-[ruby-example]: /ruby
-[python-example]: /python
-[java-example]: /java
-[go-example]: /go
-[dashboard-api-section]: https://dashboard.plaid.com/developers/api
-[contact-sales]: https://plaid.com/contact
+There is no backend Dockerfile; `docker-compose.yml` only provisions Postgres for
+local development. Run the backend with `./node/start.sh production` (runs
+migrations then starts the server) or your own process manager.
+
+## Production Notes
+
+- `node/index.js` loads `node/.env` if present, but real environment variables
+  always take precedence. For a single-host deploy a `node/.env` file is fine;
+  on a platform with a secret manager, set the variables there and skip the file.
+- Set `SESSION_SECRET` to a random string of at least 32 characters and tune
+  `SESSION_MAX_AGE_SECONDS` for your session lifetime. The server refuses to
+  start in production if `SESSION_SECRET` is unset, a placeholder, or too short.
+- Set `DB_SSL=true` for hosted Postgres. Leave `DB_SSL_REJECT_UNAUTHORIZED=true` and provide `DB_SSL_CA_PATH` or `DB_SSL_CA` when your provider requires a custom CA.
+- Set `MAPBOX_ACCESS_TOKEN` to enable real estate address autocomplete, and
+  `RENTCAST_API_KEY` to enable automated property valuations. Both APIs are
+  proxied through the backend so the frontend is not coupled to their response
+  shapes. If a key is unset, that feature returns a 400 when used; the rest of
+  the app is unaffected.
+- Configure `CORS_ORIGINS` to the exact frontend origins you deploy.
+- Configure Google OAuth redirect origins in Google Cloud.
+- Configure Plaid redirect and webhook URLs in the Plaid Dashboard when deploying.
+- Use the EventBridge setup script for scheduled monthly syncs if deploying on AWS.

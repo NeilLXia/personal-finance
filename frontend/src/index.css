@@ -1,24 +1,8 @@
-@import "tailwindcss";
-
-@theme {
-  --font-sans: Cern, Helvetica, Arial, sans-serif;
-  --font-mono: Inconsolata, Consolas, Courier, monospace;
-  --color-black-100: #fafafa;
-  --color-black-200: #f6f6f6;
-  --color-black-300: #ededed;
-  --color-black-1000: #111111;
-  --color-red-200: #ffd7dc;
-  --color-red-400: #ffaab9;
-  --color-blue-400: #b1eefc;
-  --color-yellow-200: #fefbb8;
-  --color-yellow-600: #fce76b;
-  --color-gold: #ba7d17;
-  --color-shadow: rgba(17, 17, 17, 0.08);
-}
+@import "./styles/tokens.css";
 
 /*
- * Base typography replicating plaid-threads
- * $unit = 0.8rem, root font-size = 62.5% (10px base)
+ * Base document styles. Everything visual comes from the tokens in
+ * ./styles/tokens.css — no raw values here.
  */
 
 @layer base {
@@ -26,76 +10,128 @@
   *::before,
   *::after {
     box-sizing: border-box;
-    -webkit-font-variant-ligatures: common-ligatures;
     -webkit-font-smoothing: antialiased;
+    -webkit-font-variant-ligatures: common-ligatures;
     font-variant-ligatures: common-ligatures;
     text-rendering: optimizeLegibility;
   }
 
+  /* Minimal reset (replaces the former Tailwind preflight). */
+  * {
+    margin: 0;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+  }
+
+  button {
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: default;
+  }
+
+  ul,
+  ol {
+    list-style: none;
+    padding: 0;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
   html {
+    /* 62.5% => 1rem = 10px, so rem values read as px/10 */
     font-size: 62.5%;
   }
 
   body {
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-text);
     font-family: var(--font-sans);
-    color: var(--color-black-1000);
-    font-size: 1.6rem;
-    line-height: 2.4rem;
+    font-size: var(--text-xl);
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--color-ink);
   }
 
   h1 {
-    font-family: var(--font-sans);
-    font-size: 6rem;
+    font-size: var(--text-7xl);
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.15;
   }
 
   h2 {
-    font-family: var(--font-sans);
-    font-size: 3.6rem;
+    font-size: var(--text-5xl);
     font-weight: 800;
     line-height: 1.33;
   }
 
   h3 {
-    font-family: var(--font-sans);
-    font-size: 3.6rem;
+    font-size: var(--text-5xl);
+    font-weight: 400;
     line-height: 1.33;
-    font-weight: normal;
   }
 
   h4 {
-    font-family: var(--font-sans);
-    font-size: 2.4rem;
+    font-size: var(--text-4xl);
+    font-weight: 400;
     line-height: 1.33;
-    font-weight: normal;
   }
 
   h5 {
-    font-family: var(--font-sans);
-    font-size: 1.6rem;
+    font-size: var(--text-xl);
     font-weight: 600;
     line-height: 1.5;
   }
 
   p {
-    font-size: 1.6rem;
+    margin: 0;
+    font-size: var(--text-xl);
     line-height: 1.5;
   }
 
   a {
-    color: var(--color-black-1000);
+    color: var(--color-accent);
     text-decoration: none;
   }
 
   code {
     font-family: var(--font-mono);
-    font-size: 1.4rem;
+    font-size: var(--text-lg);
     white-space: pre-wrap;
     word-break: break-word;
-    background-color: var(--color-black-200);
-    border-radius: 0.2rem;
-    padding: 0.2rem 0.4rem;
-    color: var(--color-black-1000);
+    background-color: var(--color-surface-muted);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3xs) var(--space-2xs);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
 }

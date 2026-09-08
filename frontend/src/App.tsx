@@ -1,124 +1,74 @@
-import React, { useEffect, useContext, useCallback } from "react";
+import React, { useEffect, useCallback } from "react";
 
-import Header from "./Components/Headers";
-import Products from "./Components/ProductTypes/Products";
-import Items from "./Components/ProductTypes/Items";
-import Context from "./Context";
+import Dashboard from "./Components/Dashboard";
+import Login from "./Components/Login";
+import { useAppContext } from "./Context";
+import type { AuthUser } from "./Context";
+import {
+  addAuthExpiredListener,
+  getJson,
+  postJson,
+} from "./shared/apiClient";
 
 import styles from "./App.module.css";
 
+type LinkTokenResponse = {
+  error?: { error_message?: string } | null;
+  link_token?: string;
+};
+
+type SessionResponse = {
+  authenticated: boolean;
+  google_client_id: string | null;
+  user: AuthUser | null;
+};
+
+const getStoredLinkToken = () => {
+  try {
+    return localStorage.getItem("link_token");
+  } catch {
+    return null;
+  }
+};
+
+const setStoredLinkToken = (linkToken: string) => {
+  try {
+    localStorage.setItem("link_token", linkToken);
+  } catch {
+    // Plaid OAuth can continue in memory if browser storage is unavailable.
+  }
+};
+
+const removeStoredLinkToken = () => {
+  try {
+    localStorage.removeItem("link_token");
+  } catch {
+    // Ignore storage errors during auth cleanup.
+  }
+};
+
 const App = () => {
-  const { linkSuccess, isPaymentInitiation, itemId, dispatch } =
-    useContext(Context);
-
-  const getInfo = useCallback(async () => {
-    const response = await fetch("/api/info", { method: "POST" });
-    if (!response.ok) {
-      dispatch({ type: "SET_STATE", state: { backend: false } });
-      return { paymentInitiation: false };
-    }
-    const data = await response.json();
-    const paymentInitiation: boolean =
-      data.products.includes("payment_initiation");
-
-    // CRA products are those that start with "cra_"
-    const craProducts = data.products.filter((product: string) =>
-      product.startsWith("cra_")
-    );
-    const isUserTokenFlow: boolean = craProducts.length > 0;
-    const isCraProductsExclusively: boolean =
-      craProducts.length > 0 && craProducts.length === data.products.length;
-
-    dispatch({
-      type: "SET_STATE",
-      state: {
-        products: data.products,
-        isPaymentInitiation: paymentInitiation,
-        isCraProductsExclusively: isCraProductsExclusively,
-        isUserTokenFlow: isUserTokenFlow,
-      },
-    });
-    return { paymentInitiation, isUserTokenFlow };
-  }, [dispatch]);
-
-  const generateUserToken = useCallback(async () => {
-    const response = await fetch("/api/create_user_token", { method: "POST" });
-    if (!response.ok) {
-      dispatch({ type: "SET_STATE", state: { userToken: null, userId: null } });
-      return;
-    }
-    const data = await response.json();
-    if (data) {
-      if (data.error != null) {
-        dispatch({
-          type: "SET_STATE",
-          state: {
-            linkToken: null,
-            linkTokenError: data.error,
-          },
-        });
-        return;
-      }
-      dispatch({
-        type: "SET_STATE",
-        state: {
-          userToken: data.user_token || null,
-          userId: data.user_id || null
-        }
-      });
-      return data.user_token || data.user_id;
-    }
-  }, [dispatch]);
+  const { authUser, isSessionLoading, dispatch } = useAppContext();
 
   const generateToken = useCallback(
-    async (isPaymentInitiation: boolean) => {
-      // Link tokens for 'payment_initiation' use a different creation flow in your backend.
-      const path = isPaymentInitiation
-        ? "/api/create_link_token_for_payment"
-        : "/api/create_link_token";
-      const response = await fetch(path, {
-        method: "POST",
-      });
-      if (!response.ok) {
-        let errorDetail;
-        try {
-          const data = await response.json();
-          errorDetail = data.error || {
-            error_code: data.error_code || "UNKNOWN",
-            error_type: data.error_type || "API_ERROR",
-            error_message:
-              data.error_message || `Request failed with status ${response.status}`,
-          };
-        } catch {
-          errorDetail = {
-            error_code: "UNKNOWN",
-            error_type: "API_ERROR",
-            error_message: `Request failed with status ${response.status}`,
-          };
-        }
-        dispatch({
-          type: "SET_STATE",
-          state: { linkToken: null, linkTokenError: errorDetail },
-        });
-        return;
-      }
-      const data = await response.json();
-      if (data) {
-        if (data.error != null) {
-          dispatch({
-            type: "SET_STATE",
-            state: {
-              linkToken: null,
-              linkTokenError: data.error,
-            },
-          });
+    async () => {
+      try {
+        const data = await postJson<LinkTokenResponse>(
+          "/api/create_link_token",
+          undefined,
+          {},
+          "Link token request failed",
+        );
+
+        if (data.error != null || typeof data.link_token !== "string") {
+          dispatch({ type: "SET_LINK_TOKEN", linkToken: null });
           return;
         }
-        dispatch({ type: "SET_STATE", state: { linkToken: data.link_token } });
-        // Save the link_token to be used later in the Oauth flow.
-        if (typeof data.link_token === "string") {
-          localStorage.setItem("link_token", data.link_token);
-        }
+
+        dispatch({ type: "SET_LINK_TOKEN", linkToken: data.link_token });
+        setStoredLinkToken(data.link_token);
+      } catch {
+        dispatch({ type: "SET_LINK_TOKEN", linkToken: null });
       }
     },
     [dispatch]
@@ -126,38 +76,66 @@ const App = () => {
 
   useEffect(() => {
     const init = async () => {
-      const { paymentInitiation, isUserTokenFlow } = await getInfo(); // used to determine which path to take when generating token
-      // do not generate a new token for OAuth redirect; instead
-      // setLinkToken from localStorage
-      if (window.location.href.includes("?oauth_state_id=")) {
+      try {
+        const session = await getJson<SessionResponse>(
+          "/api/session",
+          {},
+          "Session request failed",
+        );
         dispatch({
-          type: "SET_STATE",
-          state: {
-            linkToken: localStorage.getItem("link_token"),
-          },
+          type: "SESSION_LOADED",
+          authUser: session.authenticated ? session.user : null,
+          googleClientId: session.google_client_id,
         });
-        return;
-      }
 
-      if (isUserTokenFlow) {
-        await generateUserToken();
+        if (!session.authenticated) {
+          return;
+        }
+
+        // do not generate a new token for OAuth redirect; instead
+        // setLinkToken from localStorage
+        if (window.location.href.includes("?oauth_state_id=")) {
+          dispatch({
+            type: "SET_LINK_TOKEN",
+            linkToken: getStoredLinkToken(),
+          });
+          return;
+        }
+
+        generateToken();
+      } catch {
+        dispatch({
+          type: "SESSION_LOADED",
+          authUser: null,
+          googleClientId: null,
+        });
       }
-      generateToken(paymentInitiation);
     };
     init();
-  }, [dispatch, generateToken, generateUserToken, getInfo]);
+  }, [dispatch, generateToken]);
+
+  useEffect(() =>
+    addAuthExpiredListener(() => {
+      removeStoredLinkToken();
+      dispatch({ type: "AUTH_EXPIRED" });
+    }),
+  [dispatch]);
+
+  const loadAuthenticatedApp = useCallback(async () => {
+    await generateToken();
+  }, [generateToken]);
 
   return (
     <div className={styles.App}>
-      <div className={styles.container}>
-        <Header />
-        {linkSuccess && (
-          <>
-            <Products />
-            {!isPaymentInitiation && itemId && <Items />}
-          </>
-        )}
-      </div>
+      {isSessionLoading ? (
+        <div className={styles.loading}>Loading</div>
+      ) : !authUser ? (
+        <Login onAuthenticated={loadAuthenticatedApp} />
+      ) : (
+        <div className={styles.container}>
+          <Dashboard />
+        </div>
+      )}
     </div>
   );
 };

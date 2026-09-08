@@ -1,0 +1,87 @@
+.login {
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4xl) var(--space-xl);
+}
+
+.panel {
+  width: min(100%, 42rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-4xl);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-2xs);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.panel h1 {
+  margin: 0 0 var(--space-3xl);
+  color: var(--color-ink);
+  font-size: 3rem;
+  line-height: 1.15;
+}
+
+.actions {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-lg);
+}
+
+.googleButton {
+  width: min(100%, 28rem);
+  min-height: 4rem;
+}
+
+.demoButton {
+  width: min(100%, 28rem);
+  min-height: 4rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-inverse-surface);
+  color: var(--color-on-inverse);
+  cursor: pointer;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.demoButton:hover {
+  opacity: 0.9;
+}
+
+.demoButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.notice,
+.alert {
+  border-radius: var(--radius-sm);
+  font-size: var(--text-lg);
+  line-height: 1.4;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.notice {
+  border: 1px solid var(--color-info-border);
+  background: var(--color-info-surface);
+  color: var(--color-info);
+}
+
+.alert {
+  margin-top: var(--space-xl);
+  border: 1px solid var(--color-warning-border);
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}

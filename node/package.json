@@ -1,23 +1,50 @@
 {
-  "name": "plaid-node-walkthrough",
+  "name": "personal-finance-backend",
   "version": "0.1.0",
-  "description": "A sample app and accompanying walkthrough for the Plaid API.",
+  "description": "Express API for the personal finance dashboard.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "start:sandbox": "PLAID_ENV=sandbox node index.js",
+    "start:production": "PLAID_ENV=production node index.js",
     "watch": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch:sandbox": "PLAID_ENV=sandbox nodemon index.js",
+    "watch:production": "PLAID_ENV=production nodemon index.js",
+    "ngrok:auth": "ngrok config add-authtoken",
+    "ngrok:webhook": "node scripts/start-ngrok.js",
+    "plaid:sync-monthly": "node scripts/runMonthlyPlaidSync.js",
+    "db:migrate": "node scripts/runMigrations.js",
+    "db:seed-demo": "node scripts/seedDemoData.js",
+    "db:reset-demo": "node scripts/seedDemoData.js --reset",
+    "db:cleanup-demo": "node scripts/cleanupExpiredDemoUsers.js",
+    "plaid:encrypt-existing-tokens": "node scripts/encryptExistingPlaidTokens.js",
+    "db:prune-stale-plaid-items": "node scripts/prune-stale-plaid-items.js",
+    "test": "node --test"
   },
-  "author": "developers@plaid.com",
-  "repository": "https://github.com/plaid/quickstart",
+  "engines": {
+    "node": ">=26.7.0"
+  },
+  "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-kms": "^3.1127.0",
+    "@aws-sdk/client-secrets-manager": "^3.1127.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^4.22.1",
+    "express": "^4.22.2",
+    "google-auth-library": "^11.0.2",
+    "helmet": "^8.3.0",
     "moment": "^2.30.1",
-    "nodemon": "^3.1.14",
-    "plaid": "^45.0.0",
-    "uuid": "^11.1.0"
+    "multer": "^2.3.0",
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.23.0",
+    "plaid": "^45.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "overrides": {
+    "qs": "^6.16.0",
+    "body-parser": "^1.20.6"
   }
 }

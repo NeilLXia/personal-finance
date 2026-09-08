@@ -1,79 +1,99 @@
-import { createContext, useReducer, Dispatch, ReactNode } from "react";
+import type {
+  Dispatch,
+  ReactNode} from "react";
+import {
+  createContext,
+  useContext,
+  useReducer
+} from "react";
 
-interface QuickstartState {
-  linkSuccess: boolean;
-  isItemAccess: boolean;
-  isPaymentInitiation: boolean;
-  isUserTokenFlow: boolean;
-  isCraProductsExclusively: boolean;
+export type AuthUser = {
+  id: number;
+  email: string;
+  name: string | null;
+  avatar_url: string | null;
+  is_demo: boolean;
+};
+
+interface AppState {
+  isSessionLoading: boolean;
+  authUser: AuthUser | null;
+  googleClientId: string | null;
   linkToken: string | null;
-  accessToken: string | null;
-  userToken: string | null;
-  userId: string | null;
-  itemId: string | null;
-  isError: boolean;
-  backend: boolean;
-  products: string[];
-  linkTokenError: {
-    error_message: string;
-    error_code: string;
-    error_type: string;
-  };
-  linkExitError: {
-    error_message: string;
-    error_code: string;
-    error_type: string;
-    display_message: string;
-    institution_name: string;
-  } | null;
 }
 
-const initialState: QuickstartState = {
-  linkSuccess: false,
-  isItemAccess: true,
-  isPaymentInitiation: false,
-  isCraProductsExclusively: false,
-  isUserTokenFlow: false,
+const initialState: AppState = {
+  isSessionLoading: true,
+  authUser: null,
+  googleClientId: null,
   linkToken: "", // Don't set to null or error message will show up briefly when site loads
-  userToken: null,
-  userId: null,
-  accessToken: null,
-  itemId: null,
-  isError: false,
-  backend: true,
-  products: ["transactions"],
-  linkTokenError: {
-    error_type: "",
-    error_code: "",
-    error_message: "",
-  },
-  linkExitError: null,
 };
 
-type QuickstartAction = {
-  type: "SET_STATE";
-  state: Partial<QuickstartState>;
-};
+type AppAction =
+  | {
+      type: "SESSION_LOADED";
+      authUser: AuthUser | null;
+      googleClientId: string | null;
+    }
+  | {
+      type: "AUTHENTICATED";
+      authUser: AuthUser;
+    }
+  | {
+      type: "AUTH_EXPIRED";
+    }
+  | {
+      type: "SET_LINK_TOKEN";
+      linkToken: string | null;
+    };
 
-interface QuickstartContext extends QuickstartState {
-  dispatch: Dispatch<QuickstartAction>;
+interface AppContext extends AppState {
+  dispatch: Dispatch<AppAction>;
 }
 
-const Context = createContext<QuickstartContext>(
-  initialState as QuickstartContext
-);
+const Context = createContext<AppContext | null>(null);
+
+export const useAppContext = () => {
+  const context = useContext(Context);
+
+  if (!context) {
+    throw new Error("useAppContext must be used within AppProvider");
+  }
+
+  return context;
+};
 
 const { Provider } = Context;
-export const QuickstartProvider: React.FC<{ children: ReactNode }> = (
+export const AppProvider: React.FC<{ children: ReactNode }> = (
   props
 ) => {
   const reducer = (
-    state: QuickstartState,
-    action: QuickstartAction
-  ): QuickstartState => {
+    state: AppState,
+    action: AppAction
+  ): AppState => {
     switch (action.type) {
-      case "SET_STATE":
-        return { ...state, ...action.state };
+      case "SESSION_LOADED":
+        return {
+          ...state,
+          authUser: action.authUser,
+          googleClientId: action.googleClientId,
+          isSessionLoading: false,
+        };
+      case "AUTHENTICATED":
+        return {
+          ...state,
+          authUser: action.authUser,
+          isSessionLoading: false,
+        };
+      case "AUTH_EXPIRED":
+        return {
+          ...state,
+          authUser: null,
+          linkToken: "",
+          isSessionLoading: false,
+        };
+      case "SET_LINK_TOKEN":
+        return { ...state, linkToken: action.linkToken };
       default:
         return { ...state };
     }
