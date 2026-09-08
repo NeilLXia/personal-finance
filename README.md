@@ -61,9 +61,7 @@ The backend runs on `http://localhost:8001` by default (`APP_PORT`). The fronten
 
 ## Plaid Sandbox
 
-In Sandbox, use `user_good` as the username and `pass_good` as the password. If prompted for a two-factor code, use `1234`.
-
-For richer Transactions test data, use a Transactions sandbox institution with `user_transactions_dynamic` and any non-empty password.
+Plaid sandbox is setup to mimic the production connection for demo users. Demo data is loaded during the migrations and the sandbox data is not used.
 
 ## Token Encryption
 
