@@ -29,7 +29,7 @@ const initialState: AppState = {
   linkToken: "", // Don't set to null or error message will show up briefly when site loads
 };
 
-type AppAction =
+export type AppAction =
   | {
       type: "SESSION_LOADED";
       authUser: AuthUser | null;

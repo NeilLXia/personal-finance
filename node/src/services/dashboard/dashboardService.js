@@ -62,6 +62,64 @@ const ensureCurrentMonthBalances = async ({
   return refreshedAccounts;
 };
 
+const buildIncomeAllocationView = async ({
+  userId,
+  plaidEnvironment,
+  incomeAllocationDateRange,
+}) => {
+  const rangeStart = incomeAllocationDateRange.startDate.format('YYYY-MM-DD');
+  const rangeEnd = incomeAllocationDateRange.endDate.format('YYYY-MM-DD');
+  const [
+    transactionCategoryRules,
+    transactions,
+    payslips,
+    realEstatePrincipalHistory,
+    availableYears,
+  ] = await Promise.all([
+    models.transactionCategoryRules.findByUserId(userId),
+    models.dashboardReports.findCashFlowTransactionsByUserIdAndEnvironment({
+      userId,
+      plaidEnvironment,
+      startDate: rangeStart,
+      endDate: rangeEnd,
+    }),
+    models.payslips.findByUserIdAndDateRange({
+      userId,
+      startDate: rangeStart,
+      endDate: rangeEnd,
+    }),
+    models.dashboardReports.findPropertyMonthlyPrincipalPaidByUserId(userId),
+    models.dashboardReports.findTransactionYearsByUserIdAndEnvironment({
+      userId,
+      plaidEnvironment,
+    }),
+  ]);
+  const categorizedTransactions = applyTransactionCategoryRules(
+    transactions,
+    transactionCategoryRules,
+  );
+  const incomeAllocationSummary = buildIncomeAllocationSummary({
+    transactions: categorizedTransactions,
+    realEstatePrincipalHistory,
+    incomeAllocationDateRange,
+  });
+
+  return {
+    range: incomeAllocationDateRange.key,
+    years: incomeAllocationDateRange.years,
+    available_years: availableYears,
+    start_date: rangeStart,
+    end_date: rangeEnd,
+    label: incomeAllocationDateRange.label,
+    income: incomeAllocationSummary.income,
+    expenses: incomeAllocationSummary.expenses,
+    savings: incomeAllocationSummary.savings,
+    real_estate_equity: incomeAllocationSummary.real_estate_equity,
+    transactions: categorizedTransactions,
+    payslips,
+  };
+};
+
 const getDashboard = async ({
   month,
   incomeAllocationRange,
@@ -120,21 +178,15 @@ const getDashboard = async ({
     transactionDateRange.startDate.format('YYYY-MM-DD');
   const transactionRangeEndDate =
     transactionDateRange.endDate.format('YYYY-MM-DD');
-  const incomeAllocationStartDateValue =
-    incomeAllocationDateRange.startDate.format('YYYY-MM-DD');
-  const incomeAllocationEndDateValue =
-    incomeAllocationDateRange.endDate.format('YYYY-MM-DD');
 
   const [
     monthlyTransactions,
     transactionCategoryRules,
     budgetTargets,
-    payslips,
-    incomeAllocationTransactions,
-    incomeAllocationPayslips,
+    transactionPayslips,
+    incomeAllocation,
     cashFlowTransactions,
     realEstatePrincipalHistory,
-    availableIncomeAllocationYears,
     institutions,
     propertyHistory,
     currentPropertyValue,
@@ -154,16 +206,10 @@ const getDashboard = async ({
       startDate: transactionRangeStartDate,
       endDate: transactionRangeEndDate,
     }),
-    models.dashboardReports.findCashFlowTransactionsByUserIdAndEnvironment({
+    buildIncomeAllocationView({
       userId: user.id,
       plaidEnvironment: dashboardPlaidEnv,
-      startDate: incomeAllocationStartDateValue,
-      endDate: incomeAllocationEndDateValue,
-    }),
-    models.payslips.findByUserIdAndDateRange({
-      userId: user.id,
-      startDate: incomeAllocationStartDateValue,
-      endDate: incomeAllocationEndDateValue,
+      incomeAllocationDateRange,
     }),
     models.dashboardReports.findCashFlowTransactionsByUserIdAndEnvironment({
       userId: user.id,
@@ -172,10 +218,6 @@ const getDashboard = async ({
       endDate: cashFlowEnd.format('YYYY-MM-DD'),
     }),
     models.dashboardReports.findPropertyMonthlyPrincipalPaidByUserId(user.id),
-    models.dashboardReports.findTransactionYearsByUserIdAndEnvironment({
-      userId: user.id,
-      plaidEnvironment: dashboardPlaidEnv,
-    }),
     models.plaidItems.findInstitutionStatusesByUserIdAndEnvironment(
       user.id,
       dashboardPlaidEnv,
@@ -193,11 +235,7 @@ const getDashboard = async ({
     transactionDateRange,
     transactions: monthlyTransactions,
     transactionCategoryRules,
-    payslips,
-  });
-  const categorizedIncomeAllocationTransactions = applyTransactionCategoryRules(
-    incomeAllocationTransactions,
-    transactionCategoryRules,
+    payslips: transactionPayslips,
   );
   const categorizedCashFlowTransactions = applyTransactionCategoryRules(
     cashFlowTransactions,
@@ -219,11 +257,6 @@ const getDashboard = async ({
     transactions: categorizedCashFlowTransactions,
     realEstatePrincipalHistory,
   });
-  const incomeAllocationSummary = buildIncomeAllocationSummary({
-    transactions: categorizedIncomeAllocationTransactions,
-    realEstatePrincipalHistory,
-    incomeAllocationDateRange,
-  });
 
   return {
     institutions,
@@ -240,24 +273,35 @@ const getDashboard = async ({
       categories: cashFlowCategories,
       months: monthlyCashFlow,
     },
-    income_allocation: {
-      range: incomeAllocationDateRange.key,
-      years: incomeAllocationDateRange.years,
-      available_years: availableIncomeAllocationYears,
-      start_date: incomeAllocationDateRange.startDate.format('YYYY-MM-DD'),
-      end_date: incomeAllocationDateRange.endDate.format('YYYY-MM-DD'),
-      label: incomeAllocationDateRange.label,
-      income: incomeAllocationSummary.income,
-      expenses: incomeAllocationSummary.expenses,
-      savings: incomeAllocationSummary.savings,
-      real_estate_equity: incomeAllocationSummary.real_estate_equity,
-      transactions: categorizedIncomeAllocationTransactions,
-      payslips: incomeAllocationPayslips,
-    },
+    income_allocation: incomeAllocation,
     budget_targets: formatBudgetTargets(budgetTargets),
     transaction_categories: transactionsView.transaction_categories,
     latest_transactions: transactionsView.latest_transactions,
     payslips: transactionsView.payslips,
+  };
+};
+
+const getDashboardIncomeAllocation = async ({
+  month,
+  incomeAllocationRange,
+  incomeAllocationStartDate,
+  incomeAllocationEndDate,
+} = {}) => {
+  const { user, dashboardPlaidEnv, dashboardMonth } =
+    await resolveDashboardContext({ month });
+  const incomeAllocationDateRange = getIncomeAllocationRange({
+    selectedMonth: dashboardMonth,
+    incomeAllocationRange,
+    incomeAllocationStartDate,
+    incomeAllocationEndDate,
+  });
+
+  return {
+    income_allocation: await buildIncomeAllocationView({
+      userId: user.id,
+      plaidEnvironment: dashboardPlaidEnv,
+      incomeAllocationDateRange,
+    }),
   };
 };
 
@@ -304,5 +348,6 @@ const getDashboardTransactions = async ({
 
 module.exports = {
   getDashboard,
+  getDashboardIncomeAllocation,
   getDashboardTransactions,
 };

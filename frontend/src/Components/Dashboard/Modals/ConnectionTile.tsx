@@ -1,27 +1,47 @@
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { deleteRequest } from "../../../shared/apiClient";
+import { dashboardPayloadKeys } from "../dashboardQueryKeys";
 import styles from "./index.module.css";
 import type { InstitutionStatus } from "../shared/types";
 
 type ConnectionTileProps = {
   institution: InstitutionStatus;
-  onReconnectComplete: () => void | Promise<void>;
   onError: (message: string) => void;
   onReconnect: (plaidItemId: string) => void;
 };
 
 const ConnectionTile = ({
   institution,
-  onReconnectComplete,
   onError,
   onReconnect,
 }: ConnectionTileProps) => {
-  const [isRemoving, setIsRemoving] = useState(false);
+  const queryClient = useQueryClient();
+  const removeConnectionMutation = useMutation({
+    mutationFn: (plaidItemId: string) =>
+      deleteRequest(
+        `/api/plaid-items/${encodeURIComponent(plaidItemId)}`,
+        {},
+        "Remove connection failed",
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: dashboardPayloadKeys.root,
+      });
+    },
+    onError: (requestError) => {
+      onError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to remove connection",
+      );
+    },
+  });
   const canReconnect =
     Boolean(institution.plaid_item_id) &&
     (!institution.has_active_access_token || institution.has_stale_access_token);
   const canRemove = Boolean(institution.plaid_item_id);
+  const isRemoving = removeConnectionMutation.isPending;
   const statusLabel =
     institution.has_stale_access_token || !institution.has_active_access_token
       ? "Reconnect"
@@ -48,25 +68,7 @@ const ConnectionTile = ({
       return;
     }
 
-    setIsRemoving(true);
-
-    try {
-      await deleteRequest(
-        `/api/plaid-items/${encodeURIComponent(institution.plaid_item_id)}`,
-        {},
-        "Remove connection failed",
-      );
-
-      await onReconnectComplete();
-    } catch (requestError) {
-      onError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to remove connection",
-      );
-    } finally {
-      setIsRemoving(false);
-    }
+    removeConnectionMutation.mutate(institution.plaid_item_id);
   };
 
   return (

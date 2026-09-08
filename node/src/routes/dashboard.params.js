@@ -22,6 +22,12 @@ const TRANSACTION_PARAMS = new Set([
   'transaction_start_date',
   'transaction_end_date',
 ]);
+const INCOME_ALLOCATION_PARAMS = new Set([
+  'month',
+  'income_allocation_range',
+  'income_allocation_start_date',
+  'income_allocation_end_date',
+]);
 
 const parseMonth = (query) =>
   validateString(query.month, 'month', {
@@ -89,9 +95,21 @@ const parseTransactionQuery = (request) =>
     };
   });
 
+const parseIncomeAllocationQuery = (request) =>
+  validateQuery(request, (query) => {
+    rejectUnknownParams(query, INCOME_ALLOCATION_PARAMS);
+
+    return {
+      month: parseMonth(query),
+      ...parseIncomeAllocationFilters(query),
+    };
+  });
+
 module.exports = {
   DASHBOARD_PARAMS,
+  INCOME_ALLOCATION_PARAMS,
   TRANSACTION_PARAMS,
   parseDashboardQuery,
+  parseIncomeAllocationQuery,
   parseTransactionQuery,
 };

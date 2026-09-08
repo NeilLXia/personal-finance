@@ -1,11 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import {
   deleteRequest,
   getJson,
-  request,
+  postJson,
+  putJson,
 } from "../../../shared/apiClient";
+import { dashboardPayloadKeys, resourceKeys } from "../dashboardQueryKeys";
 import { manualExpenseCategories } from "../shared/constants";
+import { removeById, upsertById } from "../shared/queryCache";
+import { useReportedQueryError } from "../shared/useReportedQueryError";
 import styles from "./index.module.css";
 import shared from "../dashboard.shared.module.css";
 import type { TransactionCategoryRule } from "../shared/types";
@@ -50,50 +59,103 @@ const ruleMatchTypeOptions: Array<{
 ];
 
 const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
-  const [rules, setRules] = useState<TransactionCategoryRule[]>([]);
   const [form, setForm] = useState<CategoryRuleForm>(emptyRuleForm);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [deletingRuleId, setDeletingRuleId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+  const rulesQuery = useQuery({
+    queryKey: resourceKeys.categoryRules,
+    queryFn: async () => {
+      const data = await getJson<CategoryRulesResponse>(
+        "/api/transaction-category-rules",
+        {},
+        "Rules request failed",
+      );
 
-  useEffect(() => {
-    let isMounted = true;
+      return data.rules || [];
+    },
+  });
+  const saveRuleMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        original_category: form.original_category,
+        vendor_name: form.vendor_name,
+        match_type: form.match_type,
+        manual_category: form.manual_category,
+      };
 
-    const loadRules = async () => {
-      setIsLoading(true);
-
-      try {
-        const data = await getJson<CategoryRulesResponse>(
-          "/api/transaction-category-rules",
-          {},
-          "Rules request failed",
-        );
-        if (isMounted) {
-          setRules(data.rules || []);
-        }
-      } catch (requestError) {
-        onError(
-          requestError instanceof Error
-            ? requestError.message
-            : "Unable to load transaction rules",
-        );
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+      return form.id
+        ? putJson<CategoryRuleResponse>(
+            `/api/transaction-category-rules/${encodeURIComponent(form.id)}`,
+            payload,
+            {},
+            "Rule save failed",
+          )
+        : postJson<CategoryRuleResponse>(
+            "/api/transaction-category-rules",
+            payload,
+            {},
+            "Rule save failed",
+          );
+    },
+    onSuccess: async (data) => {
+      queryClient.setQueryData<TransactionCategoryRule[]>(
+        resourceKeys.categoryRules,
+        (currentRules) =>
+          upsertById(currentRules, data.rule, (a, b) =>
+            a.vendor_name.localeCompare(b.vendor_name),
+          ),
+      );
+      await queryClient.invalidateQueries({
+        queryKey: dashboardPayloadKeys.root,
+      });
+      setForm(emptyRuleForm);
+    },
+    onError: (requestError) => {
+      onError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to save transaction rule",
+      );
+    },
+  });
+  const deleteRuleMutation = useMutation({
+    mutationFn: (rule: TransactionCategoryRule) =>
+      deleteRequest(
+        `/api/transaction-category-rules/${encodeURIComponent(rule.id)}`,
+        {},
+        "Rule delete failed",
+      ),
+    onSuccess: async (_data, rule) => {
+      queryClient.setQueryData<TransactionCategoryRule[]>(
+        resourceKeys.categoryRules,
+        (currentRules) => removeById(currentRules, rule.id),
+      );
+      await queryClient.invalidateQueries({
+        queryKey: dashboardPayloadKeys.root,
+      });
+      if (form.id === rule.id) {
+        setForm(emptyRuleForm);
       }
-    };
-
-    void loadRules();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [onError]);
+    },
+    onError: (requestError) => {
+      onError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to delete transaction rule",
+      );
+    },
+    onSettled: () => setDeletingRuleId(null),
+  });
+  useReportedQueryError(
+    rulesQuery.error,
+    "Unable to load transaction rules",
+    onError,
+  );
 
   const filteredRules = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+    const rules = rulesQuery.data || [];
 
     if (!normalizedSearchTerm) {
       return rules;
@@ -112,10 +174,10 @@ const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
         .toLowerCase()
         .includes(normalizedSearchTerm),
     );
-  }, [rules, searchTerm]);
+  }, [rulesQuery.data, searchTerm]);
 
   const canSaveRule =
-    !isSaving &&
+    !saveRuleMutation.isPending &&
     Boolean(form.original_category.trim()) &&
     Boolean(form.vendor_name.trim()) &&
     Boolean(form.manual_category.trim());
@@ -125,49 +187,7 @@ const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
       return;
     }
 
-    setIsSaving(true);
-
-    try {
-      const response = await request(
-        form.id
-          ? `/api/transaction-category-rules/${encodeURIComponent(form.id)}`
-          : "/api/transaction-category-rules",
-        {
-          method: form.id ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(form),
-        },
-        "Rule save failed",
-      );
-      const data = (await response.json()) as CategoryRuleResponse;
-      setRules((currentRules) => {
-        const nextRule = data.rule;
-        const existingRuleIndex = currentRules.findIndex(
-          (rule) => rule.id === nextRule.id,
-        );
-
-        if (existingRuleIndex === -1) {
-          return [...currentRules, nextRule].sort((a, b) =>
-            a.vendor_name.localeCompare(b.vendor_name),
-          );
-        }
-
-        return currentRules.map((rule) =>
-          rule.id === nextRule.id ? nextRule : rule,
-        );
-      });
-      setForm(emptyRuleForm);
-    } catch (requestError) {
-      onError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to save transaction rule",
-      );
-    } finally {
-      setIsSaving(false);
-    }
+    saveRuleMutation.mutate();
   };
 
   const deleteRule = async (rule: TransactionCategoryRule) => {
@@ -180,29 +200,7 @@ const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
     }
 
     setDeletingRuleId(rule.id);
-
-    try {
-      await deleteRequest(
-        `/api/transaction-category-rules/${encodeURIComponent(rule.id)}`,
-        {},
-        "Rule delete failed",
-      );
-
-      setRules((currentRules) =>
-        currentRules.filter((currentRule) => currentRule.id !== rule.id),
-      );
-      if (form.id === rule.id) {
-        setForm(emptyRuleForm);
-      }
-    } catch (requestError) {
-      onError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to delete transaction rule",
-      );
-    } finally {
-      setDeletingRuleId(null);
-    }
+    deleteRuleMutation.mutate(rule);
   };
 
   return (
@@ -302,7 +300,7 @@ const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
         />
 
         <div className={styles.ruleList}>
-          {isLoading ? (
+          {rulesQuery.isLoading ? (
             <p className={shared.emptyText}>Loading rules...</p>
           ) : filteredRules.length === 0 ? (
             <p className={shared.emptyText}>No matching rules.</p>

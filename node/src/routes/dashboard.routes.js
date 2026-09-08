@@ -7,6 +7,7 @@ const { route } = require('../http/asyncRoute');
 const { dashboardLimiter } = require('../middleware/rateLimiters');
 const {
   parseDashboardQuery,
+  parseIncomeAllocationQuery,
   parseTransactionQuery,
 } = require('./dashboard.params');
 
@@ -29,6 +30,18 @@ router.get(
     response.json(
       await dashboardService.getDashboardTransactions(
         parseTransactionQuery(request),
+      ),
+    );
+  }),
+);
+
+router.get(
+  '/dashboard/income-allocation',
+  dashboardLimiter,
+  route(async (request, response) => {
+    response.json(
+      await dashboardService.getDashboardIncomeAllocation(
+        parseIncomeAllocationQuery(request),
       ),
     );
   }),

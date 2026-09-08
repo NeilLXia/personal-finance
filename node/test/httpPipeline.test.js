@@ -71,6 +71,7 @@ stubModule('../src/services/demo', {
 });
 stubModule('../src/services/dashboard/dashboardService', {
   getDashboard: async () => ({ ok: true }),
+  getDashboardIncomeAllocation: async () => ({ income_allocation: {} }),
   getDashboardTransactions: async () => ({ items: [] }),
 });
 

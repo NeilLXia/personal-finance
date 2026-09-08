@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import { getJson, postJson } from "../../../shared/apiClient";
+import { dashboardPayloadKeys, resourceKeys } from "../dashboardQueryKeys";
 import { incomeAllocationBudgetTargetCategories } from "../shared/constants";
+import { useReportedQueryError } from "../shared/useReportedQueryError";
 import styles from "./index.module.css";
 import shared from "../dashboard.shared.module.css";
 import type { BudgetTarget } from "../shared/types";
@@ -15,7 +22,6 @@ type BudgetTargetDraft = {
 
 type BudgetTargetsModalProps = {
   onClose: () => void;
-  onChanged: () => void;
   onError: (message: string) => void;
 };
 
@@ -27,7 +33,7 @@ const createEmptyDrafts = () =>
   incomeAllocationBudgetTargetCategories.map((category) => ({
     category,
     net_target_percent: "",
-    gross_target_percent: category === "Taxes" ? "" : "",
+    gross_target_percent: "",
   }));
 
 const normalizeCategoryKey = (category: string) =>
@@ -63,14 +69,31 @@ const getCalculatedEffectiveSavingsTarget = (
   return Number((100 - usedTargetPercent).toFixed(2));
 };
 
+const buildDraftsFromTargets = (targets: BudgetTarget[] = []) => {
+  const targetsByCategory = new Map<string, BudgetTarget>(
+    targets.map((target) => [normalizeCategoryKey(target.category), target]),
+  );
+
+  return incomeAllocationBudgetTargetCategories.map((category) => {
+    const target = targetsByCategory.get(normalizeCategoryKey(category));
+
+    return {
+      category,
+      net_target_percent:
+        category === "Taxes"
+          ? ""
+          : String(target?.net_target_percent ?? target?.target_percent ?? ""),
+      gross_target_percent: String(target?.gross_target_percent ?? ""),
+    };
+  });
+};
+
 const BudgetTargetsModal = ({
   onClose,
-  onChanged,
   onError,
 }: BudgetTargetsModalProps) => {
   const [drafts, setDrafts] = useState<BudgetTargetDraft[]>(createEmptyDrafts);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const queryClient = useQueryClient();
   const calculatedNetTarget = useMemo(
     () => getCalculatedEffectiveSavingsTarget(drafts, "net_target_percent"),
     [drafts],
@@ -79,9 +102,64 @@ const BudgetTargetsModal = ({
     () => getCalculatedEffectiveSavingsTarget(drafts, "gross_target_percent"),
     [drafts],
   );
+  const targetsQuery = useQuery({
+    queryKey: resourceKeys.budgetTargets,
+    queryFn: async () => {
+      const data = await getJson<BudgetTargetsResponse>(
+        "/api/budget-targets",
+        {},
+        "Budget target request failed",
+      );
+
+      return data.targets || [];
+    },
+  });
+  const saveTargetsMutation = useMutation({
+    mutationFn: () =>
+      Promise.all(
+        drafts.map((draft) => {
+          const isCalculatedTarget =
+            draft.category === calculatedTargetCategory;
+
+          return postJson<BudgetTarget>(
+            "/api/budget-targets",
+            {
+              category: draft.category,
+              net_target_percent:
+                draft.category === "Taxes"
+                  ? 0
+                  : isCalculatedTarget
+                    ? calculatedNetTarget
+                    : parseTargetPercent(draft.net_target_percent),
+              gross_target_percent: isCalculatedTarget
+                ? calculatedGrossTarget
+                : parseTargetPercent(draft.gross_target_percent),
+            },
+            {},
+            "Budget target save failed",
+          );
+        }),
+      ),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: resourceKeys.budgetTargets,
+        }),
+        queryClient.invalidateQueries({ queryKey: dashboardPayloadKeys.root }),
+      ]);
+      onClose();
+    },
+    onError: (requestError) => {
+      onError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to save budget targets",
+      );
+    },
+  });
 
   const canSave =
-    !isSaving &&
+    !saveTargetsMutation.isPending &&
     calculatedNetTarget >= 0 &&
     calculatedNetTarget <= 100 &&
     calculatedGrossTarget >= 0 &&
@@ -96,67 +174,18 @@ const BudgetTargetsModal = ({
     );
 
   useEffect(() => {
-    let isMounted = true;
+    if (!targetsQuery.data) {
+      return;
+    }
 
-    const loadTargets = async () => {
-      setIsLoading(true);
+    setDrafts(buildDraftsFromTargets(targetsQuery.data));
+  }, [targetsQuery.data]);
 
-      try {
-        const data = await getJson<BudgetTargetsResponse>(
-          "/api/budget-targets",
-          {},
-          "Budget target request failed",
-        );
-        const targetsByCategory = new Map<string, BudgetTarget>(
-          (data.targets || []).map((target: BudgetTarget) => [
-            normalizeCategoryKey(target.category),
-            target,
-          ]),
-        );
-
-        if (isMounted) {
-          setDrafts(
-            incomeAllocationBudgetTargetCategories.map((category) => {
-              const target = targetsByCategory.get(
-                normalizeCategoryKey(category),
-              );
-
-              return {
-                category,
-                net_target_percent:
-                  category === "Taxes"
-                    ? ""
-                    : String(
-                        target?.net_target_percent ??
-                          target?.target_percent ??
-                          "",
-                      ),
-                gross_target_percent: String(
-                  target?.gross_target_percent ?? "",
-                ),
-              };
-            }),
-          );
-        }
-      } catch (requestError) {
-        onError(
-          requestError instanceof Error
-            ? requestError.message
-            : "Unable to load budget targets",
-        );
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void loadTargets();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [onError]);
+  useReportedQueryError(
+    targetsQuery.error,
+    "Unable to load budget targets",
+    onError,
+  );
 
   const updateDraft = (
     category: string,
@@ -180,45 +209,7 @@ const BudgetTargetsModal = ({
       return;
     }
 
-    setIsSaving(true);
-
-    try {
-      await Promise.all(
-        drafts.map((draft) => {
-          const isCalculatedTarget =
-            draft.category === calculatedTargetCategory;
-
-          return postJson(
-            "/api/budget-targets",
-            {
-              category: draft.category,
-              net_target_percent:
-                draft.category === "Taxes"
-                  ? 0
-                  : isCalculatedTarget
-                    ? calculatedNetTarget
-                    : parseTargetPercent(draft.net_target_percent),
-              gross_target_percent: isCalculatedTarget
-                ? calculatedGrossTarget
-                : parseTargetPercent(draft.gross_target_percent),
-            },
-            {},
-            "Budget target save failed",
-          );
-        }),
-      );
-
-      onChanged();
-      onClose();
-    } catch (requestError) {
-      onError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to save budget targets",
-      );
-    } finally {
-      setIsSaving(false);
-    }
+    saveTargetsMutation.mutate();
   };
 
   return (
@@ -245,7 +236,7 @@ const BudgetTargetsModal = ({
           <span>Net (%)</span>
           <span>Gross (%)</span>
         </div>
-        {isLoading ? (
+        {targetsQuery.isLoading ? (
           <p className={shared.emptyText}>Loading budget targets...</p>
         ) : (
           drafts.map((draft) => {
@@ -299,8 +290,8 @@ const BudgetTargetsModal = ({
             );
           })
         )}
-        <button type="submit" disabled={!canSave || isLoading}>
-          {isSaving ? "Saving" : "Save targets"}
+        <button type="submit" disabled={!canSave || targetsQuery.isLoading}>
+          {saveTargetsMutation.isPending ? "Saving" : "Save targets"}
         </button>
       </form>
     </ModalShell>

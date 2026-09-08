@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
+import { dashboardPayloadKeys } from "../dashboardQueryKeys";
 import {
   getCategorySelectionKey,
   getExcludedCategorySelectionKey,
@@ -22,17 +24,15 @@ export const useTransactions = ({
   data,
   selectedTransactionCategories,
   transactionsInSelectedRange,
-  reloadDashboard,
   setActiveTransactionTab,
-  setError,
+  onError,
 }: {
   activeTransactionTab: TransactionTableTab;
   data: DashboardData | null;
   selectedTransactionCategories: string[];
   transactionsInSelectedRange: Transaction[];
-  reloadDashboard: () => Promise<void>;
   setActiveTransactionTab: (tab: TransactionTableTab) => void;
-  setError: (error: string | null) => void;
+  onError: (message: string) => void;
 }) => {
   const [selectedExcludedCategories, setSelectedExcludedCategories] = useState<
     string[]
@@ -48,6 +48,52 @@ export const useTransactions = ({
   const [savingDateTransactionId, setSavingDateTransactionId] = useState<
     number | null
   >(null);
+  const queryClient = useQueryClient();
+  const categoryMutation = useMutation({
+    mutationFn: ({
+      transactionIds,
+      manualCategory,
+    }: {
+      transactionIds: number[];
+      manualCategory: string;
+      errorMessage: string;
+    }) => updateTransactionsCategoryRules(transactionIds, manualCategory),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: dashboardPayloadKeys.root,
+      });
+    },
+    onError: (requestError, variables) => {
+      onError(
+        requestError instanceof Error
+          ? requestError.message
+          : variables.errorMessage,
+      );
+    },
+    onSettled: () => setSavingCategoryTransactionId(null),
+  });
+  const manualDateMutation = useMutation({
+    mutationFn: ({
+      transactionId,
+      manualDate,
+    }: {
+      transactionId: number;
+      manualDate: string;
+    }) => updateTransactionManualDate(transactionId, manualDate),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: dashboardPayloadKeys.root,
+      });
+    },
+    onError: (requestError) => {
+      onError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to update transaction date",
+      );
+    },
+    onSettled: () => setSavingDateTransactionId(null),
+  });
 
   const payslipIncomeTransactionIds = useMemo(
     () =>
@@ -194,7 +240,7 @@ export const useTransactions = ({
     );
   };
 
-  const saveManualCategory = async (
+  const saveManualCategory = (
     transactionId: number,
     manualCategory: string,
   ) => {
@@ -203,19 +249,11 @@ export const useTransactions = ({
     }
 
     setSavingCategoryTransactionId(transactionId);
-
-    try {
-      await updateTransactionsCategoryRules([transactionId], manualCategory);
-      await reloadDashboard();
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to update transaction category",
-      );
-    } finally {
-      setSavingCategoryTransactionId(null);
-    }
+    categoryMutation.mutate({
+      transactionIds: [transactionId],
+      manualCategory,
+      errorMessage: "Unable to update transaction category",
+    });
   };
 
   const saveBulkManualCategory = async (
@@ -227,37 +265,16 @@ export const useTransactions = ({
     }
 
     setSavingCategoryTransactionId(-1);
-
-    try {
-      await updateTransactionsCategoryRules(transactionIds, manualCategory);
-      await reloadDashboard();
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to update transaction categories",
-      );
-      throw requestError;
-    } finally {
-      setSavingCategoryTransactionId(null);
-    }
+    await categoryMutation.mutateAsync({
+      transactionIds,
+      manualCategory,
+      errorMessage: "Unable to update transaction categories",
+    });
   };
 
-  const saveManualDate = async (transactionId: number, manualDate: string) => {
+  const saveManualDate = (transactionId: number, manualDate: string) => {
     setSavingDateTransactionId(transactionId);
-
-    try {
-      await updateTransactionManualDate(transactionId, manualDate);
-      await reloadDashboard();
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to update transaction date",
-      );
-    } finally {
-      setSavingDateTransactionId(null);
-    }
+    manualDateMutation.mutate({ transactionId, manualDate });
   };
 
   return {
