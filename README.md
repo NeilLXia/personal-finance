@@ -106,13 +106,24 @@ migrations then starts the server) or your own process manager.
 ### Cloudflare Pages Frontend
 
 When Cloudflare Pages serves the frontend, `/api/*` is proxied by the Pages
-Function in `frontend/functions/api/[[path]].js`. Configure the Pages project
-with:
+Function. If the Pages project root is `frontend`, Cloudflare uses
+`frontend/functions/api/[[path]].js`. If the Pages project root is the repository
+root, Cloudflare uses `functions/api/[[path]].js`.
+
+Recommended Pages configuration:
 
 ```bash
 Build command: npm run build
 Build output directory: build
 Root directory: frontend
+```
+
+Alternative repository-root configuration:
+
+```bash
+Build command: cd frontend && npm run build
+Build output directory: frontend/build
+Root directory: /
 ```
 
 Set this Cloudflare Pages variable for both production and preview environments
