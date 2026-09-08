@@ -110,7 +110,18 @@ Function. If the Pages project root is `frontend`, Cloudflare uses
 `frontend/functions/api/[[path]].js`. If the Pages project root is the repository
 root, Cloudflare uses `functions/api/[[path]].js`.
 
-Recommended Pages configuration:
+Cloudflare Workers static-assets configuration:
+
+```bash
+Build command: npm run build
+Deploy command: npx wrangler deploy
+Root directory: frontend
+```
+
+This uses `frontend/wrangler.jsonc` and `frontend/worker.js`. The Worker serves
+the Vite build from `frontend/build` and proxies `/api/*` to `BACKEND_ORIGIN`.
+
+Cloudflare Pages Functions configuration:
 
 ```bash
 Build command: npm run build
@@ -118,13 +129,7 @@ Build output directory: build
 Root directory: frontend
 ```
 
-Alternative repository-root configuration:
-
-```bash
-Build command: cd frontend && npm run build
-Build output directory: frontend/build
-Root directory: /
-```
+With Pages Functions, Cloudflare uses `frontend/functions/api/[[path]].js`.
 
 Set this Cloudflare Pages variable for both production and preview environments
 as needed:
