@@ -4,13 +4,9 @@ import BudgetTargetsModal from "./Modals/BudgetTargetsModal";
 import WealthChangeModule from "./WealthChange";
 import { useWealthChange } from "./WealthChange/useWealthChange";
 import IncomeAllocationModule from "./IncomeAllocation";
-import {
-  useIncomeAllocation,
-  useIncomeAllocationControls,
-} from "./IncomeAllocation/useIncomeAllocation";
+import { useIncomeAllocation } from "./IncomeAllocation/useIncomeAllocation";
 import CategoryRulesModal from "./Modals/CategoryRulesModal";
 import DashboardToolbar from "./DashboardToolbar";
-import { logoutUser } from "./dashboardApi";
 import ExpenseBreakdownModule from "./Transactions/Breakdown";
 import { useExpenseBreakdown } from "./Transactions/useExpenseBreakdown";
 import NetWorthModule from "./NetWorth";
@@ -19,17 +15,19 @@ import PayslipUploadModal from "./Modals/PayslipUploadModal";
 import RealEstateModal from "./Modals/RealEstateModal";
 import TransactionsModule from "./Transactions";
 import { useAppContext } from "../../Context";
-import { getDefaultDashboardMonth } from "./shared/formatters";
 import { useIncomeBreakdown } from "./Transactions/useIncomeBreakdown";
 import styles from "./index.module.css";
 import { useDashboardData } from "./useDashboardData";
+import { useDashboardFilters } from "./useDashboardFilters";
+import { useDashboardLogout } from "./useDashboardLogout";
 import { useTransactions } from "./Transactions/useTransactions";
 import type { TransactionTableTab } from "./shared/types";
 
 const Dashboard = () => {
   const { dispatch } = useAppContext();
-  const [selectedMonth, setSelectedMonth] = useState(getDefaultDashboardMonth);
-  const incomeAllocationControls = useIncomeAllocationControls();
+  const logout = useDashboardLogout(dispatch);
+  const filters = useDashboardFilters();
+  const { selectedMonth } = filters;
   const [isCategoryRulesModalOpen, setIsCategoryRulesModalOpen] =
     useState(false);
   const [isBudgetTargetsModalOpen, setIsBudgetTargetsModalOpen] =
@@ -44,23 +42,14 @@ const Dashboard = () => {
     data,
     isLoading,
     error,
-    setError,
-    loadDashboard,
-    loadIncomeAllocation,
+    reportError,
     changeTransactionCustomRange,
     changeTransactionRange,
     manuallyRefreshData,
-    transactionCustomRange,
-    transactionRange,
     isTransactionRangeLoading,
     isIncomeAllocationLoading,
     isManualRefreshLoading,
-  } = useDashboardData({
-    selectedMonth,
-    incomeAllocationRange: incomeAllocationControls.incomeAllocationRange,
-    incomeAllocationCustomRange:
-      incomeAllocationControls.incomeAllocationCustomRange,
-  });
+  } = useDashboardData(filters);
   const netWorth = useNetWorth({
     data,
     selectedMonth,
@@ -68,37 +57,30 @@ const Dashboard = () => {
   const wealthChange = useWealthChange({ data });
   const incomeAllocation = useIncomeAllocation({
     data,
-    loadIncomeAllocation,
-    ...incomeAllocationControls,
+    incomeAllocationRange: filters.incomeAllocationRange,
+    incomeAllocationMode: filters.incomeAllocationMode,
+    incomeAllocationCustomRange: filters.incomeAllocationCustomRange,
+    setIncomeAllocationRange: filters.setIncomeAllocationRange,
+    setIncomeAllocationMode: filters.setIncomeAllocationMode,
+    setIncomeAllocationCustomRange: filters.setIncomeAllocationCustomRange,
   });
   const expenseBreakdown = useExpenseBreakdown({
     data,
     selectedMonth,
-    transactionCustomRange,
-    transactionRange,
+    transactionCustomRange: filters.transactionCustomRange,
+    transactionRange: filters.transactionRange,
     changeTransactionCustomRange,
     changeTransactionRange,
     setActiveTransactionTab,
   });
 
-  const logout = async () => {
-    await logoutUser();
-    localStorage.removeItem("link_token");
-    dispatch({
-      type: "AUTH_EXPIRED",
-    });
-  };
-
-  const transactionsInSelectedRange =
-    expenseBreakdown.transactionsInSelectedRange;
   const transactions = useTransactions({
     activeTransactionTab,
     data,
-    reloadDashboard: () => loadDashboard({ preserveScroll: true }),
     selectedTransactionCategories: expenseBreakdown.selectedTransactionCategories,
     setActiveTransactionTab,
-    setError,
-    transactionsInSelectedRange,
+    onError: reportError,
+    transactionsInSelectedRange: expenseBreakdown.transactionsInSelectedRange,
   });
   const incomeBreakdown = useIncomeBreakdown({
     data,
@@ -107,7 +89,7 @@ const Dashboard = () => {
   });
 
   const changeSelectedMonth = (month: string) => {
-    setSelectedMonth(month);
+    filters.setSelectedMonth(month);
     expenseBreakdown.resetTransactionCategorySelections();
     transactions.resetExcludedCategorySelections();
     transactions.setIsShowingExpenseReviewOnly(false);
@@ -133,8 +115,7 @@ const Dashboard = () => {
         areBalancesHidden={netWorth.areBalancesHidden}
         isManualRefreshLoading={isManualRefreshLoading}
         onSelectedMonthChange={changeSelectedMonth}
-        onReconnectComplete={loadDashboard}
-        onError={setError}
+        onError={reportError}
         onToggleBalanceVisibility={() =>
           netWorth.setAreBalancesHidden((areHidden) => !areHidden)
         }
@@ -176,10 +157,8 @@ const Dashboard = () => {
             segments={incomeAllocation.incomeAllocationSegments}
             isLoading={isIncomeAllocationLoading}
             onModeChange={incomeAllocation.setIncomeAllocationMode}
-            onRangeChange={incomeAllocation.changeIncomeAllocationRange}
-            onCustomRangeChange={
-              incomeAllocation.changeIncomeAllocationCustomRange
-            }
+            onRangeChange={incomeAllocation.setIncomeAllocationRange}
+            onCustomRangeChange={incomeAllocation.setIncomeAllocationCustomRange}
           />
         </div>
       </div>
@@ -256,27 +235,25 @@ const Dashboard = () => {
       {isCategoryRulesModalOpen && (
         <CategoryRulesModal
           onClose={() => setIsCategoryRulesModalOpen(false)}
-          onError={setError}
+          onError={reportError}
         />
       )}
       {isBudgetTargetsModalOpen && (
         <BudgetTargetsModal
           onClose={() => setIsBudgetTargetsModalOpen(false)}
-          onChanged={() => loadDashboard({ preserveScroll: true })}
-          onError={setError}
+          onError={reportError}
         />
       )}
       {isRealEstateModalOpen && (
         <RealEstateModal
           onClose={() => setIsRealEstateModalOpen(false)}
-          onChanged={() => loadDashboard({ preserveScroll: true })}
-          onError={setError}
+          onError={reportError}
         />
       )}
       {isPayslipUploadModalOpen && (
         <PayslipUploadModal
           onClose={() => setIsPayslipUploadModalOpen(false)}
-          onError={setError}
+          onError={reportError}
         />
       )}
     </main>

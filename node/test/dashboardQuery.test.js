@@ -9,10 +9,12 @@ const assert = require('node:assert/strict');
 
 const {
   parseDashboardQuery,
+  parseIncomeAllocationQuery,
   parseTransactionQuery,
 } = require('../src/routes/dashboard.params');
 
 const dash = (query) => parseDashboardQuery({ query });
+const income = (query) => parseIncomeAllocationQuery({ query });
 const txn = (query) => parseTransactionQuery({ query });
 
 const expectStatus = (fn, status, messageMatch) => {
@@ -106,6 +108,21 @@ test('parseTransactionQuery: valid, no income-allocation keys in output', () => 
   assert.equal(result.month, '2026-03');
   assert.equal(result.transactionRange, '1');
   assert.ok(!('incomeAllocationRange' in result));
+});
+
+test('parseIncomeAllocationQuery: rejects transaction params', () => {
+  expectStatus(
+    () => income({ month: '2026-03', transaction_range: '12' }),
+    400,
+    /transaction_range/,
+  );
+});
+
+test('parseIncomeAllocationQuery: valid, no transaction keys in output', () => {
+  const result = income({ month: '2026-03', income_allocation_range: '12' });
+  assert.equal(result.month, '2026-03');
+  assert.equal(result.incomeAllocationRange, '12');
+  assert.ok(!('transactionRange' in result));
 });
 
 test('empty query is valid (all fields optional)', () => {

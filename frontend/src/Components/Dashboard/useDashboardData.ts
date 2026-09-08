@@ -1,66 +1,67 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   fetchDashboard,
+  fetchDashboardIncomeAllocation,
+  fetchDashboardTransactions,
   refreshAllPlaidData,
 } from "./dashboardApi";
 import {
+  dashboardPayloadKeys,
+  type IncomeAllocationSliceParams,
+  type TransactionSliceParams,
+} from "./dashboardQueryKeys";
+import {
   appendCustomDateRangeParams,
-  getMonthDateRange,
   isValidDateRange,
 } from "./shared/dashboardStateUtils";
-import { getDefaultDashboardMonth } from "./shared/formatters";
-import type {
-  DashboardData,
-  DateRange,
-  IncomeAllocationRange,
-  TransactionRange,
-} from "./shared/types";
+import { getErrorMessage } from "./shared/useReportedQueryError";
+import type { DashboardFilters } from "./useDashboardFilters";
+import type { DateRange, TransactionRange } from "./shared/types";
 
-type LoadDashboardOptions = {
-  preserveScroll?: boolean;
-  month?: string;
-};
+type UseDashboardDataOptions = Pick<
+  DashboardFilters,
+  | "selectedMonth"
+  | "transactionRange"
+  | "transactionCustomRange"
+  | "incomeAllocationRange"
+  | "incomeAllocationCustomRange"
+  | "setTransactionRange"
+  | "setTransactionCustomRange"
+>;
 
-type UseDashboardDataOptions = {
-  selectedMonth: string;
-  incomeAllocationRange: IncomeAllocationRange;
-  incomeAllocationCustomRange: DateRange;
-};
+const buildBaseSearchParams = (month: string) => new URLSearchParams({ month });
 
-const buildDashboardSearchParams = ({
+const buildTransactionSearchParams = ({
   month,
-  incomeAllocationRange,
-  incomeAllocationCustomRange,
-  transactionRange,
-  transactionCustomRange,
-}: {
-  month: string;
-  incomeAllocationRange: IncomeAllocationRange;
-  incomeAllocationCustomRange: DateRange;
-  transactionRange: TransactionRange;
-  transactionCustomRange: DateRange;
-}) => {
+  range,
+  customRange,
+}: TransactionSliceParams) => {
   const searchParams = new URLSearchParams({
     month,
-    income_allocation_range: String(incomeAllocationRange),
-    transaction_range: String(transactionRange),
+    transaction_range: String(range),
   });
 
-  if (incomeAllocationRange === "custom") {
-    appendCustomDateRangeParams(
-      searchParams,
-      "income_allocation",
-      incomeAllocationCustomRange,
-    );
+  if (range === "custom" && customRange) {
+    appendCustomDateRangeParams(searchParams, "transaction", customRange);
   }
 
-  if (transactionRange === "custom") {
-    appendCustomDateRangeParams(
-      searchParams,
-      "transaction",
-      transactionCustomRange,
-    );
+  return searchParams;
+};
+
+const buildIncomeAllocationSearchParams = ({
+  month,
+  range,
+  customRange,
+}: IncomeAllocationSliceParams) => {
+  const searchParams = new URLSearchParams({
+    month,
+    income_allocation_range: String(range),
+  });
+
+  if (range === "custom" && customRange) {
+    appendCustomDateRangeParams(searchParams, "income_allocation", customRange);
   }
 
   return searchParams;
@@ -68,299 +69,199 @@ const buildDashboardSearchParams = ({
 
 export const useDashboardData = ({
   selectedMonth,
+  transactionRange,
+  transactionCustomRange,
   incomeAllocationRange,
   incomeAllocationCustomRange,
+  setTransactionRange,
+  setTransactionCustomRange,
 }: UseDashboardDataOptions) => {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [transactionRange, setTransactionRange] = useState<TransactionRange>(1);
-  const [transactionCustomRange, setTransactionCustomRange] =
-    useState<DateRange>(() => getMonthDateRange(getDefaultDashboardMonth(), 1));
-  const [isLoading, setIsLoading] = useState(true);
-  const [isTransactionRangeLoading, setIsTransactionRangeLoading] =
-    useState(false);
-  const [isIncomeAllocationLoading, setIsIncomeAllocationLoading] =
-    useState(false);
-  const [isManualRefreshLoading, setIsManualRefreshLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const incomeAllocationRangeRef = useRef(incomeAllocationRange);
-  const incomeAllocationCustomRangeRef = useRef(incomeAllocationCustomRange);
-  const transactionRangeRef = useRef(transactionRange);
-  const transactionCustomRangeRef = useRef(transactionCustomRange);
-  const dashboardRequestId = useRef(0);
-  const dashboardAbortController = useRef<AbortController | null>(null);
-  const transactionRangeRequestId = useRef(0);
-  const incomeAllocationRequestId = useRef(0);
+  // Errors surfaced imperatively — mutation failures, modal callbacks, range
+  // validation. Query load errors are derived below, not mirrored into state.
+  const [actionError, setActionError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const scrollPositionRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    incomeAllocationRangeRef.current = incomeAllocationRange;
-  }, [incomeAllocationRange]);
+  const reportError = useCallback((message: string) => {
+    setActionError(message);
+  }, []);
+  const clearError = useCallback(() => {
+    setActionError(null);
+  }, []);
 
-  useEffect(() => {
-    incomeAllocationCustomRangeRef.current = incomeAllocationCustomRange;
-  }, [incomeAllocationCustomRange]);
-
-  useEffect(() => {
-    transactionRangeRef.current = transactionRange;
-  }, [transactionRange]);
-
-  useEffect(() => {
-    transactionCustomRangeRef.current = transactionCustomRange;
-  }, [transactionCustomRange]);
-
-  const loadDashboard = useCallback(
-    async (options?: LoadDashboardOptions) => {
-      const scrollPosition = options?.preserveScroll ? window.scrollY : null;
-      const dashboardMonth = options?.month || selectedMonth;
-      const requestId = dashboardRequestId.current + 1;
-      const abortController = new AbortController();
-      dashboardRequestId.current = requestId;
-      dashboardAbortController.current?.abort();
-      dashboardAbortController.current = abortController;
-
-      if (!options?.preserveScroll) {
-        setIsLoading(true);
-      }
-      setError(null);
-
-      try {
-        const searchParams = buildDashboardSearchParams({
-          month: dashboardMonth,
-          incomeAllocationRange: incomeAllocationRangeRef.current,
-          incomeAllocationCustomRange: incomeAllocationCustomRangeRef.current,
-          transactionRange: transactionRangeRef.current,
-          transactionCustomRange: transactionCustomRangeRef.current,
-        });
-
-        const dashboardData = await fetchDashboard(
-          searchParams,
-          "Dashboard",
-          { signal: abortController.signal },
-        );
-
-        if (dashboardRequestId.current !== requestId) {
-          return;
-        }
-
-        setData(dashboardData);
-        if (scrollPosition !== null) {
-          requestAnimationFrame(() => {
-            window.scrollTo({
-              top: scrollPosition,
-              left: window.scrollX,
-              behavior: "auto",
-            });
-          });
-        }
-      } catch (requestError) {
-        if (
-          requestError instanceof DOMException &&
-          requestError.name === "AbortError"
-        ) {
-          return;
-        }
-
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "Unable to load dashboard",
-        );
-      } finally {
-        if (dashboardRequestId.current === requestId) {
-          dashboardAbortController.current = null;
-        }
-
-        if (!options?.preserveScroll && dashboardRequestId.current === requestId) {
-          setIsLoading(false);
-        }
-      }
-    },
-    [selectedMonth],
+  const transactionSliceParams = useMemo<TransactionSliceParams>(
+    () => ({
+      month: selectedMonth,
+      range: transactionRange,
+      customRange: transactionRange === "custom" ? transactionCustomRange : null,
+    }),
+    [selectedMonth, transactionCustomRange, transactionRange],
+  );
+  const incomeAllocationSliceParams = useMemo<IncomeAllocationSliceParams>(
+    () => ({
+      month: selectedMonth,
+      range: incomeAllocationRange,
+      customRange:
+        incomeAllocationRange === "custom" ? incomeAllocationCustomRange : null,
+    }),
+    [incomeAllocationCustomRange, incomeAllocationRange, selectedMonth],
   );
 
+  const isTransactionQueryEnabled =
+    transactionRange !== "custom" || isValidDateRange(transactionCustomRange);
+  const isIncomeAllocationQueryEnabled =
+    incomeAllocationRange !== "custom" ||
+    isValidDateRange(incomeAllocationCustomRange);
+
+  const baseQuery = useQuery({
+    queryKey: dashboardPayloadKeys.base(selectedMonth),
+    queryFn: ({ signal }) =>
+      fetchDashboard(buildBaseSearchParams(selectedMonth), "Dashboard", {
+        signal,
+      }),
+    placeholderData: (previousData) => previousData,
+  });
+  const transactionSliceQuery = useQuery({
+    queryKey: dashboardPayloadKeys.transactionSlice(transactionSliceParams),
+    queryFn: ({ signal }) =>
+      fetchDashboardTransactions(
+        buildTransactionSearchParams(transactionSliceParams),
+        { signal },
+      ),
+    enabled: isTransactionQueryEnabled,
+    placeholderData: (previousData) => previousData,
+  });
+  const incomeAllocationSliceQuery = useQuery({
+    queryKey: dashboardPayloadKeys.incomeAllocationSlice(
+      incomeAllocationSliceParams,
+    ),
+    queryFn: ({ signal }) =>
+      fetchDashboardIncomeAllocation(
+        buildIncomeAllocationSearchParams(incomeAllocationSliceParams),
+        { signal },
+      ),
+    enabled: isIncomeAllocationQueryEnabled,
+    placeholderData: (previousData) => previousData,
+  });
+
+  const data = useMemo(() => {
+    if (!baseQuery.data) {
+      return null;
+    }
+
+    return {
+      ...baseQuery.data,
+      ...(transactionSliceQuery.data || {}),
+      income_allocation:
+        incomeAllocationSliceQuery.data?.income_allocation ||
+        baseQuery.data.income_allocation,
+    };
+  }, [
+    baseQuery.data,
+    incomeAllocationSliceQuery.data,
+    transactionSliceQuery.data,
+  ]);
+
+  const queryError =
+    baseQuery.error ??
+    transactionSliceQuery.error ??
+    incomeAllocationSliceQuery.error;
+  const error =
+    actionError ??
+    (queryError ? getErrorMessage(queryError, "Unable to load dashboard") : null);
+
+  const isPayloadFresh =
+    baseQuery.isSuccess &&
+    transactionSliceQuery.isSuccess &&
+    incomeAllocationSliceQuery.isSuccess &&
+    !baseQuery.isPlaceholderData &&
+    !transactionSliceQuery.isPlaceholderData &&
+    !incomeAllocationSliceQuery.isPlaceholderData;
+
+  // Drop a stale imperative error once every slice has refetched cleanly — e.g.
+  // after a mutation invalidates the payload and all three queries succeed.
   useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+    if (isPayloadFresh && !queryError) {
+      setActionError(null);
+    }
+  }, [isPayloadFresh, queryError]);
 
-  useEffect(
-    () => () => {
-      dashboardAbortController.current?.abort();
-    },
-    [],
-  );
+  // Restore the pre-refresh scroll position once the new payload has rendered.
+  useEffect(() => {
+    const scrollPosition = scrollPositionRef.current;
 
-  const manuallyRefreshData = useCallback(async () => {
-    if (isManualRefreshLoading) {
+    if (!data || scrollPosition === null) {
       return;
     }
 
-    setIsManualRefreshLoading(true);
-    setError(null);
+    scrollPositionRef.current = null;
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: scrollPosition,
+        left: window.scrollX,
+        behavior: "auto",
+      });
+    });
+  }, [data]);
 
-    try {
-      await refreshAllPlaidData();
-      await loadDashboard({ preserveScroll: true });
-    } catch (requestError) {
-      setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to refresh data",
-      );
-    } finally {
-      setIsManualRefreshLoading(false);
+  const manualRefreshMutation = useMutation({
+    mutationFn: refreshAllPlaidData,
+    onMutate: () => {
+      scrollPositionRef.current = window.scrollY;
+      setActionError(null);
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: dashboardPayloadKeys.root }),
+    onError: (requestError) => {
+      setActionError(getErrorMessage(requestError, "Unable to refresh data"));
+    },
+  });
+  const { mutate: runManualRefresh, isPending: isManualRefreshLoading } =
+    manualRefreshMutation;
+
+  const manuallyRefreshData = useCallback(() => {
+    if (!isManualRefreshLoading) {
+      runManualRefresh();
     }
-  }, [isManualRefreshLoading, loadDashboard]);
-
-  const loadTransactionRange = useCallback(
-    async (range: TransactionRange, customRange: DateRange) => {
-      if (!data) {
-        return;
-      }
-
-      const requestId = transactionRangeRequestId.current + 1;
-      transactionRangeRequestId.current = requestId;
-      setIsTransactionRangeLoading(true);
-      setError(null);
-
-      try {
-        const searchParams = buildDashboardSearchParams({
-          month: selectedMonth,
-          incomeAllocationRange: incomeAllocationRangeRef.current,
-          incomeAllocationCustomRange: incomeAllocationCustomRangeRef.current,
-          transactionRange: range,
-          transactionCustomRange: customRange,
-        });
-
-        const transactionData = await fetchDashboard(
-          searchParams,
-          "Transaction range",
-        );
-        if (transactionRangeRequestId.current !== requestId) {
-          return;
-        }
-
-        setData((currentData) =>
-          currentData
-            ? {
-                ...currentData,
-                transaction_range: transactionData.transaction_range,
-                transaction_categories: transactionData.transaction_categories,
-                latest_transactions: transactionData.latest_transactions,
-                payslips: transactionData.payslips,
-              }
-            : currentData,
-        );
-      } catch (requestError) {
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "Unable to load transaction range",
-        );
-      } finally {
-        if (transactionRangeRequestId.current === requestId) {
-          setIsTransactionRangeLoading(false);
-        }
-      }
-    },
-    [
-      data,
-      selectedMonth,
-    ],
-  );
-
-  const loadIncomeAllocation = useCallback(
-    async ({
-      range,
-      customRange,
-    }: {
-      range: IncomeAllocationRange;
-      customRange: DateRange;
-    }) => {
-      if (!data) {
-        return;
-      }
-
-      const requestId = incomeAllocationRequestId.current + 1;
-      incomeAllocationRequestId.current = requestId;
-      setIsIncomeAllocationLoading(true);
-      setError(null);
-
-      try {
-        const searchParams = buildDashboardSearchParams({
-          month: selectedMonth,
-          incomeAllocationRange: range,
-          incomeAllocationCustomRange: customRange,
-          transactionRange: transactionRangeRef.current,
-          transactionCustomRange: transactionCustomRangeRef.current,
-        });
-
-        const incomeAllocationData = await fetchDashboard(
-          searchParams,
-          "Income allocation",
-        );
-        if (incomeAllocationRequestId.current !== requestId) {
-          return;
-        }
-
-        setData((currentData) =>
-          currentData
-            ? {
-                ...currentData,
-                income_allocation: incomeAllocationData.income_allocation,
-              }
-            : currentData,
-        );
-      } catch (requestError) {
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "Unable to load income allocation",
-        );
-      } finally {
-        if (incomeAllocationRequestId.current === requestId) {
-          setIsIncomeAllocationLoading(false);
-        }
-      }
-    },
-    [data, selectedMonth],
-  );
+  }, [isManualRefreshLoading, runManualRefresh]);
 
   const changeTransactionRange = useCallback(
     (range: TransactionRange) => {
-      transactionRangeRef.current = range;
+      setActionError(null);
       setTransactionRange(range);
-      void loadTransactionRange(range, transactionCustomRangeRef.current);
     },
-    [loadTransactionRange],
+    [setTransactionRange],
   );
-
   const changeTransactionCustomRange = useCallback(
     (range: DateRange) => {
-      transactionCustomRangeRef.current = range;
       setTransactionCustomRange(range);
 
-      if (transactionRangeRef.current !== "custom" || !isValidDateRange(range)) {
-        return;
+      if (transactionRange === "custom" && isValidDateRange(range)) {
+        setActionError(null);
       }
-
-      void loadTransactionRange("custom", range);
     },
-    [loadTransactionRange],
+    [setTransactionCustomRange, transactionRange],
   );
 
   return {
     data,
-    isLoading,
+    isLoading:
+      baseQuery.isLoading ||
+      transactionSliceQuery.isLoading ||
+      incomeAllocationSliceQuery.isLoading,
     error,
-    setError,
-    loadDashboard,
-    loadIncomeAllocation,
+    reportError,
+    clearError,
     changeTransactionCustomRange,
     changeTransactionRange,
     manuallyRefreshData,
-    transactionCustomRange,
-    transactionRange,
-    isTransactionRangeLoading,
-    isIncomeAllocationLoading,
+    // A slice spinner shows only while that slice refetches on its own. When the
+    // month changes or a manual refresh runs, the base query refetches too and
+    // the full-screen loading state covers it instead.
+    isTransactionRangeLoading:
+      transactionSliceQuery.isFetching && !baseQuery.isFetching,
+    isIncomeAllocationLoading:
+      incomeAllocationSliceQuery.isFetching && !baseQuery.isFetching,
     isManualRefreshLoading,
   };
 };

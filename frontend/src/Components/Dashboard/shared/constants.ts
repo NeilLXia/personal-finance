@@ -8,6 +8,10 @@ import type {
   WealthChangeCategoryKey,
 } from "./types";
 
+// localStorage key for the cached Plaid Link token. Cleared on logout and after
+// a successful token exchange.
+export const LINK_TOKEN_STORAGE_KEY = "link_token";
+
 // Chart colours are CSS custom properties (see src/styles/tokens.css) so the
 // SVG fills and legend swatches follow the light/dark theme. Values here are
 // `var(--chart-*)` strings; they land in `style={{ fill }}` / `backgroundColor`.

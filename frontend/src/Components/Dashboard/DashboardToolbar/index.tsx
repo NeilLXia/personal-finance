@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type {
   PlaidLinkError,
   PlaidLinkOnExitMetadata,
@@ -7,19 +8,14 @@ import type {
 import { usePlaidLink } from "react-plaid-link";
 
 import { useAppContext } from "../../../Context";
-import {
-  postJson,
-  postUrlEncoded,
-} from "../../../shared/apiClient";
+import { createLinkToken, exchangePublicToken } from "../dashboardApi";
+import { dashboardPayloadKeys } from "../dashboardQueryKeys";
+import { LINK_TOKEN_STORAGE_KEY } from "../shared/constants";
 import styles from "./index.module.css";
 import type { InstitutionStatus } from "../shared/types";
 import ConnectionsModal from "../Modals/ConnectionsModal";
 import ThemeToggle from "../../ThemeToggle";
 import DashboardActionsMenu from "./DashboardActionsMenu";
-
-type LinkTokenResponse = {
-  link_token?: string;
-};
 
 type DashboardToolbarProps = {
   institutions: InstitutionStatus[];
@@ -27,7 +23,6 @@ type DashboardToolbarProps = {
   areBalancesHidden: boolean;
   isManualRefreshLoading: boolean;
   onSelectedMonthChange: (month: string) => void;
-  onReconnectComplete: () => void | Promise<void>;
   onError: (message: string) => void;
   onToggleBalanceVisibility: () => void;
   onManualRefresh: () => void;
@@ -44,7 +39,6 @@ const DashboardToolbar = ({
   areBalancesHidden,
   isManualRefreshLoading,
   onSelectedMonthChange,
-  onReconnectComplete,
   onError,
   onToggleBalanceVisibility,
   onManualRefresh,
@@ -65,6 +59,12 @@ const DashboardToolbar = ({
   const [isConnectionsModalOpen, setIsConnectionsModalOpen] = useState(false);
   const hasOpenedOauthRef = useRef(false);
   const activeLinkToken = reconnectLinkToken || linkToken;
+  const queryClient = useQueryClient();
+  const invalidateDashboard = useCallback(
+    () =>
+      queryClient.invalidateQueries({ queryKey: dashboardPayloadKeys.root }),
+    [queryClient],
+  );
 
   const resetPlaidLink = useCallback(() => {
     setActiveLinkMode(null);
@@ -93,7 +93,7 @@ const DashboardToolbar = ({
     async (publicToken: string | null) => {
       if (activeLinkMode === "reconnect") {
         resetPlaidLink();
-        await onReconnectComplete();
+        await invalidateDashboard();
         return;
       }
 
@@ -104,25 +104,15 @@ const DashboardToolbar = ({
       }
 
       try {
-        await postUrlEncoded(
-          "/api/set_access_token",
-          new URLSearchParams({ public_token: publicToken }),
-          {},
-          "Plaid token exchange failed",
-        );
-        localStorage.removeItem("link_token");
+        await exchangePublicToken(publicToken);
+        localStorage.removeItem(LINK_TOKEN_STORAGE_KEY);
         window.history.replaceState("", "", "/");
-        const data = await postJson<LinkTokenResponse>(
-          "/api/create_link_token",
-          undefined,
-          {},
-          "Link token request failed",
-        );
+        const data = await createLinkToken();
         dispatch({
           type: "SET_LINK_TOKEN",
           linkToken: typeof data.link_token === "string" ? data.link_token : null,
         });
-        await onReconnectComplete();
+        await invalidateDashboard();
         resetPlaidLink();
       } catch (requestError) {
         resetPlaidLink();
@@ -133,13 +123,7 @@ const DashboardToolbar = ({
         );
       }
     },
-    [
-      activeLinkMode,
-      dispatch,
-      onError,
-      onReconnectComplete,
-      resetPlaidLink,
-    ],
+    [activeLinkMode, dispatch, invalidateDashboard, onError, resetPlaidLink],
   );
 
   const config: PlaidLinkOptionsWithLinkToken = {
@@ -184,14 +168,7 @@ const DashboardToolbar = ({
     setShouldOpenPlaidLink(false);
 
     try {
-      const data = await postJson<LinkTokenResponse>(
-        "/api/create_link_token",
-        {
-          plaid_item_id: plaidItemId,
-        },
-        {},
-        "Reconnect failed",
-      );
+      const data = await createLinkToken(plaidItemId);
       if (typeof data.link_token !== "string") {
         throw new Error("Reconnect did not return a link token.");
       }
@@ -249,7 +226,6 @@ const DashboardToolbar = ({
           canConnectAccount={Boolean(activeLinkToken && ready)}
           onClose={() => setIsConnectionsModalOpen(false)}
           onConnectAccount={connectAccount}
-          onReconnectComplete={onReconnectComplete}
           onError={onError}
           onReconnect={(plaidItemId) => void reconnectAccount(plaidItemId)}
         />

@@ -8,6 +8,17 @@ export class ApiError extends Error {
   }
 }
 
+// react-query `retry` predicate. Client errors (401 auth-expired, 403, 404,
+// validation) can't succeed on a retry and just delay the auth-expired handoff,
+// so give up immediately; retry everything else (network blips, 5xx) once.
+export const shouldRetryRequest = (failureCount: number, error: unknown) => {
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
+    return false;
+  }
+
+  return failureCount < 1;
+};
+
 export const authExpiredEvent = "expense-tracker:auth-expired";
 
 export const addAuthExpiredListener = (handler: () => void) => {

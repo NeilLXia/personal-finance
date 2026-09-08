@@ -1,18 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import {
-  getBudgetTargetPercent,
-  getMonthDateRange,
-  isValidDateRange,
-} from "../shared/dashboardStateUtils";
-import { getDefaultDashboardMonth } from "../shared/formatters";
+import { getBudgetTargetPercent } from "../shared/dashboardStateUtils";
 import { summarizeTransactionsByDisplayCategory } from "../shared/dashboardDataUtils";
-import type {
-  DashboardData,
-  DateRange,
-  IncomeAllocationMode,
-  IncomeAllocationRange,
-} from "../shared/types";
+import type { DashboardFilters } from "../useDashboardFilters";
+import type { DashboardData } from "../shared/types";
 import {
   buildIncomeAllocationSegments,
   getIncomeAllocationIncomeTotal,
@@ -20,37 +11,16 @@ import {
   resolveSegmentTargetPercent,
 } from "./incomeAllocationUtils";
 
-type IncomeAllocationControls = {
-  incomeAllocationRange: IncomeAllocationRange;
-  incomeAllocationMode: IncomeAllocationMode;
-  incomeAllocationCustomRange: DateRange;
-  setIncomeAllocationRange: (range: IncomeAllocationRange) => void;
-  setIncomeAllocationMode: (mode: IncomeAllocationMode) => void;
-  setIncomeAllocationCustomRange: (range: DateRange) => void;
-};
-
-/**
- * Owns the income-allocation controls (range / mode / custom range). These are
- * lifted to the dashboard container because `useDashboardData` needs the range
- * as a request parameter for the initial payload, but the state conceptually
- * belongs to this module.
- */
-export const useIncomeAllocationControls = (): IncomeAllocationControls => {
-  const [incomeAllocationRange, setIncomeAllocationRange] =
-    useState<IncomeAllocationRange>(12);
-  const [incomeAllocationMode, setIncomeAllocationMode] =
-    useState<IncomeAllocationMode>("net");
-  const [incomeAllocationCustomRange, setIncomeAllocationCustomRange] =
-    useState<DateRange>(() => getMonthDateRange(getDefaultDashboardMonth(), 12));
-
-  return {
-    incomeAllocationRange,
-    incomeAllocationMode,
-    incomeAllocationCustomRange,
-    setIncomeAllocationRange,
-    setIncomeAllocationMode,
-    setIncomeAllocationCustomRange,
-  };
+type UseIncomeAllocationOptions = Pick<
+  DashboardFilters,
+  | "incomeAllocationRange"
+  | "incomeAllocationMode"
+  | "incomeAllocationCustomRange"
+  | "setIncomeAllocationRange"
+  | "setIncomeAllocationMode"
+  | "setIncomeAllocationCustomRange"
+> & {
+  data: DashboardData | null;
 };
 
 export const useIncomeAllocation = ({
@@ -58,17 +28,10 @@ export const useIncomeAllocation = ({
   incomeAllocationCustomRange,
   incomeAllocationMode,
   incomeAllocationRange,
-  loadIncomeAllocation,
   setIncomeAllocationCustomRange,
   setIncomeAllocationMode,
   setIncomeAllocationRange,
-}: IncomeAllocationControls & {
-  data: DashboardData | null;
-  loadIncomeAllocation: (options: {
-    range: IncomeAllocationRange;
-    customRange: DateRange;
-  }) => void;
-}) => {
+}: UseIncomeAllocationOptions) => {
   // Only the budget targets the user has actually set, keyed by lowercased
   // category. A segment gets a target marker only when it finds a match here.
   const targetsByCategory = useMemo(() => {
@@ -136,29 +99,6 @@ export const useIncomeAllocation = ({
     [data, incomeAllocationMode],
   );
 
-  const changeIncomeAllocationRange = (range: IncomeAllocationRange) => {
-    setIncomeAllocationRange(range);
-    loadIncomeAllocation({
-      range,
-      customRange: incomeAllocationCustomRange,
-    });
-  };
-
-  const changeIncomeAllocationCustomRange = (range: DateRange) => {
-    setIncomeAllocationCustomRange(range);
-
-    if (incomeAllocationRange === "custom") {
-      if (!isValidDateRange(range)) {
-        return;
-      }
-
-      loadIncomeAllocation({
-        range: "custom",
-        customRange: range,
-      });
-    }
-  };
-
   return {
     income,
     incomeAllocationCustomRange,
@@ -166,7 +106,7 @@ export const useIncomeAllocation = ({
     incomeAllocationRange,
     incomeAllocationSegments,
     setIncomeAllocationMode,
-    changeIncomeAllocationCustomRange,
-    changeIncomeAllocationRange,
+    setIncomeAllocationCustomRange,
+    setIncomeAllocationRange,
   };
 };

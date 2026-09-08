@@ -9,7 +9,6 @@ type ConnectionsModalProps = {
   canConnectAccount: boolean;
   onClose: () => void;
   onConnectAccount: () => void;
-  onReconnectComplete: () => void | Promise<void>;
   onError: (message: string) => void;
   onReconnect: (plaidItemId: string) => void;
 };
@@ -19,7 +18,6 @@ const ConnectionsModal = ({
   canConnectAccount,
   onClose,
   onConnectAccount,
-  onReconnectComplete,
   onError,
   onReconnect,
 }: ConnectionsModalProps) => {
@@ -60,7 +58,6 @@ const ConnectionsModal = ({
               <ConnectionTile
                 key={`${institution.plaid_environment}-${institution.institution_id || institution.institution_name}`}
                 institution={institution}
-                onReconnectComplete={onReconnectComplete}
                 onError={onError}
                 onReconnect={onReconnect}
               />
