@@ -22,7 +22,7 @@ const ThemeToggle = () => {
       <span className={styles.icon} aria-hidden="true">
         {icon}
       </span>
-      {text}
+      <span className={styles.label}>{text}</span>
     </button>
   );
 };
