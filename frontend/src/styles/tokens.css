@@ -38,13 +38,13 @@
   /* ---- Type scale ----------------------------------------------------------
    * SVG chart labels use sub-1rem sizes in user units and are intentionally
    * not tokenised. */
-  --text-2xs: 1rem;
-  --text-xs: 1.1rem;
-  --text-sm: 1.2rem;
-  --text-md: 1.3rem;
-  --text-lg: 1.4rem;
-  --text-xl: 1.6rem;
-  --text-2xl: 1.7rem;
+  --text-2xs: 0.95rem;
+  --text-xs: 1.05rem;
+  --text-sm: 1.15rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.35rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.65rem;
   --text-3xl: 1.9rem;
   --text-4xl: 2.2rem;
   --text-5xl: 3.2rem;
