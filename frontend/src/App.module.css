@@ -17,8 +17,11 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  /* No `overflow` here on purpose. `.container` is always <= viewport width
+     (min(80vw, ...) above 720px, min-width:0 below), so this wrapper never needs
+     to scroll or clip — and any non-`visible` overflow value promotes overflow-y
+     to `auto`, which makes Safari pad the element with phantom scroll height
+     below the content. */
 }
 
 .container {
@@ -43,11 +46,6 @@
 }
 
 @media (max-width: 720px) {
-  .appViewport {
-    /* Fluid shell: content wraps to fit, no sideways scroll. */
-    overflow-x: hidden;
-  }
-
   .container {
     flex-basis: auto;
     min-width: 0;

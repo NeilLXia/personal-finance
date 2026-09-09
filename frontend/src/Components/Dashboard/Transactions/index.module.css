@@ -228,12 +228,14 @@
 }
 
 .transactionList {
+  /* Size to the rows, but cap and scroll once the list gets long, so a short
+     or filtered list doesn't leave a tall empty gap below it. */
   min-height: 18rem;
-  height: min(58rem, 62vh);
+  max-height: min(58rem, 62vh);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--space-sm) var(--space-xs) var(--space-sm) 0;
