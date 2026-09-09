@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import Dashboard from "./Components/Dashboard";
 import Login from "./Components/Login";
@@ -11,6 +11,13 @@ import {
 } from "./shared/apiClient";
 
 import styles from "./App.module.css";
+
+const REM_SIZE_PX = 10;
+const APP_CONTENT_MIN_WIDTH_REM = 56;
+const APP_GUTTER_REM = 1.6;
+const APP_MIN_WIDTH_PX =
+  (APP_CONTENT_MIN_WIDTH_REM + APP_GUTTER_REM * 2) * REM_SIZE_PX;
+const APP_MIN_SCALE = 0.8;
 
 type LinkTokenResponse = {
   error?: { error_message?: string } | null;
@@ -47,8 +54,34 @@ const removeStoredLinkToken = () => {
   }
 };
 
+const getAppScale = () => {
+  if (typeof window === "undefined") {
+    return 1;
+  }
+
+  return Math.max(
+    APP_MIN_SCALE,
+    Math.min(1, window.innerWidth / APP_MIN_WIDTH_PX),
+  );
+};
+
+const useResponsiveAppScale = () => {
+  const [appScale, setAppScale] = useState(getAppScale);
+
+  useEffect(() => {
+    const updateAppScale = () => setAppScale(getAppScale());
+
+    window.addEventListener("resize", updateAppScale);
+
+    return () => window.removeEventListener("resize", updateAppScale);
+  }, []);
+
+  return appScale;
+};
+
 const App = () => {
   const { authUser, isSessionLoading, dispatch } = useAppContext();
+  const appScale = useResponsiveAppScale();
 
   const generateToken = useCallback(
     async () => {
@@ -132,8 +165,15 @@ const App = () => {
       ) : !authUser ? (
         <Login onAuthenticated={loadAuthenticatedApp} />
       ) : (
-        <div className={styles.container}>
-          <Dashboard />
+        <div className={styles.appViewport}>
+          <div
+            className={styles.container}
+            style={
+              { "--app-scale": String(appScale) } as React.CSSProperties
+            }
+          >
+            <Dashboard />
+          </div>
         </div>
       )}
     </div>
