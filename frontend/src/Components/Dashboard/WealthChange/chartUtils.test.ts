@@ -80,4 +80,25 @@ describe("buildWealthChangeChart", () => {
       expect(bar.height).toBeGreaterThanOrEqual(0);
     }
   });
+
+  it("labels negative asset appreciation as asset depreciation", () => {
+    const chart = buildWealthChangeChart(
+      [
+        month({
+          month: "2026-02",
+          asset_appreciation: -300,
+          total: -300,
+        }),
+      ],
+      defaultWealthChangeCategories,
+    );
+
+    expect(chart.bars).toEqual([
+      expect.objectContaining({
+        category: "asset_appreciation",
+        label: "Asset depreciation",
+        value: -300,
+      }),
+    ]);
+  });
 });

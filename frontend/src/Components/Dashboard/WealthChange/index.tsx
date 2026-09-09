@@ -2,6 +2,7 @@ import {
   chartBounds,
   chartViewBoxValue,
   defaultWealthChangeCategories,
+  negativeWealthChangeColor,
   wealthChangeColors,
 } from "../shared/constants";
 import { formatCompactCurrency, formatCurrency } from "../shared/formatters";
@@ -124,12 +125,21 @@ const WealthChangeModule = ({
               ).map((category) => (
                 <span className={shared.chartLegendItem} key={category.key}>
                   <span
-                    className={shared.chartLegendSwatch}
+                    className={
+                      category.key === "asset_appreciation"
+                        ? styles.assetMovementLegendSwatch
+                        : shared.chartLegendSwatch
+                    }
                     style={{
-                      backgroundColor: wealthChangeColors[category.key],
+                      background:
+                        category.key === "asset_appreciation"
+                          ? `linear-gradient(90deg, ${wealthChangeColors.asset_appreciation} 0 50%, ${negativeWealthChangeColor} 50% 100%)`
+                          : wealthChangeColors[category.key],
                     }}
                   />
-                  {category.label}
+                  {category.key === "asset_appreciation"
+                    ? "Asset appreciation/depreciation"
+                    : category.label}
                 </span>
               ))}
             </div>
