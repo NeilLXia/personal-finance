@@ -7,5 +7,8 @@
     "directory": "build",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    "BACKEND_ORIGIN": "http://ec2-18-188-72-11.us-east-2.compute.amazonaws.com:8001"
   }
 }
