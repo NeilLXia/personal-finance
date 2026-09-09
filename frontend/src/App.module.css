@@ -19,10 +19,12 @@
   display: flex;
   justify-content: center;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .container {
   display: flex;
+  flex: 0 1 var(--app-max-width);
   flex-direction: column;
   align-items: center;
   min-width: var(--app-min-width);
@@ -40,4 +42,14 @@
   color: var(--color-text-muted);
   font-size: var(--text-xl);
   font-weight: 700;
+}
+
+@media (max-width: 592px) {
+  .appViewport {
+    justify-content: flex-start;
+  }
+
+  .container {
+    flex-basis: var(--app-min-width);
+  }
 }
