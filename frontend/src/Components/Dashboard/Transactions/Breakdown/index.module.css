@@ -193,15 +193,16 @@
 
 @media (max-width: 720px) {
   .chartSection {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+    height: auto;
+    align-items: start;
+  }
 
-  .chartSection {
-      height: auto;
-      align-items: start;
-    }
+  .pieChart {
+    justify-self: center;
+  }
 
   .legendRows {
-      max-height: 30rem;
-    }
+    max-height: 30rem;
+  }
 }
