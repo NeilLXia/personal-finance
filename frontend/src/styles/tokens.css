@@ -30,6 +30,7 @@
   --summary-card-padding: var(--space-xl);
 
   /* ---- Radii ------------------------------------------------------------- */
+  --radius-xs: 0.4rem;
   --radius-sm: 0.6rem;
   --radius-md: 0.8rem;
   --radius-pill: 999px;
