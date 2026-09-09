@@ -135,12 +135,13 @@ Set this Cloudflare Pages variable for both production and preview environments
 as needed:
 
 ```bash
-BACKEND_ORIGIN=https://ec2-18-188-72-11.us-east-2.compute.amazonaws.com
+BACKEND_ORIGIN=http://ec2-18-188-72-11.us-east-2.compute.amazonaws.com:8001
 ```
 
-`BACKEND_ORIGIN` must include `http://` or `https://` and should not include
-`/api`. In production, prefer a real backend domain with a valid TLS certificate
-(for example `https://api.example.com`) over the default EC2 hostname.
+`BACKEND_ORIGIN` must include `http://` or `https://`, include the port when
+the backend is exposed directly on `APP_PORT`, and should not include `/api`.
+In production, prefer a real backend domain with a valid TLS certificate (for
+example `https://api.example.com`) over the default EC2 hostname.
 
 On the backend EC2 instance, set `CORS_ORIGINS` to the exact Cloudflare frontend
 origins users visit, not to the backend origin:
