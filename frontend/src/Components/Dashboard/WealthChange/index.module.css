@@ -10,6 +10,9 @@
 
 .wealthChangeChartTitle {
   width: 100%;
+  min-height: var(--control-row-height);
+  display: flex;
+  align-items: center;
   margin: 0;
   color: var(--color-ink);
   font-size: var(--text-xl);

@@ -10,10 +10,11 @@
   border-radius: var(--radius-md);
   background: var(--color-surface);
   min-height: 16rem;
-  padding: var(--space-lg);
+  padding: var(--summary-card-padding);
 }
 
 .incomeAllocationHeader {
+  min-height: var(--control-row-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -54,6 +55,7 @@
   flex-direction: column;
   font-size: var(--text-xl);
   gap: var(--space-3xs);
+  line-height: 1.2;
 }
 
 .incomeAllocationTitle span {

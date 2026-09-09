@@ -26,6 +26,8 @@
   --space-4xl: 3.2rem;
   --space-5xl: 4rem;
   --space-6xl: 9rem;
+  --control-row-height: 2.8rem;
+  --summary-card-padding: var(--space-xl);
 
   /* ---- Radii ------------------------------------------------------------- */
   --radius-sm: 0.6rem;
