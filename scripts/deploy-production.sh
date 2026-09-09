@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-cd /opt/personal-finance/node
+sudo -iu personal-finance bash -lc '
+  cd /opt/personal-finance/node
+  npm ci --omit=dev
+'
 
-npm ci --omit=dev
-
-sudo systemctl restart personal-finance
-sudo systemctl is-active --quiet personal-finance
-
+/usr/bin/systemctl restart personal-finance
+/usr/bin/systemctl is-active --quiet personal-finance
