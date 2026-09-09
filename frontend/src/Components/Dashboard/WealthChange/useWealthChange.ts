@@ -9,23 +9,27 @@ export const useWealthChange = ({ data }: { data: DashboardData | null }) => {
     string | null
   >(null);
 
-  const wealthChangeChart = useMemo(() => {
-    const months = addAssetAppreciation({
-      months: data?.monthly_cash_flow.months || [],
-      netWorthHistory: data?.net_worth.history || [],
-    });
+  const wealthChangeCategories = useMemo(() => {
     const categoryKeys = new Set(
       (data?.monthly_cash_flow.categories || []).map((category) => category.key),
     );
-    const categories = [
+
+    return [
       ...(data?.monthly_cash_flow.categories || defaultWealthChangeCategories),
       ...defaultWealthChangeCategories.filter(
         (category) => !categoryKeys.has(category.key),
       ),
     ];
+  }, [data?.monthly_cash_flow.categories]);
 
-    return buildWealthChangeChart(months, categories);
-  }, [data]);
+  const wealthChangeChart = useMemo(() => {
+    const months = addAssetAppreciation({
+      months: data?.monthly_cash_flow.months || [],
+      netWorthHistory: data?.net_worth.history || [],
+    });
+
+    return buildWealthChangeChart(months, wealthChangeCategories);
+  }, [data, wealthChangeCategories]);
 
   useEffect(() => {
     setHoveredWealthChangeBarId(null);
@@ -33,6 +37,7 @@ export const useWealthChange = ({ data }: { data: DashboardData | null }) => {
 
   return {
     wealthChangeChart,
+    wealthChangeCategories,
     hoveredWealthChangeBarId,
     setHoveredWealthChangeBarId,
   };

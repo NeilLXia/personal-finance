@@ -143,7 +143,7 @@ const Dashboard = () => {
         <div className={styles.rightColumn}>
           <WealthChangeModule
             wealthChangeChart={wealthChange.wealthChangeChart}
-            categories={data.monthly_cash_flow.categories}
+            categories={wealthChange.wealthChangeCategories}
             hoveredBarId={wealthChange.hoveredWealthChangeBarId}
             onHoveredBarChange={wealthChange.setHoveredWealthChangeBarId}
           />

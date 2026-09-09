@@ -156,7 +156,10 @@ export const buildWealthChangeChart = (
         id: `${month.month}-${category.key}`,
         month: month.month,
         category: category.key,
-        label: category.label,
+        label:
+          category.key === "asset_appreciation" && value < 0
+            ? "Asset depreciation"
+            : category.label,
         x,
         y,
         width: barWidth,
