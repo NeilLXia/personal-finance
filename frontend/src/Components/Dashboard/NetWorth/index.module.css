@@ -129,29 +129,29 @@
 
 .netWorthTableHeader {
   display: grid;
-  width: max-content;
+  width: 100%;
   min-width: 100%;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   align-items: center;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md);
 }
 
 .netWorthCategoryRow {
   display: grid;
-  width: max-content;
+  width: 100%;
   min-width: 100%;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   align-items: center;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md);
 }
 
 .netWorthAccountRow {
   display: grid;
-  width: max-content;
+  width: 100%;
   min-width: 100%;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   align-items: center;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md);
 }
 
 .netWorthTableHeader {

@@ -8,6 +8,9 @@ import type {
 } from "../shared/types";
 import { buildNetWorthChart } from "./chartUtils";
 
+const NET_WORTH_NAME_COLUMN = "minmax(16rem, 1.4fr)";
+const NET_WORTH_BALANCE_COLUMN = "minmax(8.8rem, 1fr)";
+
 export const useNetWorth = ({
   data,
   selectedMonth,
@@ -42,10 +45,10 @@ export const useNetWorth = ({
     [data],
   );
   const tableColumns = {
-    gridTemplateColumns: `minmax(22rem, 28rem) repeat(${Math.max(
+    gridTemplateColumns: `${NET_WORTH_NAME_COLUMN} repeat(${Math.max(
       breakdownDates.length,
       1,
-    )}, minmax(12rem, 1fr))`,
+    )}, ${NET_WORTH_BALANCE_COLUMN})`,
   };
   const toggleCategory = (categoryKey: NetWorthCategoryKey) => {
     setOpenCategories((currentCategories) => ({
