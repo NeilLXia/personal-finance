@@ -30,8 +30,27 @@ type NetWorthChartProps = {
   onTrailingMonthsChange: (trailingMonths: NetWorthTrailingMonths) => void;
 };
 
-const tooltipWidth = 54;
+const tooltipWidth = 66;
 const tooltipPadding = 4;
+const tooltipLabelXOffset = 7;
+const tooltipHeaderBaselineOffset = 5;
+const tooltipRowStartOffset = 12;
+const tooltipRowHeight = 5.6;
+const tooltipValueXOffset = tooltipWidth - 4;
+
+const getTooltipCategoryLabel = (
+  category: NetWorthChartData["hoverPoints"][number]["categories"][number],
+) => {
+  if (category.key === "personal_equity") {
+    return "Personal";
+  }
+
+  if (category.key === "tax_advantaged") {
+    return "Tax-advantaged";
+  }
+
+  return category.label;
+};
 
 const NetWorthChart = ({
   areBalancesHidden,
@@ -63,7 +82,7 @@ const NetWorthChart = ({
     setHoveredPoint(nearestPoint);
   };
   const tooltipHeight = hoveredPoint
-    ? 10 + hoveredPoint.categories.length * 5
+    ? 12 + hoveredPoint.categories.length * tooltipRowHeight
     : 0;
   const tooltipX = hoveredPoint
     ? Math.min(
@@ -202,14 +221,14 @@ const NetWorthChart = ({
                 <text
                   className={styles.netWorthTooltipTitle}
                   x={tooltipX + 3}
-                  y={tooltipY + 5}
+                  y={tooltipY + tooltipHeaderBaselineOffset}
                 >
                   {formatShortDate(hoveredPoint.date)}
                 </text>
                 <text
                   className={styles.netWorthTooltipTotal}
-                  x={tooltipX + 51}
-                  y={tooltipY + 5}
+                  x={tooltipX + tooltipValueXOffset}
+                  y={tooltipY + tooltipHeaderBaselineOffset}
                 >
                   {formatBalanceValue(hoveredPoint.total)}
                 </text>
@@ -217,21 +236,34 @@ const NetWorthChart = ({
                   <Fragment key={category.key}>
                     <circle
                       cx={tooltipX + 4}
-                      cy={tooltipY + 11 + index * 5}
+                      cy={
+                        tooltipY +
+                        tooltipRowStartOffset -
+                        1 +
+                        index * tooltipRowHeight
+                      }
                       style={{ fill: category.color }}
                       r="0.9"
                     />
                     <text
                       className={styles.netWorthTooltipText}
-                      x={tooltipX + 7}
-                      y={tooltipY + 12 + index * 5}
+                      x={tooltipX + tooltipLabelXOffset}
+                      y={
+                        tooltipY +
+                        tooltipRowStartOffset +
+                        index * tooltipRowHeight
+                      }
                     >
-                      {category.label}
+                      {getTooltipCategoryLabel(category)}
                     </text>
                     <text
                       className={styles.netWorthTooltipValue}
-                      x={tooltipX + 51}
-                      y={tooltipY + 12 + index * 5}
+                      x={tooltipX + tooltipValueXOffset}
+                      y={
+                        tooltipY +
+                        tooltipRowStartOffset +
+                        index * tooltipRowHeight
+                      }
                     >
                       {formatBalanceValue(category.value)}
                     </text>
