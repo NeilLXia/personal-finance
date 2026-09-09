@@ -2,14 +2,35 @@
   box-sizing: border-box;
 }
 
+.App {
+  --app-content-min-width: 56rem;
+  --app-gutter: var(--space-xl);
+  --app-content-max-width: 144rem;
+  --app-min-width: calc(
+    var(--app-content-min-width) + (var(--app-gutter) * 2)
+  );
+  --app-max-width: calc(
+    var(--app-content-max-width) + (var(--app-gutter) * 2)
+  );
+}
+
+.appViewport {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
 .container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 56rem;
-  width: min(80vw, 144rem);
-  max-width: 144rem;
+  min-width: var(--app-min-width);
+  width: min(80vw, var(--app-max-width));
+  max-width: var(--app-max-width);
   margin: 0 auto;
+  padding: 0 var(--app-gutter);
+  zoom: var(--app-scale, 1);
 }
 
 .loading {
@@ -19,11 +40,4 @@
   color: var(--color-text-muted);
   font-size: var(--text-xl);
   font-weight: 700;
-}
-
-@media (max-width: 720px) {
-  .container {
-    min-width: 0;
-    width: min(100% - 3.2rem, 144rem);
-  }
 }
