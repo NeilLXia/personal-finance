@@ -11,7 +11,9 @@ export const useWealthChange = ({ data }: { data: DashboardData | null }) => {
 
   const wealthChangeCategories = useMemo(() => {
     const categoryKeys = new Set(
-      (data?.monthly_cash_flow.categories || []).map((category) => category.key),
+      (data?.monthly_cash_flow.categories || []).map(
+        (category) => category.key,
+      ),
     );
 
     return [

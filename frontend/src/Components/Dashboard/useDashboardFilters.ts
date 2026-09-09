@@ -42,11 +42,13 @@ export type DashboardFilters = {
  */
 export const useDashboardFilters = (): DashboardFilters => {
   const [selectedMonth, setSelectedMonth] = useState(getDefaultDashboardMonth);
-  const [transactionRange, setTransactionRange] =
-    useState<TransactionRange>(DEFAULT_TRANSACTION_MONTHS);
-  const [transactionCustomRange, setTransactionCustomRange] = useState<DateRange>(
-    () => getMonthDateRange(getDefaultDashboardMonth(), DEFAULT_TRANSACTION_MONTHS),
+  const [transactionRange, setTransactionRange] = useState<TransactionRange>(
+    DEFAULT_TRANSACTION_MONTHS,
   );
+  const [transactionCustomRange, setTransactionCustomRange] =
+    useState<DateRange>(() =>
+      getMonthDateRange(getDefaultDashboardMonth(), DEFAULT_TRANSACTION_MONTHS),
+    );
   const [incomeAllocationRange, setIncomeAllocationRange] =
     useState<IncomeAllocationRange>(DEFAULT_INCOME_ALLOCATION_MONTHS);
   const [incomeAllocationMode, setIncomeAllocationMode] =

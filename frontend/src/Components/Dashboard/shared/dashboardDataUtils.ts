@@ -83,26 +83,25 @@ export const summarizeExcludedTransactions = (transactions: Transaction[]) => {
     return null;
   }
 
-  const childrenByName = excludedTransactions.reduce<Record<string, CategoryTotal>>(
-    (categories, transaction) => {
-      const category = getExcludedTransactionCategory(transaction);
+  const childrenByName = excludedTransactions.reduce<
+    Record<string, CategoryTotal>
+  >((categories, transaction) => {
+    const category = getExcludedTransactionCategory(transaction);
 
-      if (!categories[category]) {
-        categories[category] = {
-          category,
-          selectionKey: getExcludedCategorySelectionKey(category),
-          amount: 0,
-          count: 0,
-        };
-      }
+    if (!categories[category]) {
+      categories[category] = {
+        category,
+        selectionKey: getExcludedCategorySelectionKey(category),
+        amount: 0,
+        count: 0,
+      };
+    }
 
-      categories[category].amount += getTransactionSignedAmount(transaction);
-      categories[category].count += 1;
+    categories[category].amount += getTransactionSignedAmount(transaction);
+    categories[category].count += 1;
 
-      return categories;
-    },
-    {},
-  );
+    return categories;
+  }, {});
 
   const children = Object.values(childrenByName)
     .map((category) => ({
@@ -126,7 +125,8 @@ export const summarizeExcludedTransactions = (transactions: Transaction[]) => {
     amount: Number(
       excludedTransactions
         .reduce(
-          (total, transaction) => total + getTransactionSignedAmount(transaction),
+          (total, transaction) =>
+            total + getTransactionSignedAmount(transaction),
           0,
         )
         .toFixed(2),
@@ -190,7 +190,10 @@ export const getVenmoDetails = (transaction: Transaction) => {
     transaction.merchant_name,
     transaction.account_name,
     transaction.institution_name,
-  ].filter(Boolean).join(" ").toLowerCase();
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
   if (!transactionText.includes("venmo")) {
     return null;
@@ -198,16 +201,20 @@ export const getVenmoDetails = (transaction: Transaction) => {
 
   const noteMatch = transaction.name.match(/"([^"]+)"/);
   const note = noteMatch?.[1] || null;
-  const counterparty = transaction.merchant_name ||
+  const counterparty =
+    transaction.merchant_name ||
     transaction.name.replace(/"[^"]+"/g, "").trim();
 
   return {
-    counterparty: counterparty && counterparty !== "Venmo" ? counterparty : null,
+    counterparty:
+      counterparty && counterparty !== "Venmo" ? counterparty : null,
     note,
   };
 };
 
-export const normalizeDashboardData = (dashboardData: DashboardResponse): DashboardData => ({
+export const normalizeDashboardData = (
+  dashboardData: DashboardResponse,
+): DashboardData => ({
   institutions: dashboardData.institutions || [],
   dashboard_month: dashboardData.dashboard_month || {
     start_date: "",
@@ -221,7 +228,8 @@ export const normalizeDashboardData = (dashboardData: DashboardResponse): Dashbo
   },
   net_worth: {
     current: dashboardData.net_worth?.current || 0,
-    categories: dashboardData.net_worth?.categories || defaultNetWorthCategories,
+    categories:
+      dashboardData.net_worth?.categories || defaultNetWorthCategories,
     history: dashboardData.net_worth?.history || [],
     breakdown_dates: dashboardData.net_worth?.breakdown_dates || [],
     breakdown: dashboardData.net_worth?.breakdown || [],
@@ -249,9 +257,11 @@ export const normalizeDashboardData = (dashboardData: DashboardResponse): Dashbo
     income: dashboardData.income_allocation?.income || 0,
     expenses: dashboardData.income_allocation?.expenses || 0,
     savings: dashboardData.income_allocation?.savings || 0,
-    real_estate_equity: dashboardData.income_allocation?.real_estate_equity || 0,
+    real_estate_equity:
+      dashboardData.income_allocation?.real_estate_equity || 0,
     transactions: dashboardData.income_allocation?.transactions || [],
-    payslips: dashboardData.income_allocation?.payslips || dashboardData.payslips || [],
+    payslips:
+      dashboardData.income_allocation?.payslips || dashboardData.payslips || [],
   },
   budget_targets: dashboardData.budget_targets || [],
   transaction_range: dashboardData.transaction_range || {

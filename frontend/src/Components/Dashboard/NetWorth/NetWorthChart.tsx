@@ -1,8 +1,4 @@
-import {
-  Fragment,
-  useEffect,
-  useState,
-} from "react";
+import { Fragment, useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 
 import {

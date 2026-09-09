@@ -7,14 +7,7 @@
     <meta name="description" content="Personal Finance app" />
 
     <title>Personal Finance</title>
-    <script>
-      // Apply the saved theme before first paint to avoid a flash.
-      try {
-        var t = localStorage.getItem("theme");
-        if (t === "light" || t === "dark")
-          document.documentElement.dataset.theme = t;
-      } catch (e) {}
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

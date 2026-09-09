@@ -77,8 +77,7 @@ const ExpenseBreakdownModule = ({
   onSelectAll,
   onClearAll,
 }: ExpenseBreakdownModuleProps) => {
-  const activePieSlices =
-    activeTab === "income" ? payslipPieSlices : pieSlices;
+  const activePieSlices = activeTab === "income" ? payslipPieSlices : pieSlices;
   const summaryTitle =
     activeTab === "income" ? "Income breakdown" : "Expenses by type";
   const summaryTotal =

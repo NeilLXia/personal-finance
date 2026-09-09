@@ -27,43 +27,43 @@ const ConnectionsModal = ({
       className={styles.connectionsModal}
       onClose={onClose}
     >
-        <header className={styles.modalHeader}>
-          <div>
-            <h2>Connections</h2>
-            <p>Manage linked financial institutions.</p>
-          </div>
-          <button type="button" onClick={onClose}>
-            Close
-          </button>
-        </header>
-
-        <div className={styles.connectionModalActions}>
-          <button
-            type="button"
-            className={styles.primaryActionButton}
-            disabled={!canConnectAccount}
-            onClick={onConnectAccount}
-          >
-            New connection
-          </button>
+      <header className={styles.modalHeader}>
+        <div>
+          <h2>Connections</h2>
+          <p>Manage linked financial institutions.</p>
         </div>
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </header>
 
-        <div className={styles.connectionTileGrid}>
-          {institutions.length === 0 ? (
-            <p className={shared.emptyText}>
-              No active institution connections yet.
-            </p>
-          ) : (
-            institutions.map((institution) => (
-              <ConnectionTile
-                key={`${institution.plaid_environment}-${institution.institution_id || institution.institution_name}`}
-                institution={institution}
-                onError={onError}
-                onReconnect={onReconnect}
-              />
-            ))
-          )}
-        </div>
+      <div className={styles.connectionModalActions}>
+        <button
+          type="button"
+          className={styles.primaryActionButton}
+          disabled={!canConnectAccount}
+          onClick={onConnectAccount}
+        >
+          New connection
+        </button>
+      </div>
+
+      <div className={styles.connectionTileGrid}>
+        {institutions.length === 0 ? (
+          <p className={shared.emptyText}>
+            No active institution connections yet.
+          </p>
+        ) : (
+          institutions.map((institution) => (
+            <ConnectionTile
+              key={`${institution.plaid_environment}-${institution.institution_id || institution.institution_name}`}
+              institution={institution}
+              onError={onError}
+              onReconnect={onReconnect}
+            />
+          ))
+        )}
+      </div>
     </ModalShell>
   );
 };

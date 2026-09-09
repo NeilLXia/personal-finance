@@ -170,23 +170,23 @@
 
 @media (max-width: 720px) {
   .incomeAllocationRow {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .incomeAllocationRows {
-      grid-template-columns: 1fr;
-      grid-auto-rows: auto;
-    }
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
 
   .incomeAllocationResult {
-      align-items: flex-start;
-    }
+    align-items: flex-start;
+  }
 
   .incomeAllocationResult strong {
-      text-align: left;
-    }
+    text-align: left;
+  }
 
   .incomeAllocationResult small {
-      text-align: left;
-    }
+    text-align: left;
+  }
 }

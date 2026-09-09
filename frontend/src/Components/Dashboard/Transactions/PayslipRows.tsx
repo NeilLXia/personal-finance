@@ -1,14 +1,8 @@
-import {
-  formatCurrency,
-  formatDate,
-} from "../shared/formatters";
+import { formatCurrency, formatDate } from "../shared/formatters";
 import shared from "../dashboard.shared.module.css";
 import styles from "./index.module.css";
 import type { Payslip } from "../shared/types";
-import type {
-  PayslipSortColumn,
-  TransactionSortDirection,
-} from "./tableUtils";
+import type { PayslipSortColumn, TransactionSortDirection } from "./tableUtils";
 import { getVisiblePayslipAmounts } from "./tableUtils";
 
 type PayslipRowsProps = {

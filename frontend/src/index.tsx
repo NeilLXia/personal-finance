@@ -3,11 +3,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "./index.css";
 import App from "./App";
+import ErrorBoundary from "./Components/ErrorBoundary";
 import { AppProvider } from "./Context";
 import { shouldRetryRequest } from "./shared/apiClient";
 
 const root = ReactDOM.createRoot(
-  document.getElementById("root") as HTMLElement
+  document.getElementById("root") as HTMLElement,
 );
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,9 +21,11 @@ const queryClient = new QueryClient({
 });
 
 root.render(
-  <QueryClientProvider client={queryClient}>
-    <AppProvider>
-      <App />
-    </AppProvider>
-  </QueryClientProvider>,
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AppProvider>
+        <App />
+      </AppProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>,
 );

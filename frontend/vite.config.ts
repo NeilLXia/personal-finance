@@ -13,7 +13,10 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         "/api": {
-          target: env.API_HOST || rootEnv.API_HOST || `http://127.0.0.1:${backendPort}`,
+          target:
+            env.API_HOST ||
+            rootEnv.API_HOST ||
+            `http://127.0.0.1:${backendPort}`,
           changeOrigin: true,
         },
       },

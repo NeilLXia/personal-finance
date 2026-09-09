@@ -1,9 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getJson, postJson } from "../../../shared/apiClient";
 import { dashboardPayloadKeys, resourceKeys } from "../dashboardQueryKeys";
@@ -88,10 +84,7 @@ const buildDraftsFromTargets = (targets: BudgetTarget[] = []) => {
   });
 };
 
-const BudgetTargetsModal = ({
-  onClose,
-  onError,
-}: BudgetTargetsModalProps) => {
+const BudgetTargetsModal = ({ onClose, onError }: BudgetTargetsModalProps) => {
   const [drafts, setDrafts] = useState<BudgetTargetDraft[]>(createEmptyDrafts);
   const queryClient = useQueryClient();
   const calculatedNetTarget = useMemo(

@@ -153,13 +153,12 @@ export const trailingRangeOptions: Array<{
   { label: "Specific date range", value: "custom" },
 ];
 
-export const wealthChangeColors: Record<WealthChangeCategoryKey, string> =
-  {
-    expenses: incomeAllocationColors.discretionary,
-    savings: incomeAllocationColors.savings,
-    real_estate_equity: incomeAllocationColors.realEstateEquity,
-    asset_appreciation: "var(--chart-asset-appreciation)",
-  };
+export const wealthChangeColors: Record<WealthChangeCategoryKey, string> = {
+  expenses: incomeAllocationColors.discretionary,
+  savings: incomeAllocationColors.savings,
+  real_estate_equity: incomeAllocationColors.realEstateEquity,
+  asset_appreciation: "var(--chart-asset-appreciation)",
+};
 export const negativeWealthChangeColor = dashboardPalette.fitness;
 
 export const defaultWealthChangeCategories: WealthChangeCategory[] = [

@@ -3,15 +3,8 @@ import {
   negativeWealthChangeColor,
   wealthChangeColors,
 } from "../shared/constants";
-import {
-  roundDownTo,
-  roundUpTo,
-  scaleLinearY,
-} from "../shared/chartScale";
-import {
-  getMonthKey,
-  getPreviousMonthKey,
-} from "../shared/date";
+import { roundDownTo, roundUpTo, scaleLinearY } from "../shared/chartScale";
+import { getMonthKey, getPreviousMonthKey } from "../shared/date";
 import type {
   NetWorthPoint,
   WealthChangeChart,
@@ -42,7 +35,9 @@ export const addAssetAppreciation = ({
 
   return months.map((month) => {
     const currentNetWorth = netWorthByMonth.get(month.month);
-    const previousNetWorth = netWorthByMonth.get(getPreviousMonthKey(month.month));
+    const previousNetWorth = netWorthByMonth.get(
+      getPreviousMonthKey(month.month),
+    );
     const netWorthChange =
       currentNetWorth === undefined || previousNetWorth === undefined
         ? 0
@@ -99,8 +94,14 @@ export const buildWealthChangeChart = (
       { positive: 0, negative: 0 },
     ),
   );
-  const positiveMax = Math.max(...monthTotals.map((month) => month.positive), 0);
-  const negativeMin = Math.min(...monthTotals.map((month) => month.negative), 0);
+  const positiveMax = Math.max(
+    ...monthTotals.map((month) => month.positive),
+    0,
+  );
+  const negativeMin = Math.min(
+    ...monthTotals.map((month) => month.negative),
+    0,
+  );
   const maxValue = Math.max(roundUpTo(positiveMax, snapAmount), snapAmount);
   const minValue = Math.min(roundDownTo(negativeMin, snapAmount), -snapAmount);
   const range = maxValue - minValue || snapAmount;

@@ -1,8 +1,5 @@
 import { chartBounds, netWorthCategoryColors } from "../shared/constants";
-import {
-  roundUpTo,
-  scaleLinearY,
-} from "../shared/chartScale";
+import { roundUpTo, scaleLinearY } from "../shared/chartScale";
 import { parseIsoDate } from "../shared/date";
 import { formatShortDate } from "../shared/formatters";
 import type {
@@ -138,9 +135,10 @@ export const buildNetWorthChart = (
   const activeCategories = categories.filter((category) =>
     normalizedHistory.some((point) => Number(point[category.key] || 0) !== 0),
   );
-  const orderedCategories = activeCategories.length > 0
-    ? activeCategories
-    : [{ key: "cash" as const, label: "Net worth" }];
+  const orderedCategories =
+    activeCategories.length > 0
+      ? activeCategories
+      : [{ key: "cash" as const, label: "Net worth" }];
   const cumulativeValues = normalizedHistory.flatMap((point) => {
     let total = 0;
 
@@ -170,11 +168,13 @@ export const buildNetWorthChart = (
       return chartBounds.left;
     }
 
-    const time = date instanceof Date ? date.getTime() : parseIsoDate(date).getTime();
+    const time =
+      date instanceof Date ? date.getTime() : parseIsoDate(date).getTime();
 
-    return chartBounds.left +
-      ((time - startTime) / timeRange) *
-        (chartBounds.right - chartBounds.left);
+    return (
+      chartBounds.left +
+      ((time - startTime) / timeRange) * (chartBounds.right - chartBounds.left)
+    );
   };
   const xForExpandedPoint = (point: NetWorthPoint, index: number) =>
     normalizedHistory.length === 1 && index === 1
@@ -236,8 +236,9 @@ export const buildNetWorthChart = (
       };
     });
     const path = points
-      .map((point, index) =>
-        `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`,
+      .map(
+        (point, index) =>
+          `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`,
       )
       .join(" ");
 
@@ -273,17 +274,21 @@ export const buildNetWorthChart = (
       categories: categoriesForPoint,
     };
   });
-  chart.xLabels = normalizedHistory.length === 1
-    ? [{ label: formatShortDate(normalizedHistory[0].date), x: 50 }]
-    : [
-        { label: formatShortDate(normalizedHistory[0].date), x: chartBounds.left },
-        {
-          label: formatShortDate(
-            normalizedHistory[normalizedHistory.length - 1].date,
-          ),
-          x: chartBounds.right,
-        },
-      ];
+  chart.xLabels =
+    normalizedHistory.length === 1
+      ? [{ label: formatShortDate(normalizedHistory[0].date), x: 50 }]
+      : [
+          {
+            label: formatShortDate(normalizedHistory[0].date),
+            x: chartBounds.left,
+          },
+          {
+            label: formatShortDate(
+              normalizedHistory[normalizedHistory.length - 1].date,
+            ),
+            x: chartBounds.right,
+          },
+        ];
   chart.xTicks = buildDateTicks(normalizedHistory).map((tick) => ({
     label: tick.label,
     x: xForDate(tick.date),

@@ -136,7 +136,8 @@ export const useTransactions = ({
     [excludedCategorySummary],
   );
   const excludedCategoryNames = useMemo(
-    () => excludedCategories.map((category) => getCategorySelectionKey(category)),
+    () =>
+      excludedCategories.map((category) => getCategorySelectionKey(category)),
     [excludedCategories],
   );
 
@@ -187,7 +188,8 @@ export const useTransactions = ({
     if (activeTransactionTab === "expenses") {
       if (isShowingExpenseReviewOnly) {
         return transactionsInSelectedRange.filter(
-          (transaction) => transaction.is_expense && !transaction.manual_category,
+          (transaction) =>
+            transaction.is_expense && !transaction.manual_category,
         );
       }
 
@@ -235,7 +237,9 @@ export const useTransactions = ({
   const toggleExcludedCategory = (category: string) => {
     setSelectedExcludedCategories((currentCategories) =>
       currentCategories.includes(category)
-        ? currentCategories.filter((currentCategory) => currentCategory !== category)
+        ? currentCategories.filter(
+            (currentCategory) => currentCategory !== category,
+          )
         : [...currentCategories, category],
     );
   };

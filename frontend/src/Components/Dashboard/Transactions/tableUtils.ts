@@ -1,4 +1,8 @@
-import { formatCurrency, formatDate, formatTransactionAmount } from "../shared/formatters";
+import {
+  formatCurrency,
+  formatDate,
+  formatTransactionAmount,
+} from "../shared/formatters";
 import { getTransactionEffectiveDate } from "../shared/formatters";
 import type { Payslip, Transaction } from "../shared/types";
 
@@ -225,7 +229,8 @@ export const buildSortedPayslips = ({
         (!dateSearch ||
           isDateWithinPayPeriod(dateSearch, payslip) ||
           dateText.includes(dateSearch)) &&
-        (!amountSearch || getPayslipSearchAmount(payslip).includes(amountSearch))
+        (!amountSearch ||
+          getPayslipSearchAmount(payslip).includes(amountSearch))
       );
     })
     .sort((firstPayslip, secondPayslip) => {

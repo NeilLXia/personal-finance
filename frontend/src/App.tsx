@@ -1,23 +1,12 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 
 import Dashboard from "./Components/Dashboard";
 import Login from "./Components/Login";
 import { useAppContext } from "./Context";
 import type { AuthUser } from "./Context";
-import {
-  addAuthExpiredListener,
-  getJson,
-  postJson,
-} from "./shared/apiClient";
+import { addAuthExpiredListener, getJson, postJson } from "./shared/apiClient";
 
 import styles from "./App.module.css";
-
-const REM_SIZE_PX = 10;
-const APP_CONTENT_MIN_WIDTH_REM = 56;
-const APP_GUTTER_REM = 1.6;
-const APP_MIN_WIDTH_PX =
-  (APP_CONTENT_MIN_WIDTH_REM + APP_GUTTER_REM * 2) * REM_SIZE_PX;
-const APP_MIN_SCALE = 0.8;
 
 type LinkTokenResponse = {
   error?: { error_message?: string } | null;
@@ -54,58 +43,29 @@ const removeStoredLinkToken = () => {
   }
 };
 
-const getAppScale = () => {
-  if (typeof window === "undefined") {
-    return 1;
-  }
-
-  return Math.max(
-    APP_MIN_SCALE,
-    Math.min(1, window.innerWidth / APP_MIN_WIDTH_PX),
-  );
-};
-
-const useResponsiveAppScale = () => {
-  const [appScale, setAppScale] = useState(getAppScale);
-
-  useEffect(() => {
-    const updateAppScale = () => setAppScale(getAppScale());
-
-    window.addEventListener("resize", updateAppScale);
-
-    return () => window.removeEventListener("resize", updateAppScale);
-  }, []);
-
-  return appScale;
-};
-
 const App = () => {
   const { authUser, isSessionLoading, dispatch } = useAppContext();
-  const appScale = useResponsiveAppScale();
 
-  const generateToken = useCallback(
-    async () => {
-      try {
-        const data = await postJson<LinkTokenResponse>(
-          "/api/create_link_token",
-          undefined,
-          {},
-          "Link token request failed",
-        );
+  const generateToken = useCallback(async () => {
+    try {
+      const data = await postJson<LinkTokenResponse>(
+        "/api/create_link_token",
+        undefined,
+        {},
+        "Link token request failed",
+      );
 
-        if (data.error != null || typeof data.link_token !== "string") {
-          dispatch({ type: "SET_LINK_TOKEN", linkToken: null });
-          return;
-        }
-
-        dispatch({ type: "SET_LINK_TOKEN", linkToken: data.link_token });
-        setStoredLinkToken(data.link_token);
-      } catch {
+      if (data.error != null || typeof data.link_token !== "string") {
         dispatch({ type: "SET_LINK_TOKEN", linkToken: null });
+        return;
       }
-    },
-    [dispatch]
-  );
+
+      dispatch({ type: "SET_LINK_TOKEN", linkToken: data.link_token });
+      setStoredLinkToken(data.link_token);
+    } catch {
+      dispatch({ type: "SET_LINK_TOKEN", linkToken: null });
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     const init = async () => {
@@ -147,12 +107,14 @@ const App = () => {
     init();
   }, [dispatch, generateToken]);
 
-  useEffect(() =>
-    addAuthExpiredListener(() => {
-      removeStoredLinkToken();
-      dispatch({ type: "AUTH_EXPIRED" });
-    }),
-  [dispatch]);
+  useEffect(
+    () =>
+      addAuthExpiredListener(() => {
+        removeStoredLinkToken();
+        dispatch({ type: "AUTH_EXPIRED" });
+      }),
+    [dispatch],
+  );
 
   const loadAuthenticatedApp = useCallback(async () => {
     await generateToken();
@@ -166,12 +128,7 @@ const App = () => {
         <Login onAuthenticated={loadAuthenticatedApp} />
       ) : (
         <div className={styles.appViewport}>
-          <div
-            className={styles.container}
-            style={
-              { "--app-scale": String(appScale) } as React.CSSProperties
-            }
-          >
+          <div className={styles.container}>
             <Dashboard />
           </div>
         </div>

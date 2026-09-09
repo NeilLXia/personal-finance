@@ -31,7 +31,10 @@ export const useExpenseBreakdown = ({
   transactionRange: TransactionRange;
   changeTransactionCustomRange: (range: DateRange) => void;
   changeTransactionRange: (range: TransactionRange) => void;
-  setActiveTransactionTab: (tab: TransactionTableTab | ((tab: TransactionTableTab) => TransactionTableTab)) => void;
+  setActiveTransactionTab: (
+    tab:
+      TransactionTableTab | ((tab: TransactionTableTab) => TransactionTableTab),
+  ) => void;
 }) => {
   const [activeBreakdownTab, setActiveBreakdownTab] =
     useState<BreakdownTab>("expenses");
@@ -112,8 +115,8 @@ export const useExpenseBreakdown = ({
       (transactionRange === "custom"
         ? "Specific date range"
         : transactionRange === 1
-        ? "1 month"
-        : `${transactionRange} months ending ${selectedMonth}`);
+          ? "1 month"
+          : `${transactionRange} months ending ${selectedMonth}`);
 
     return `${label} (${formatDateRange(startDate, endDate)})`;
   }, [data, selectedMonth, transactionDateRange, transactionRange]);

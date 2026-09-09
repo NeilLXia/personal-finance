@@ -19,7 +19,11 @@ describe("buildTransactionPieSlices", () => {
     const slices = buildTransactionPieSlices(categories);
 
     expect(slices).toHaveLength(2);
-    expect(slices[0]).toMatchObject({ category: "Housing", amount: -750, count: 1 });
+    expect(slices[0]).toMatchObject({
+      category: "Housing",
+      amount: -750,
+      count: 1,
+    });
     expect(slices[0].color).toMatch(/^var\(--chart-/);
     expect(slices[0].path.startsWith("M ")).toBe(true);
     expect(slices[1].path).toContain("A ");

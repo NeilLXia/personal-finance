@@ -93,7 +93,8 @@ export const useDashboardData = ({
     () => ({
       month: selectedMonth,
       range: transactionRange,
-      customRange: transactionRange === "custom" ? transactionCustomRange : null,
+      customRange:
+        transactionRange === "custom" ? transactionCustomRange : null,
     }),
     [selectedMonth, transactionCustomRange, transactionRange],
   );
@@ -168,7 +169,9 @@ export const useDashboardData = ({
     incomeAllocationSliceQuery.error;
   const error =
     actionError ??
-    (queryError ? getErrorMessage(queryError, "Unable to load dashboard") : null);
+    (queryError
+      ? getErrorMessage(queryError, "Unable to load dashboard")
+      : null);
 
   const isPayloadFresh =
     baseQuery.isSuccess &&

@@ -5,9 +5,7 @@ import {
   buildPayslipBreakdown,
   getPayslipGrossTotal,
 } from "./payslipBreakdownUtils";
-import type {
-  DashboardData,
-} from "../shared/types";
+import type { DashboardData } from "../shared/types";
 
 export const useIncomeBreakdown = ({
   data,

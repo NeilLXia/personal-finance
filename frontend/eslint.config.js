@@ -62,5 +62,11 @@ export default tseslint.config(
       globals: globals.worker,
     },
   },
+  {
+    files: ["public/**/*.js"],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
   prettier,
 );

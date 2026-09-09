@@ -17,7 +17,13 @@ const point = (overrides: Partial<NetWorthPoint>): NetWorthPoint => ({
 
 describe("buildNetWorthChart", () => {
   it("returns an empty chart shape when there is no history", () => {
-    const chart = buildNetWorthChart([], defaultNetWorthCategories, 0, "all", "2026-02");
+    const chart = buildNetWorthChart(
+      [],
+      defaultNetWorthCategories,
+      0,
+      "all",
+      "2026-02",
+    );
     expect(chart.areas).toEqual([]);
     expect(chart.lines).toEqual([]);
     expect(chart.hoverPoints).toEqual([]);

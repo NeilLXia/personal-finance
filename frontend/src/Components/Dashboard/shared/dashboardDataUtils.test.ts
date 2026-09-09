@@ -45,7 +45,9 @@ describe("getTransactionDisplayCategory", () => {
 describe("getExcludedTransactionCategory", () => {
   it("uses the manual category or Unassigned", () => {
     expect(
-      getExcludedTransactionCategory(transaction({ manual_category: "Transfers" })),
+      getExcludedTransactionCategory(
+        transaction({ manual_category: "Transfers" }),
+      ),
     ).toBe("Transfers");
     expect(getExcludedTransactionCategory(transaction())).toBe("Unassigned");
   });
@@ -83,7 +85,12 @@ describe("summarizeExcludedTransactions", () => {
   it("rolls non-expense rows into an Excluded group with Unassigned first", () => {
     const summary = summarizeExcludedTransactions([
       transaction({ id: 1, amount: 50, is_expense: false }),
-      transaction({ id: 2, amount: 20, is_expense: false, manual_category: "Transfers" }),
+      transaction({
+        id: 2,
+        amount: 20,
+        is_expense: false,
+        manual_category: "Transfers",
+      }),
     ]);
 
     expect(summary).not.toBeNull();

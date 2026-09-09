@@ -239,15 +239,15 @@
 
 @media (max-width: 720px) {
   .netWorthSection {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .netWorthTopRow {
-      align-items: flex-start;
-      flex-direction: column;
-    }
+    align-items: flex-start;
+    flex-direction: column;
+  }
 
   .totalBalance {
-      font-size: var(--text-5xl);
-    }
+    font-size: var(--text-5xl);
+  }
 }

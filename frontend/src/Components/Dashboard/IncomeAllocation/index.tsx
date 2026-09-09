@@ -1,8 +1,5 @@
 import { incomeAllocationRangeOptions } from "../shared/constants";
-import {
-  formatCurrency,
-  maskCurrency,
-} from "../shared/formatters";
+import { formatCurrency, maskCurrency } from "../shared/formatters";
 import styles from "./index.module.css";
 import shared from "../dashboard.shared.module.css";
 import CustomDateRangeInputs from "../shared/CustomDateRangeInputs";

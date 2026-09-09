@@ -1,11 +1,5 @@
-import type {
-  Dispatch,
-  ReactNode} from "react";
-import {
-  createContext,
-  useContext,
-  useReducer
-} from "react";
+import type { Dispatch, ReactNode } from "react";
+import { createContext, useContext, useReducer } from "react";
 
 export type AuthUser = {
   id: number;
@@ -64,13 +58,8 @@ export const useAppContext = () => {
 };
 
 const { Provider } = Context;
-export const AppProvider: React.FC<{ children: ReactNode }> = (
-  props
-) => {
-  const reducer = (
-    state: AppState,
-    action: AppAction
-  ): AppState => {
+export const AppProvider: React.FC<{ children: ReactNode }> = (props) => {
+  const reducer = (state: AppState, action: AppAction): AppState => {
     switch (action.type) {
       case "SESSION_LOADED":
         return {

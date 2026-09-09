@@ -19,7 +19,9 @@ describe("useTransactions mutations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     transactionsApi.updateTransactionManualDate.mockResolvedValue(undefined);
-    transactionsApi.updateTransactionsCategoryRules.mockResolvedValue(undefined);
+    transactionsApi.updateTransactionsCategoryRules.mockResolvedValue(
+      undefined,
+    );
   });
 
   it("invalidates dashboard queries after saving a manual category", async () => {
@@ -42,10 +44,9 @@ describe("useTransactions mutations", () => {
     result.current.saveManualCategory(42, "Dining");
 
     await waitFor(() =>
-      expect(transactionsApi.updateTransactionsCategoryRules).toHaveBeenCalledWith(
-        [42],
-        "Dining",
-      ),
+      expect(
+        transactionsApi.updateTransactionsCategoryRules,
+      ).toHaveBeenCalledWith([42], "Dining"),
     );
 
     expect(result.current.savingCategoryTransactionId).toBe(null);
