@@ -134,7 +134,7 @@
 
 .legendGroupRow {
   grid-template-columns: 1.6rem minmax(0, 1fr) minmax(8.8rem, auto) 5.6rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .legendChildRow {

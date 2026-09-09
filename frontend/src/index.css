@@ -79,26 +79,26 @@
   }
 
   h1 {
-    font-size: var(--text-7xl);
+    font-size: var(--text-5xl);
     font-weight: 800;
     line-height: 1.15;
   }
 
   h2 {
-    font-size: var(--text-5xl);
-    font-weight: 800;
+    font-size: var(--text-4xl);
+    font-weight: 700;
     line-height: 1.33;
   }
 
   h3 {
-    font-size: var(--text-5xl);
-    font-weight: 400;
+    font-size: var(--text-3xl);
+    font-weight: 700;
     line-height: 1.33;
   }
 
   h4 {
-    font-size: var(--text-4xl);
-    font-weight: 400;
+    font-size: var(--text-2xl);
+    font-weight: 700;
     line-height: 1.33;
   }
 

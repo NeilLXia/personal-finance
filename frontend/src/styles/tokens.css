@@ -51,7 +51,8 @@
   --text-6xl: 4.4rem;
   --text-7xl: 6rem;
 
-  --font-sans: Helvetica, Arial, sans-serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   --font-mono: Inconsolata, Consolas, "Courier New", monospace;
 
   /* ---- Colour: text --------------------------------------------------------- */
