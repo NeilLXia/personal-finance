@@ -6,6 +6,7 @@ import {
   formatDate,
   formatDateRange,
   formatShortDate,
+  formatTooltipCompactCurrency,
   formatTransactionAmount,
   getDateInputValue,
   getDefaultDashboardMonth,
@@ -43,6 +44,18 @@ describe("formatCompactCurrency", () => {
   it("uses compact notation", () => {
     expect(formatCompactCurrency(1_500_000)).toBe("$1.5M");
     expect(formatCompactCurrency(2_000)).toBe("$2K");
+  });
+});
+
+describe("formatTooltipCompactCurrency", () => {
+  it("keeps one decimal for compact values in tooltips", () => {
+    expect(formatTooltipCompactCurrency(1_000)).toBe("$1.0K");
+    expect(formatTooltipCompactCurrency(2_000)).toBe("$2.0K");
+    expect(formatTooltipCompactCurrency(1_500_000)).toBe("$1.5M");
+  });
+
+  it("does not add decimals below compact range", () => {
+    expect(formatTooltipCompactCurrency(999)).toBe("$999");
   });
 });
 

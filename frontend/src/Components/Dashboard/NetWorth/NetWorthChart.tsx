@@ -13,7 +13,7 @@ import {
 } from "../shared/constants";
 import {
   formatShortDate,
-  maskCompactCurrency,
+  maskTooltipCompactCurrency,
 } from "../shared/formatters";
 import shared from "../dashboard.shared.module.css";
 import RangeSelector from "../shared/RangeSelector";
@@ -78,7 +78,7 @@ const NetWorthChart = ({
       )
     : 0;
   const formatBalanceValue = (value: number) =>
-    maskCompactCurrency(value, areBalancesHidden);
+    maskTooltipCompactCurrency(value, areBalancesHidden);
 
   return (
     <div className={shared.chartFrame}>
