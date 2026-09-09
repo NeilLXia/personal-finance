@@ -2,7 +2,6 @@ import styles from "./index.module.css";
 import { useTheme, type ThemePreference } from "./useTheme";
 
 const LABELS: Record<ThemePreference, { icon: string; text: string }> = {
-  system: { icon: "◐", text: "System" },
   light: { icon: "☀", text: "Light" },
   dark: { icon: "☾", text: "Dark" },
 };

@@ -3,13 +3,13 @@
  * colour. Components reference these via var(); no raw hex / rem literals in
  * component CSS.
  *
- * Light is defined on :root. Dark is applied automatically via
- * prefers-color-scheme and can be forced either way with
- * <html data-theme="dark"> / <html data-theme="light">.
+ * Light is defined on :root; dark on :root[data-theme="dark"]. The app always
+ * sets <html data-theme="light"|"dark"> (see useTheme.ts / theme-init.js), so
+ * the OS prefers-color-scheme is only consulted to seed the first visit.
  */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* ---- Spacing scale (0.2rem base, 10px root) ------------------------------
    * Consolidation candidates: --space-lg absorbs old 1.4rem; --space-xl absorbs
@@ -172,106 +172,10 @@
   --color-scrim: rgba(255, 255, 255, 0.92); /* loading overlay over content */
 }
 
-/* Dark palette. Redefine only what changes; scale/type/radii are shared.
- * The :not([data-theme="light"]) guard lets an explicit light choice win. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-ink: #e8ecf1;
-    --color-text: #b9c2cd;
-    --color-text-muted: #97a1ad;
-    --color-text-subtle: #808b98;
-    --color-text-faint: #616c7a;
-
-    --color-canvas: #0d1117;
-    --color-surface: #161c24;
-    --color-surface-muted: #232a33;
-
-    --color-inverse-surface: #e8ecf1;
-    --color-on-inverse: #0d1117;
-
-    --color-border: #2a323d;
-
-    --color-accent: #5b93f7;
-    --color-accent-weak: #1e3a5f;
-    --color-accent-surface: #14243d;
-    --color-on-accent: #0d1117;
-
-    --color-positive: #34d399;
-    --color-positive-surface: #10331f;
-
-    --color-negative: #f87171;
-    --color-negative-border: #5a2b2b;
-    --color-negative-surface: #3a1c1c;
-
-    --color-info: #93c5fd;
-    --color-info-border: #2e4a6b;
-    --color-info-surface: #14243d;
-
-    --color-warning: #fcd34d;
-    --color-warning-border: #6b5416;
-    --color-warning-surface: #33280a;
-
-    /* Chart series — dimmed from the light hues so they sit on the dark
-     * surface without out-glowing the text. Tune the 66% per token if one
-     * reads too muddy or too hot. */
-    --chart-cat-1: color-mix(in oklab, #8a6dff 66%, #000);
-    --chart-cat-2: color-mix(in oklab, #2f8fe8 66%, #000);
-    --chart-cat-3: color-mix(in oklab, #35c59f 66%, #000);
-    --chart-cat-4: color-mix(in oklab, #8de8cf 66%, #000);
-    --chart-cat-5: color-mix(in oklab, #f4a14e 66%, #000);
-    --chart-cat-6: color-mix(in oklab, #f25f6d 66%, #000);
-    --chart-cat-7: color-mix(in oklab, #e6c642 66%, #000);
-    --chart-cat-8: color-mix(in oklab, #a8b0b8 66%, #000);
-    --chart-real-estate: color-mix(in oklab, #8a6dff 66%, #000);
-    --chart-tax-advantaged: color-mix(in oklab, #2f8fe8 66%, #000);
-    --chart-normal-savings: color-mix(in oklab, #35c59f 66%, #000);
-    --chart-personal-equity: color-mix(in oklab, #42d1fa 66%, #000);
-    --chart-cash: color-mix(in oklab, #8de8cf 66%, #000);
-    --chart-essential: color-mix(in oklab, #f4a14e 66%, #000);
-    --chart-food-dining: color-mix(in oklab, #c9823a 66%, #000);
-    --chart-discretionary: color-mix(in oklab, #f25f6d 66%, #000);
-    --chart-travel: color-mix(in oklab, #c85aa6 66%, #000);
-    --chart-fitness: color-mix(in oklab, #f04a5a 66%, #000);
-    --chart-housing-costs: color-mix(in oklab, #f0d449 66%, #000);
-    --chart-neutral: color-mix(in oklab, #a8b0b8 66%, #000);
-    --chart-ia-housing: color-mix(in oklab, #f4dd67 66%, #000);
-    --chart-ia-real-estate-equity: color-mix(in oklab, #b4a0ff 66%, #000);
-    --chart-ia-essentials: color-mix(in oklab, #f7bc7b 66%, #000);
-    --chart-ia-discretionary: color-mix(in oklab, #f58e97 66%, #000);
-    --chart-ia-savings: color-mix(in oklab, #78d69f 66%, #000);
-    --chart-ia-other-income: color-mix(in oklab, #42d1fa 66%, #000);
-    --chart-ia-shortfall: color-mix(in oklab, #ff4040 66%, #000);
-    --chart-ia-taxes: color-mix(in oklab, #c3c8ce 66%, #000);
-    --chart-c-401k-bonus-deferral: color-mix(in oklab, #45a3ee 66%, #000);
-    --chart-c-401k-bonus-deferral-roth: color-mix(in oklab, #5db2f0 66%, #000);
-    --chart-c-401k-roth: color-mix(in oklab, #4ca8ec 66%, #000);
-    --chart-c-bills: color-mix(in oklab, #f5a95d 66%, #000);
-    --chart-c-ca-disability-tax: color-mix(in oklab, #b8bec6 66%, #000);
-    --chart-c-dental: color-mix(in oklab, #f3ad68 66%, #000);
-    --chart-c-entertainment: color-mix(in oklab, #f57780 66%, #000);
-    --chart-c-federal-withholding-tax: color-mix(in oklab, #a2a9b2 66%, #000);
-    --chart-c-gifts: color-mix(in oklab, #f77f89 66%, #000);
-    --chart-c-groceries: color-mix(in oklab, #d99046 66%, #000);
-    --chart-c-health: color-mix(in oklab, #f2b06a 66%, #000);
-    --chart-c-income: color-mix(in oklab, #55dfae 66%, #000);
-    --chart-c-insurance: color-mix(in oklab, #f2a458 66%, #000);
-    --chart-c-medicare-tax: color-mix(in oklab, #aeb5be 66%, #000);
-    --chart-c-personal-care: color-mix(in oklab, #f2b273 66%, #000);
-    --chart-c-roth: color-mix(in oklab, #52adee 66%, #000);
-    --chart-c-social-security-tax: color-mix(in oklab, #acb3bc 66%, #000);
-    --chart-c-venmo: color-mix(in oklab, #eaa65b 66%, #000);
-    --chart-asset-appreciation: color-mix(in oklab, #22c989 66%, #000);
-
-    --shadow-sm: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 1.2rem 3rem rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 2rem 5rem rgba(0, 0, 0, 0.6);
-    --color-overlay: rgba(0, 0, 0, 0.6);
-    --color-scrim: rgba(13, 17, 23, 0.92);
-  }
-}
-
-/* Explicit override — wins over the OS preference in both directions. */
+/* Dark palette. Redefine only what changes; scale/type/radii are shared. */
 :root[data-theme="dark"] {
+  color-scheme: dark;
+
   --color-ink: #e8ecf1;
   --color-text: #b9c2cd;
   --color-text-muted: #97a1ad;
@@ -307,7 +211,9 @@
   --color-warning-border: #6b5416;
   --color-warning-surface: #33280a;
 
-  /* Chart series — see the note in the prefers-color-scheme block above. */
+  /* Chart series — dimmed from the light hues so they sit on the dark surface
+   * without out-glowing the text. Tune the 66% per token if one reads too
+   * muddy or too hot. */
   --chart-cat-1: color-mix(in oklab, #8a6dff 66%, #000);
   --chart-cat-2: color-mix(in oklab, #2f8fe8 66%, #000);
   --chart-cat-3: color-mix(in oklab, #35c59f 66%, #000);

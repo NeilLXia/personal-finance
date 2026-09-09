@@ -1,58 +1,51 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export type ThemePreference = "system" | "light" | "dark";
+export type ThemePreference = "light" | "dark";
 
 const STORAGE_KEY = "theme";
-const ORDER: ThemePreference[] = ["system", "light", "dark"];
 
-const readStored = (): ThemePreference => {
+/** The stored choice, or the OS preference to seed the first visit, or light. */
+const resolveInitialPreference = (): ThemePreference => {
   try {
-    const value = localStorage.getItem(STORAGE_KEY);
-    return value === "light" || value === "dark" ? value : "system";
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
   } catch {
-    return "system";
+    /* storage unavailable — fall through to the OS preference */
   }
+
+  const prefersDark =
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  return prefersDark ? "dark" : "light";
 };
 
 /**
- * Reflect the preference onto <html data-theme> and localStorage. "system"
- * removes the attribute so tokens.css falls back to prefers-color-scheme.
- * Mirrors the inline bootstrap script in index.html.
+ * Reflect the preference onto <html data-theme> and localStorage. Mirrors the
+ * pre-paint bootstrap script in public/theme-init.js.
  */
 const applyPreference = (preference: ThemePreference) => {
-  const root = document.documentElement;
-
-  if (preference === "system") {
-    delete root.dataset.theme;
-  } else {
-    root.dataset.theme = preference;
-  }
+  document.documentElement.dataset.theme = preference;
 
   try {
-    if (preference === "system") {
-      localStorage.removeItem(STORAGE_KEY);
-    } else {
-      localStorage.setItem(STORAGE_KEY, preference);
-    }
+    localStorage.setItem(STORAGE_KEY, preference);
   } catch {
     /* storage unavailable — the attribute is still set for this session */
   }
 };
 
 export const useTheme = () => {
-  const [theme, setThemeState] = useState<ThemePreference>(readStored);
+  const [theme, setTheme] = useState<ThemePreference>(resolveInitialPreference);
 
-  const setTheme = useCallback((preference: ThemePreference) => {
-    applyPreference(preference);
-    setThemeState(preference);
-  }, []);
+  useEffect(() => {
+    applyPreference(theme);
+  }, [theme]);
 
   const cycleTheme = useCallback(() => {
-    setThemeState((current) => {
-      const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
-      applyPreference(next);
-      return next;
-    });
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
   }, []);
 
   return { theme, setTheme, cycleTheme };
