@@ -236,7 +236,7 @@ const getDashboard = async ({
     transactions: monthlyTransactions,
     transactionCategoryRules,
     payslips: transactionPayslips,
-  );
+  });
   const categorizedCashFlowTransactions = applyTransactionCategoryRules(
     cashFlowTransactions,
     transactionCategoryRules,
