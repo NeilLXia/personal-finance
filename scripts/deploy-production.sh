@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
 
-sudo -iu personal-finance bash -lc '
+sudo -u personal-finance env HOME=/home/personal-finance bash -c '
+  export NVM_DIR="$HOME/.nvm"
+  source "$NVM_DIR/nvm.sh"
+
   cd /opt/personal-finance/node
   npm ci --omit=dev
 '
