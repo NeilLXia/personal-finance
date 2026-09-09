@@ -36,6 +36,7 @@
 
 .netWorthChartHeader {
   width: 100%;
+  min-height: var(--control-row-height);
   display: flex;
   justify-content: space-between;
   gap: var(--space-md);

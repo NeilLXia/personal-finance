@@ -20,6 +20,7 @@
 }
 
 .rangeSelector select {
+  box-sizing: border-box;
   min-height: 3rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -97,7 +98,7 @@
     var(--color-surface) 0%,
     var(--color-canvas) 100%
   );
-  padding: var(--space-md);
+  padding: var(--summary-card-padding);
 }
 
 .chartFrameTight {
@@ -182,7 +183,10 @@
 
 /* ---- Tab strip ------------------------------------------------------- */
 .tabRow {
+  box-sizing: border-box;
+  height: var(--control-row-height);
   display: inline-flex;
+  align-items: center;
   gap: var(--space-2xs);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -198,7 +202,9 @@
    full base. */
 .tab,
 .tabActive {
-  min-height: 2.8rem;
+  box-sizing: border-box;
+  height: calc(var(--control-row-height) - (var(--space-2xs) * 2) - 2px);
+  min-height: 0;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -208,7 +214,7 @@
   font-size: var(--text-sm);
   font-weight: 800;
   line-height: 1;
-  padding: var(--space-xs) var(--space-md);
+  padding: 0 var(--space-md);
 }
 
 .tab:hover,
