@@ -82,8 +82,10 @@ const NetWorthChart = ({
 
   return (
     <div className={shared.chartFrame}>
-      <div className={styles.netWorthChartHeader}>
-        <h2>Historical Net Worth</h2>
+      <div
+        className={`${shared.dashboardCardHeader} ${shared.dashboardCardHeaderWrap}`}
+      >
+        <h2 className={shared.dashboardCardTitle}>Historical Net Worth</h2>
         <RangeSelector
           label="Range"
           layout="inline"

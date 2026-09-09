@@ -111,7 +111,7 @@ const ExpenseBreakdownModule = ({
       />
       <div className={styles.legend}>
         <div className={styles.summaryHeader}>
-          <h2>{summaryTitle}</h2>
+          <h2 className={shared.dashboardSectionTitle}>{summaryTitle}</h2>
           <TabRow
             ariaLabel="Summary type"
             compact

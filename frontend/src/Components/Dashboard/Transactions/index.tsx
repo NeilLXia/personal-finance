@@ -246,7 +246,7 @@ const TransactionsModule = ({
       )}
       <div className={styles.transactionsHeader}>
         <div>
-          <h2>
+          <h2 className={shared.dashboardSectionTitle}>
             {monthLabel}{" "}
             {activeTab === "income"
               ? "income"

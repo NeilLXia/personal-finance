@@ -14,14 +14,8 @@
 }
 
 .incomeAllocationHeader {
-  min-height: var(--control-row-height);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-lg);
   color: var(--color-ink);
-  font-size: var(--text-sm);
+  font-size: var(--dashboard-label-size);
 }
 
 .incomeAllocationControls {
@@ -40,28 +34,26 @@
 
 .incomeAllocationIncome span {
   color: var(--color-text-muted);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: var(--dashboard-label-size);
+  font-weight: var(--font-weight-label);
 }
 
 .incomeAllocationIncome strong {
   color: var(--color-ink);
   font-size: var(--text-2xl);
+  font-weight: var(--font-weight-value);
   line-height: 1.05;
 }
 
 .incomeAllocationTitle {
   display: flex;
   flex-direction: column;
-  font-size: var(--text-xl);
-  font-weight: 700;
   gap: var(--space-3xs);
-  line-height: 1.2;
 }
 
 .incomeAllocationTitle span {
   color: var(--color-text-muted);
-  font-weight: 600;
+  font-weight: var(--font-weight-label);
 }
 
 .incomeAllocationRows {
@@ -83,8 +75,8 @@
 .incomeAllocationRowLabel {
   border-left: 0.4rem solid transparent;
   color: var(--color-text);
-  font-size: var(--text-sm);
-  font-weight: 700;
+  font-size: var(--dashboard-label-size);
+  font-weight: var(--font-weight-label);
   min-width: 0;
   overflow: hidden;
   padding-left: var(--space-xs);
@@ -143,7 +135,7 @@
 .incomeAllocationSegment span {
   color: var(--color-ink);
   font-size: var(--text-2xs);
-  font-weight: 700;
+  font-weight: var(--font-weight-value);
   line-height: 1;
   padding: 0 var(--space-xs);
   white-space: nowrap;
@@ -160,7 +152,8 @@
 
 .incomeAllocationResult strong {
   color: var(--color-ink);
-  font-size: var(--text-xs);
+  font-size: var(--dashboard-meta-size);
+  font-weight: var(--font-weight-value);
   text-align: right;
   white-space: nowrap;
 }
@@ -168,7 +161,7 @@
 .incomeAllocationResult small {
   color: var(--color-text-muted);
   font-size: var(--text-2xs);
-  font-weight: 600;
+  font-weight: var(--font-weight-label);
   overflow: hidden;
   text-align: right;
   text-overflow: ellipsis;

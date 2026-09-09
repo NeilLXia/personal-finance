@@ -55,9 +55,13 @@ const IncomeAllocationModule = ({
       {isLoading && (
         <span className={shared.loadingOverlay}>Updating allocation...</span>
       )}
-      <div className={styles.incomeAllocationHeader}>
+      <div
+        className={`${shared.dashboardCardHeader} ${shared.dashboardCardHeaderWrap} ${styles.incomeAllocationHeader}`}
+      >
         <div className={styles.incomeAllocationTitle}>
-          <strong>Income distribution</strong>
+          <strong className={shared.dashboardCardTitle}>
+            Income distribution
+          </strong>
         </div>
         <TabRow
           ariaLabel="Income allocation basis"

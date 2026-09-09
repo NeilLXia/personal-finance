@@ -24,31 +24,15 @@
   margin: 0 0 var(--space-2xs);
   color: var(--color-text-muted);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-label);
 }
 
 .totalBalance {
   display: block;
   color: var(--color-ink);
   font-size: var(--text-6xl);
+  font-weight: var(--font-weight-value);
   line-height: 1.1;
-}
-
-.netWorthChartHeader {
-  width: 100%;
-  min-height: var(--control-row-height);
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-md);
-  align-items: center;
-}
-
-.netWorthChartHeader h2 {
-  margin: 0;
-  color: var(--color-ink);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  line-height: 1.2;
 }
 
 .netWorthArea {
@@ -174,14 +158,14 @@
   background: var(--color-canvas);
   color: var(--color-text-muted);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: var(--font-weight-title);
 }
 
 .netWorthCategoryRow {
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-ink);
-  font-weight: 700;
+  font-weight: var(--font-weight-label);
 }
 
 .netWorthCategoryButton {
@@ -259,11 +243,6 @@
     }
 
   .netWorthTopRow {
-      align-items: flex-start;
-      flex-direction: column;
-    }
-
-  .netWorthChartHeader {
       align-items: flex-start;
       flex-direction: column;
     }
