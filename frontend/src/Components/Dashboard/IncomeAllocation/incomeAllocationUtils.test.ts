@@ -30,7 +30,11 @@ const incomeTransaction = (
 describe("getIncomeAllocationIncomeTotal", () => {
   it("returns the raw income figure when there are no payslips", () => {
     expect(
-      getIncomeAllocationIncomeTotal({ income: 5000, payslips: [], transactions: [] }),
+      getIncomeAllocationIncomeTotal({
+        income: 5000,
+        payslips: [],
+        transactions: [],
+      }),
     ).toBe(5000);
   });
 
@@ -79,7 +83,9 @@ describe("resolveSegmentTargetPercent", () => {
   });
 
   it("returns undefined when no target is set for the segment", () => {
-    expect(resolveSegmentTargetPercent(housingSegment, new Map())).toBeUndefined();
+    expect(
+      resolveSegmentTargetPercent(housingSegment, new Map()),
+    ).toBeUndefined();
   });
 
   it("ignores a zero / negative target", () => {
@@ -149,9 +155,9 @@ describe("getIncomeAllocationOffsetPercent", () => {
       chartRangePercent: segment.chartRangePercent,
     });
 
-    expect(segment.chartMinPercent + segment.chartRangePercent).toBeGreaterThanOrEqual(
-      55,
-    );
+    expect(
+      segment.chartMinPercent + segment.chartRangePercent,
+    ).toBeGreaterThanOrEqual(55);
     expect(offset).toBeLessThan(100);
   });
 });

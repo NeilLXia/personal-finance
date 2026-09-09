@@ -29,10 +29,7 @@ describe("useDashboardLogout", () => {
       setItem: vi.fn((key: string, value: string) =>
         localStorageItems.set(key, value),
       ),
-    } satisfies Pick<
-      Storage,
-      "clear" | "getItem" | "removeItem" | "setItem"
-    >);
+    } satisfies Pick<Storage, "clear" | "getItem" | "removeItem" | "setItem">);
     dashboardApi.logoutUser.mockResolvedValue(undefined);
   });
 
@@ -56,7 +53,9 @@ describe("useDashboardLogout", () => {
 
     await result.current();
 
-    await waitFor(() => expect(queryClient.getQueryCache().getAll()).toHaveLength(0));
+    await waitFor(() =>
+      expect(queryClient.getQueryCache().getAll()).toHaveLength(0),
+    );
     expect(localStorage.getItem(LINK_TOKEN_STORAGE_KEY)).toBeNull();
     expect(dispatch).toHaveBeenCalledWith({ type: "AUTH_EXPIRED" });
   });

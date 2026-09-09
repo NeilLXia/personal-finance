@@ -39,7 +39,8 @@ const ConnectionTile = ({
   });
   const canReconnect =
     Boolean(institution.plaid_item_id) &&
-    (!institution.has_active_access_token || institution.has_stale_access_token);
+    (!institution.has_active_access_token ||
+      institution.has_stale_access_token);
   const canRemove = Boolean(institution.plaid_item_id);
   const isRemoving = removeConnectionMutation.isPending;
   const statusLabel =

@@ -53,7 +53,6 @@ type TransactionsModuleProps = {
   onSaveManualDate: (transactionId: number, manualDate: string) => void;
 };
 
-
 const TransactionsModule = ({
   monthLabel,
   breakdownTab,
@@ -92,12 +91,14 @@ const TransactionsModule = ({
     date: "",
     amount: "",
   });
-  const [expandedPayslipId, setExpandedPayslipId] = useState<number | null>(null);
+  const [expandedPayslipId, setExpandedPayslipId] = useState<number | null>(
+    null,
+  );
   const [editingCategoryTransactionId, setEditingCategoryTransactionId] =
     useState<number | null>(null);
-  const [selectedTransactionIds, setSelectedTransactionIds] = useState<number[]>(
-    [],
-  );
+  const [selectedTransactionIds, setSelectedTransactionIds] = useState<
+    number[]
+  >([]);
   const [bulkCategory, setBulkCategory] = useState("");
   const [isBulkSavingCategory, setIsBulkSavingCategory] = useState(false);
 
@@ -218,7 +219,10 @@ const TransactionsModule = ({
     setIsBulkSavingCategory(true);
 
     try {
-      await onBulkSaveManualCategory(selectedVisibleTransactionIds, bulkCategory);
+      await onBulkSaveManualCategory(
+        selectedVisibleTransactionIds,
+        bulkCategory,
+      );
       setSelectedTransactionIds((currentTransactionIds) =>
         currentTransactionIds.filter(
           (transactionId) =>
@@ -285,7 +289,8 @@ const TransactionsModule = ({
           <div className={styles.excludedCategoryChips}>
             {excludedCategories.map((category) => {
               const selectionKey = getCategorySelectionKey(category);
-              const isSelected = selectedExcludedCategories.includes(selectionKey);
+              const isSelected =
+                selectedExcludedCategories.includes(selectionKey);
 
               return (
                 <button
@@ -326,7 +331,9 @@ const TransactionsModule = ({
           <label className={styles.transactionSelectAll}>
             <input
               checked={areAllVisibleTransactionsSelected}
-              disabled={visibleTransactions.length === 0 || isBulkSavingCategory}
+              disabled={
+                visibleTransactions.length === 0 || isBulkSavingCategory
+              }
               onChange={toggleSelectAllVisibleTransactions}
               type="checkbox"
             />
@@ -418,7 +425,9 @@ const TransactionsModule = ({
             selectedTransactionIds={selectedTransactionIds}
             sortColumn={sortColumn}
             visibleTransactions={visibleTransactions}
-            onEditingCategoryTransactionIdChange={setEditingCategoryTransactionId}
+            onEditingCategoryTransactionIdChange={
+              setEditingCategoryTransactionId
+            }
             onSaveManualCategory={onSaveManualCategory}
             onSaveManualDate={onSaveManualDate}
             onToggleTransactionSelection={toggleTransactionSelection}

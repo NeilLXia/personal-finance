@@ -1,0 +1,14 @@
+# Applied by Cloudflare Pages / Workers static assets when this file sits at the
+# build output root (Vite copies public/ into build/). See README "Deployment".
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data:; font-src 'self'; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/; script-src 'self' https://accounts.google.com/gsi/; connect-src 'self' https://accounts.google.com/gsi/; frame-src 'self' https://accounts.google.com/gsi/
+
+# Hashed, immutable build assets.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

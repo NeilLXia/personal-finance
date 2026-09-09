@@ -40,8 +40,7 @@ type LoginResponse = {
 const googleScriptId = "google-identity-services";
 let initializedGoogleClientId: string | null = null;
 let googleCredentialHandler:
-  | ((response: { credential?: string }) => Promise<void>)
-  | null = null;
+  ((response: { credential?: string }) => Promise<void>) | null = null;
 
 const Login = ({ onAuthenticated }: LoginProps) => {
   const { googleClientId, dispatch } = useAppContext();
@@ -121,7 +120,9 @@ const Login = ({ onAuthenticated }: LoginProps) => {
 
     const existingScript = document.getElementById(googleScriptId);
     if (existingScript) {
-      existingScript.addEventListener("load", renderGoogleButton, { once: true });
+      existingScript.addEventListener("load", renderGoogleButton, {
+        once: true,
+      });
       return () => {
         existingScript.removeEventListener("load", renderGoogleButton);
         googleCredentialHandler = null;
@@ -175,7 +176,9 @@ const Login = ({ onAuthenticated }: LoginProps) => {
           {googleClientId ? (
             <div ref={googleButtonRef} className={styles.googleButton} />
           ) : (
-            <div className={styles.notice}>Set GOOGLE_CLIENT_ID to enable Google login.</div>
+            <div className={styles.notice}>
+              Set GOOGLE_CLIENT_ID to enable Google login.
+            </div>
           )}
           <button
             type="button"

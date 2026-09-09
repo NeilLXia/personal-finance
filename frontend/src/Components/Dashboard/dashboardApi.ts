@@ -64,7 +64,10 @@ export const fetchDashboardTransactions = async (
 ): Promise<
   Pick<
     DashboardData,
-    "latest_transactions" | "payslips" | "transaction_categories" | "transaction_range"
+    | "latest_transactions"
+    | "payslips"
+    | "transaction_categories"
+    | "transaction_range"
   >
 > =>
   getJson<

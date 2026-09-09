@@ -1,9 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   deleteRequest,
@@ -205,144 +201,142 @@ const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
 
   return (
     <ModalShell ariaLabel="Transaction category rules" onClose={onClose}>
-        <div className={styles.modalHeader}>
-          <div>
-            <h2>Category rules</h2>
-            <p>Match Plaid category and vendor to a manual category.</p>
-          </div>
-          <button type="button" onClick={onClose}>
-            Close
-          </button>
+      <div className={styles.modalHeader}>
+        <div>
+          <h2>Category rules</h2>
+          <p>Match Plaid category and vendor to a manual category.</p>
         </div>
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </div>
 
-        <form
-          className={styles.ruleForm}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void saveRule();
-          }}
-        >
-          <label>
-            <span>Original category</span>
-            <input
-              onChange={(event) =>
-                setForm((currentForm) => ({
-                  ...currentForm,
-                  original_category: event.target.value,
-                }))
-              }
-              value={form.original_category}
-            />
-          </label>
-          <label>
-            <span>Vendor/name</span>
-            <input
-              onChange={(event) =>
-                setForm((currentForm) => ({
-                  ...currentForm,
-                  vendor_name: event.target.value,
-                }))
-              }
-              value={form.vendor_name}
-            />
-          </label>
-          <label>
-            <span>Manual category</span>
-            <select
-              onChange={(event) =>
-                setForm((currentForm) => ({
-                  ...currentForm,
-                  manual_category: event.target.value,
-                }))
-              }
-              value={form.manual_category}
-            >
-              <option value="">Choose category</option>
-              {manualExpenseCategories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Match</span>
-            <select
-              onChange={(event) =>
-                setForm((currentForm) => ({
-                  ...currentForm,
-                  match_type: event.target.value as TransactionCategoryRule["match_type"],
-                }))
-              }
-              value={form.match_type}
-            >
-              {ruleMatchTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="submit"
-            disabled={!canSaveRule}
+      <form
+        className={styles.ruleForm}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void saveRule();
+        }}
+      >
+        <label>
+          <span>Original category</span>
+          <input
+            onChange={(event) =>
+              setForm((currentForm) => ({
+                ...currentForm,
+                original_category: event.target.value,
+              }))
+            }
+            value={form.original_category}
+          />
+        </label>
+        <label>
+          <span>Vendor/name</span>
+          <input
+            onChange={(event) =>
+              setForm((currentForm) => ({
+                ...currentForm,
+                vendor_name: event.target.value,
+              }))
+            }
+            value={form.vendor_name}
+          />
+        </label>
+        <label>
+          <span>Manual category</span>
+          <select
+            onChange={(event) =>
+              setForm((currentForm) => ({
+                ...currentForm,
+                manual_category: event.target.value,
+              }))
+            }
+            value={form.manual_category}
           >
-            {form.id ? "Update rule" : "Add rule"}
-          </button>
-        </form>
+            <option value="">Choose category</option>
+            {manualExpenseCategories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>Match</span>
+          <select
+            onChange={(event) =>
+              setForm((currentForm) => ({
+                ...currentForm,
+                match_type: event.target
+                  .value as TransactionCategoryRule["match_type"],
+              }))
+            }
+            value={form.match_type}
+          >
+            {ruleMatchTypeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" disabled={!canSaveRule}>
+          {form.id ? "Update rule" : "Add rule"}
+        </button>
+      </form>
 
-        <input
-          className={styles.ruleSearch}
-          onChange={(event) => setSearchTerm(event.target.value)}
-          placeholder="Search rules"
-          type="search"
-          value={searchTerm}
-        />
+      <input
+        className={styles.ruleSearch}
+        onChange={(event) => setSearchTerm(event.target.value)}
+        placeholder="Search rules"
+        type="search"
+        value={searchTerm}
+      />
 
-        <div className={styles.ruleList}>
-          {rulesQuery.isLoading ? (
-            <p className={shared.emptyText}>Loading rules...</p>
-          ) : filteredRules.length === 0 ? (
-            <p className={shared.emptyText}>No matching rules.</p>
-          ) : (
-            filteredRules.map((rule) => (
-              <div className={styles.ruleRow} key={rule.id}>
-                <span>
-                  <strong>{rule.vendor_name}</strong>
-                  <small>
-                    {rule.original_category} ·{" "}
-                    {ruleMatchTypeOptions.find(
-                      (option) => option.value === rule.match_type,
-                    )?.label || "Exact"}
-                  </small>
-                </span>
-                <strong>{rule.manual_category}</strong>
-                <div className={styles.modalRowActions}>
-                  <ModalActionButton
-                    onClick={() =>
-                      setForm({
-                        id: rule.id,
-                        original_category: rule.original_category,
-                        vendor_name: rule.vendor_name,
-                        match_type: rule.match_type || "contains",
-                        manual_category: rule.manual_category,
-                      })
-                    }
-                  >
-                    Edit
-                  </ModalActionButton>
-                  <ModalActionButton
-                    variant="danger"
-                    disabled={deletingRuleId === rule.id}
-                    onClick={() => deleteRule(rule)}
-                  >
-                    {deletingRuleId === rule.id ? "Removing" : "Remove"}
-                  </ModalActionButton>
-                </div>
+      <div className={styles.ruleList}>
+        {rulesQuery.isLoading ? (
+          <p className={shared.emptyText}>Loading rules...</p>
+        ) : filteredRules.length === 0 ? (
+          <p className={shared.emptyText}>No matching rules.</p>
+        ) : (
+          filteredRules.map((rule) => (
+            <div className={styles.ruleRow} key={rule.id}>
+              <span>
+                <strong>{rule.vendor_name}</strong>
+                <small>
+                  {rule.original_category} ·{" "}
+                  {ruleMatchTypeOptions.find(
+                    (option) => option.value === rule.match_type,
+                  )?.label || "Exact"}
+                </small>
+              </span>
+              <strong>{rule.manual_category}</strong>
+              <div className={styles.modalRowActions}>
+                <ModalActionButton
+                  onClick={() =>
+                    setForm({
+                      id: rule.id,
+                      original_category: rule.original_category,
+                      vendor_name: rule.vendor_name,
+                      match_type: rule.match_type || "contains",
+                      manual_category: rule.manual_category,
+                    })
+                  }
+                >
+                  Edit
+                </ModalActionButton>
+                <ModalActionButton
+                  variant="danger"
+                  disabled={deletingRuleId === rule.id}
+                  onClick={() => deleteRule(rule)}
+                >
+                  {deletingRuleId === rule.id ? "Removing" : "Remove"}
+                </ModalActionButton>
               </div>
-            ))
-          )}
-        </div>
+            </div>
+          ))
+        )}
+      </div>
     </ModalShell>
   );
 };

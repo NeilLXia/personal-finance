@@ -5,7 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useDashboardData } from "./useDashboardData";
 import { createDashboardData } from "../../test/dashboardData";
 import { createQueryClientWrapper } from "../../test/queryClient";
-import type { DashboardData, DateRange, TransactionRange } from "./shared/types";
+import type {
+  DashboardData,
+  DateRange,
+  TransactionRange,
+} from "./shared/types";
 
 const dashboardApi = vi.hoisted(() => ({
   fetchDashboard: vi.fn(),
@@ -23,7 +27,10 @@ const incomeAllocationCustomRange = {
 const transaction = { id: 101 } as DashboardData["latest_transactions"][number];
 type TransactionSlice = Pick<
   DashboardData,
-  "latest_transactions" | "payslips" | "transaction_categories" | "transaction_range"
+  | "latest_transactions"
+  | "payslips"
+  | "transaction_categories"
+  | "transaction_range"
 >;
 const transactionSlice: TransactionSlice = {
   latest_transactions: [transaction],
@@ -97,9 +104,9 @@ describe("useDashboardData", () => {
     );
 
     expect(result.current.data?.latest_transactions).toEqual([transaction]);
-    expect(
-      dashboardApi.fetchDashboard.mock.calls[0][0].toString(),
-    ).toBe("month=2026-08");
+    expect(dashboardApi.fetchDashboard.mock.calls[0][0].toString()).toBe(
+      "month=2026-08",
+    );
     expect(
       dashboardApi.fetchDashboardTransactions.mock.calls[0][0].toString(),
     ).toBe("month=2026-08&transaction_range=1");

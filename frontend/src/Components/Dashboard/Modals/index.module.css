@@ -1012,58 +1012,58 @@
 
 @media (max-width: 720px) {
   .payslipRow {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .payslipRow {
-      gap: var(--space-sm);
-    }
+    gap: var(--space-sm);
+  }
 
   .payslipDetails {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .ruleForm {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .payslipUploadForm {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .realEstateForm {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .propertyCard {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .propertyCardHeader {
-      flex-direction: column;
-    }
+    flex-direction: column;
+  }
 
   .propertyCard dl {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .propertyCard dd {
-      text-align: left;
-    }
+    text-align: left;
+  }
 
   .ruleRow {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: 1fr;
+  }
 
   .modalRowActions {
-      justify-content: flex-start;
-    }
+    justify-content: flex-start;
+  }
 
   .propertyCard .modalRowActions {
-      justify-self: start;
-    }
+    justify-self: start;
+  }
 
   .modalHeader {
-      align-items: stretch;
-    }
+    align-items: stretch;
+  }
 }

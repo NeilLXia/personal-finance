@@ -108,7 +108,13 @@ migrations then starts the server) or your own process manager.
 When Cloudflare Pages serves the frontend, `/api/*` is proxied by the Pages
 Function. If the Pages project root is `frontend`, Cloudflare uses
 `frontend/functions/api/[[path]].js`. If the Pages project root is the repository
-root, Cloudflare uses `functions/api/[[path]].js`.
+root, Cloudflare uses `functions/api/[[path]].js`. Both entries, and the Workers
+`worker.js`, share one implementation in `frontend/functions/_proxy-backend.js`.
+
+Response headers (a `Content-Security-Policy` that allows Google Identity
+Services, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, and
+long-cache for `/assets/*`) are served from `frontend/public/_headers`, which
+Vite copies into `build/`.
 
 Cloudflare Workers static-assets configuration:
 
@@ -120,6 +126,8 @@ Root directory: frontend
 
 This uses `frontend/wrangler.jsonc` and `frontend/worker.js`. The Worker serves
 the Vite build from `frontend/build` and proxies `/api/*` to `BACKEND_ORIGIN`.
+For local `wrangler dev`, copy `frontend/.dev.vars.example` to `frontend/.dev.vars`
+and set `BACKEND_ORIGIN` there (gitignored).
 
 Cloudflare Pages Functions configuration:
 
@@ -131,17 +139,18 @@ Root directory: frontend
 
 With Pages Functions, Cloudflare uses `frontend/functions/api/[[path]].js`.
 
-Set this Cloudflare Pages variable for both production and preview environments
-as needed:
+Set `BACKEND_ORIGIN` as a Cloudflare dashboard variable for both production and
+preview environments (Workers: Settings → Variables; Pages: Settings →
+Environment variables). It is deliberately not committed to `wrangler.jsonc`.
 
 ```bash
-BACKEND_ORIGIN=http://ec2-18-188-72-11.us-east-2.compute.amazonaws.com:8001
+BACKEND_ORIGIN=https://api.example.com
 ```
 
 `BACKEND_ORIGIN` must include `http://` or `https://`, include the port when
-the backend is exposed directly on `APP_PORT`, and should not include `/api`.
-In production, prefer a real backend domain with a valid TLS certificate (for
-example `https://api.example.com`) over the default EC2 hostname.
+the backend is exposed directly on `APP_PORT`, and must not include `/api`. Use a
+real backend domain with a valid TLS certificate — a plaintext `http://` origin
+sends session cookies and Plaid data in the clear.
 
 On the backend EC2 instance, set `CORS_ORIGINS` to the exact Cloudflare frontend
 origins users visit, not to the backend origin:

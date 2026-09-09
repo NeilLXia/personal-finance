@@ -1,8 +1,4 @@
-import type {
-  BudgetTarget,
-  DateRange,
-  IncomeAllocationMode,
-} from "./types";
+import type { BudgetTarget, DateRange, IncomeAllocationMode } from "./types";
 
 export const getMonthDateRange = (month: string, trailingMonths: number) => {
   const [year, monthIndex] = month.split("-").map(Number);

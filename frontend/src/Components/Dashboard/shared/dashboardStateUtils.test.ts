@@ -104,8 +104,16 @@ describe("getCalculatedEffectiveSavingsTarget", () => {
 
   it("excludes taxes in net mode but includes them in gross mode", () => {
     const targets = [
-      budgetTarget({ category: "Housing", net_target_percent: 30, gross_target_percent: 25 }),
-      budgetTarget({ category: "Taxes", net_target_percent: 0, gross_target_percent: 15 }),
+      budgetTarget({
+        category: "Housing",
+        net_target_percent: 30,
+        gross_target_percent: 25,
+      }),
+      budgetTarget({
+        category: "Taxes",
+        net_target_percent: 0,
+        gross_target_percent: 15,
+      }),
     ];
     expect(getCalculatedEffectiveSavingsTarget(targets, "net")).toBe(70);
     expect(getCalculatedEffectiveSavingsTarget(targets, "gross")).toBe(60);

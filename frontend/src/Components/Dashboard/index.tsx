@@ -77,7 +77,8 @@ const Dashboard = () => {
   const transactions = useTransactions({
     activeTransactionTab,
     data,
-    selectedTransactionCategories: expenseBreakdown.selectedTransactionCategories,
+    selectedTransactionCategories:
+      expenseBreakdown.selectedTransactionCategories,
     setActiveTransactionTab,
     onError: reportError,
     transactionsInSelectedRange: expenseBreakdown.transactionsInSelectedRange,
@@ -158,7 +159,9 @@ const Dashboard = () => {
             isLoading={isIncomeAllocationLoading}
             onModeChange={incomeAllocation.setIncomeAllocationMode}
             onRangeChange={incomeAllocation.setIncomeAllocationRange}
-            onCustomRangeChange={incomeAllocation.setIncomeAllocationCustomRange}
+            onCustomRangeChange={
+              incomeAllocation.setIncomeAllocationCustomRange
+            }
           />
         </div>
       </div>
@@ -222,7 +225,9 @@ const Dashboard = () => {
             transactions.excludedCategoryNames,
           )
         }
-        onClearAllExcluded={() => transactions.setSelectedExcludedCategories([])}
+        onClearAllExcluded={() =>
+          transactions.setSelectedExcludedCategories([])
+        }
         onToggleExpenseReviewOnly={() =>
           transactions.setIsShowingExpenseReviewOnly(
             (isShowingReviewOnly) => !isShowingReviewOnly,

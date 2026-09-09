@@ -1,7 +1,4 @@
-import type {
-  ExpenseCategorySummary,
-  Payslip,
-} from "../shared/types";
+import type { ExpenseCategorySummary, Payslip } from "../shared/types";
 
 type PayslipAmountField = keyof Pick<
   Payslip,
@@ -81,10 +78,7 @@ export const sumPayslipField = (
   payslips: Payslip[],
   field: PayslipAmountField,
 ) =>
-  payslips.reduce(
-    (total, payslip) => total + Number(payslip[field] || 0),
-    0,
-  );
+  payslips.reduce((total, payslip) => total + Number(payslip[field] || 0), 0);
 
 const buildPayslipTotal = ({
   category,

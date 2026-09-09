@@ -8,10 +8,7 @@ import {
 import { formatCompactCurrency, formatCurrency } from "../shared/formatters";
 import styles from "./index.module.css";
 import shared from "../dashboard.shared.module.css";
-import type {
-  WealthChangeChart,
-  WealthChangeCategory,
-} from "../shared/types";
+import type { WealthChangeChart, WealthChangeCategory } from "../shared/types";
 
 type WealthChangeModuleProps = {
   wealthChangeChart: WealthChangeChart;

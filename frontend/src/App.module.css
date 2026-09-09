@@ -2,16 +2,15 @@
   box-sizing: border-box;
 }
 
+/* The shell is fixed-width and centered on tablet/desktop; at 720px it goes
+   fluid so the per-module `@media (max-width: 720px)` layouts take over. Keep
+   that 720px in sync with the module stylesheets. */
 .App {
   --app-content-min-width: 56rem;
   --app-gutter: var(--space-xl);
   --app-content-max-width: 144rem;
-  --app-min-width: calc(
-    var(--app-content-min-width) + (var(--app-gutter) * 2)
-  );
-  --app-max-width: calc(
-    var(--app-content-max-width) + (var(--app-gutter) * 2)
-  );
+  --app-min-width: calc(var(--app-content-min-width) + (var(--app-gutter) * 2));
+  --app-max-width: calc(var(--app-content-max-width) + (var(--app-gutter) * 2));
 }
 
 .appViewport {
@@ -32,7 +31,6 @@
   max-width: var(--app-max-width);
   margin: 0 auto;
   padding: 0 var(--app-gutter);
-  zoom: var(--app-scale, 1);
 }
 
 .loading {
@@ -44,12 +42,17 @@
   font-weight: 700;
 }
 
-@media (max-width: 592px) {
+@media (max-width: 720px) {
   .appViewport {
-    justify-content: flex-start;
+    /* Fluid shell: content wraps to fit, no sideways scroll. */
+    overflow-x: hidden;
   }
 
   .container {
-    flex-basis: var(--app-min-width);
+    flex-basis: auto;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 var(--space-md);
   }
 }

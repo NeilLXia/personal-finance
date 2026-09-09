@@ -6,9 +6,9 @@
   "assets": {
     "directory": "build",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
   },
-  "vars": {
-    "BACKEND_ORIGIN": "http://ec2-18-188-72-11.us-east-2.compute.amazonaws.com:8001"
-  }
+  // BACKEND_ORIGIN is intentionally not set here. Configure it per environment as
+  // a Cloudflare dashboard variable for deploys, and in a gitignored .dev.vars
+  // (see .dev.vars.example) for local `wrangler dev`.
 }

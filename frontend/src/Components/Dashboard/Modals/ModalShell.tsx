@@ -30,7 +30,8 @@ const ModalShell = ({
   useEffect(() => {
     const previouslyFocusedElement = document.activeElement;
     const panel = panelRef.current;
-    const focusableElement = panel?.querySelector<HTMLElement>(focusableSelector);
+    const focusableElement =
+      panel?.querySelector<HTMLElement>(focusableSelector);
     (focusableElement || panel)?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {

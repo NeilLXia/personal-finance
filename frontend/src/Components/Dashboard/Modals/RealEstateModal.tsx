@@ -1,9 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   deleteRequest,
@@ -97,10 +93,7 @@ const sortProperties = (items: Property[]) =>
     first.address.localeCompare(second.address),
   );
 
-const RealEstateModal = ({
-  onClose,
-  onError,
-}: RealEstateModalProps) => {
+const RealEstateModal = ({ onClose, onError }: RealEstateModalProps) => {
   const [address, setAddress] = useState("");
   const [loanBalance, setLoanBalance] = useState("");
   const [annualInterestRate, setAnnualInterestRate] = useState("");
@@ -226,11 +219,9 @@ const RealEstateModal = ({
 
   const properties = propertiesQuery.data || [];
   const canSave = useMemo(() => {
-    const numericFields = [
-      loanBalance,
-      annualInterestRate,
-      monthlyPayment,
-    ].map((value) => Number(value));
+    const numericFields = [loanBalance, annualInterestRate, monthlyPayment].map(
+      (value) => Number(value),
+    );
 
     return (
       address.trim().length > 0 &&
@@ -368,7 +359,9 @@ const RealEstateModal = ({
             )}
           </div>
           <small className={styles.addressSearchStatus}>
-            {isSearchingAddresses ? "Searching addresses..." : addressSearchStatus}
+            {isSearchingAddresses
+              ? "Searching addresses..."
+              : addressSearchStatus}
           </small>
         </label>
         <label>

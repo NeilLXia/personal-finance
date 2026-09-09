@@ -1,0 +1,6 @@
+# Copy to `.dev.vars` for local `wrangler dev`. This file mirrors the variables
+# you set in the Cloudflare dashboard for deployed environments. `.dev.vars` is
+# gitignored.
+
+BACKEND_ORIGIN=http://127.0.0.1:8001
+# BACKEND_TIMEOUT_MS=10000

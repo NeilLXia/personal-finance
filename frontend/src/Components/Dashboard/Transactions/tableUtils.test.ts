@@ -69,7 +69,9 @@ describe("getTransactionSelectionSummary", () => {
   });
 
   it("handles the single-transaction case", () => {
-    const summary = getTransactionSelectionSummary([transaction({ amount: 20 })]);
+    const summary = getTransactionSelectionSummary([
+      transaction({ amount: 20 }),
+    ]);
     expect(summary.count).toBe("1 transaction");
     expect(summary.dateRange).not.toContain(" - ");
   });

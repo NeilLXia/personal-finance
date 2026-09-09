@@ -23,10 +23,7 @@ const sumCategories = (
   }, 0);
 };
 
-const sumPayslipFields = (
-  payslips: Payslip[],
-  fields: Array<keyof Payslip>,
-) =>
+const sumPayslipFields = (payslips: Payslip[], fields: Array<keyof Payslip>) =>
   payslips.reduce(
     (total, payslip) =>
       total +
@@ -51,8 +48,8 @@ export const resolveSegmentTargetPercent = (
 ) => {
   const targetPercent =
     segment.key === "savings"
-      ? targetsByCategory.get("effective savings") ??
-        targetsByCategory.get("savings")
+      ? (targetsByCategory.get("effective savings") ??
+        targetsByCategory.get("savings"))
       : targetsByCategory.get(segment.label.trim().toLowerCase());
 
   return typeof targetPercent === "number" && targetPercent > 0
@@ -149,34 +146,40 @@ export const buildIncomeAllocationSegments = ({
    */
   targetPercents?: number[];
 }) => {
-  const denominator = roundCurrency(getIncomeAllocationIncomeTotal({
-    income,
-    mode,
-    payslips,
-    transactions,
-  }));
+  const denominator = roundCurrency(
+    getIncomeAllocationIncomeTotal({
+      income,
+      mode,
+      payslips,
+      transactions,
+    }),
+  );
 
   if (denominator <= 0) {
     return [];
   }
 
   const housing = roundCurrency(sumCategories(categories, ["Housing"]));
-  const discretionary = roundCurrency(sumCategories(categories, [
-    "Entertainment",
-    "Shopping",
-    "Gifts",
-    "Travel",
-    "Fitness",
-  ]));
-  const essentials = roundCurrency(sumCategories(categories, [
-    "Transportation",
-    "Bills",
-    "Insurance",
-    "Health",
-    "Personal care",
-    "Groceries",
-    "Dining",
-  ]));
+  const discretionary = roundCurrency(
+    sumCategories(categories, [
+      "Entertainment",
+      "Shopping",
+      "Gifts",
+      "Travel",
+      "Fitness",
+    ]),
+  );
+  const essentials = roundCurrency(
+    sumCategories(categories, [
+      "Transportation",
+      "Bills",
+      "Insurance",
+      "Health",
+      "Personal care",
+      "Groceries",
+      "Dining",
+    ]),
+  );
   const grossEssentialDeductions =
     mode === "gross"
       ? roundCurrency(
@@ -202,7 +205,9 @@ export const buildIncomeAllocationSegments = ({
   const realEstateEquityOffset = roundCurrency(
     Math.min(housing, Math.max(0, realEstateEquity)),
   );
-  const netHousing = roundCurrency(Math.max(0, housing - realEstateEquityOffset));
+  const netHousing = roundCurrency(
+    Math.max(0, housing - realEstateEquityOffset),
+  );
   const essentialTotal = roundCurrency(essentials + grossEssentialDeductions);
   const effectiveSavings = roundCurrency(
     denominator -
@@ -262,8 +267,12 @@ export const buildIncomeAllocationSegments = ({
     ...segment,
     percent: (segment.amount / denominator) * 100,
   }));
-  const minSegmentPercent = Math.min(...rawSegments.map((segment) => segment.percent));
-  const maxSegmentPercent = Math.max(...rawSegments.map((segment) => segment.percent));
+  const minSegmentPercent = Math.min(
+    ...rawSegments.map((segment) => segment.percent),
+  );
+  const maxSegmentPercent = Math.max(
+    ...rawSegments.map((segment) => segment.percent),
+  );
   const maxTargetPercent = Math.max(
     0,
     ...targetPercents.filter((percent) => Number.isFinite(percent)),
@@ -274,8 +283,7 @@ export const buildIncomeAllocationSegments = ({
   const chartMaxPercent =
     chartUpperBound > 30 ? Math.ceil(chartUpperBound / 10) * 10 : 30;
   const chartRangePercent = chartMaxPercent - chartMinPercent;
-  const zeroLinePercent =
-    ((0 - chartMinPercent) / chartRangePercent) * 100;
+  const zeroLinePercent = ((0 - chartMinPercent) / chartRangePercent) * 100;
 
   return rawSegments.map((segment) => {
     const { percent } = segment;

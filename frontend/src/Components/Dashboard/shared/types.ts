@@ -170,10 +170,7 @@ export type NetWorthChart = {
 };
 
 export type WealthChangeCategoryKey =
-  | "expenses"
-  | "savings"
-  | "real_estate_equity"
-  | "asset_appreciation";
+  "expenses" | "savings" | "real_estate_equity" | "asset_appreciation";
 
 export type WealthChangeCategory = {
   key: WealthChangeCategoryKey;
@@ -241,10 +238,7 @@ export type NetWorthTrailingMonths = 12 | 24 | 36 | 60 | 120 | "all";
 export type BreakdownTab = "expenses" | "income";
 
 export type TransactionTableTab =
-  | "expenses"
-  | "excluded"
-  | "income"
-  | "other_income";
+  "expenses" | "excluded" | "income" | "other_income";
 
 export type Transaction = {
   id: number;

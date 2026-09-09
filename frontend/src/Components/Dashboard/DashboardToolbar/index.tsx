@@ -110,7 +110,8 @@ const DashboardToolbar = ({
         const data = await createLinkToken();
         dispatch({
           type: "SET_LINK_TOKEN",
-          linkToken: typeof data.link_token === "string" ? data.link_token : null,
+          linkToken:
+            typeof data.link_token === "string" ? data.link_token : null,
         });
         await invalidateDashboard();
         resetPlaidLink();

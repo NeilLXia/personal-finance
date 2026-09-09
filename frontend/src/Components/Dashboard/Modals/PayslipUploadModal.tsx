@@ -1,9 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getJson, postFormData } from "../../../shared/apiClient";
 import { dashboardPayloadKeys, resourceKeys } from "../dashboardQueryKeys";
@@ -89,7 +85,11 @@ const PayslipUploadModal = ({ onClose, onError }: PayslipUploadModalProps) => {
     [payslipsQuery.data],
   );
 
-  useReportedQueryError(payslipsQuery.error, "Unable to load payslips", onError);
+  useReportedQueryError(
+    payslipsQuery.error,
+    "Unable to load payslips",
+    onError,
+  );
 
   const uploadPayslip = () => {
     if (!selectedFile || uploadPayslipMutation.isPending) {
@@ -146,8 +146,8 @@ const PayslipUploadModal = ({ onClose, onError }: PayslipUploadModalProps) => {
         <div className={styles.payslipUploadSummary}>
           <strong>{lastUpload.original_filename}</strong>
           <span>
-            {lastUpload.imported_count} imported, {lastUpload.skipped_count} skipped
-            from {lastUpload.page_count} page
+            {lastUpload.imported_count} imported, {lastUpload.skipped_count}{" "}
+            skipped from {lastUpload.page_count} page
             {lastUpload.page_count === 1 ? "" : "s"}.
           </span>
         </div>
@@ -169,7 +169,9 @@ const PayslipUploadModal = ({ onClose, onError }: PayslipUploadModalProps) => {
                 </span>
               </div>
               <div>
-                <strong>{payslip.employer_name || "Employer unavailable"}</strong>
+                <strong>
+                  {payslip.employer_name || "Employer unavailable"}
+                </strong>
                 <span>{payslip.hours_worked || "0"} hours</span>
               </div>
               <div>

@@ -5,10 +5,7 @@ import { getCategorySelectionKey } from "../../shared/dashboardDataUtils";
 import { formatCurrency } from "../../shared/formatters";
 import shared from "../../dashboard.shared.module.css";
 import styles from "./index.module.css";
-import type {
-  BreakdownTab,
-  ExpenseCategorySummary,
-} from "../../shared/types";
+import type { BreakdownTab, ExpenseCategorySummary } from "../../shared/types";
 
 type SummaryAmountProps = {
   amount: number;
@@ -131,7 +128,9 @@ const LegendRows = ({
               isHovered ? styles.legendRowActive : ""
             }`}
             key={category.category}
-            onMouseEnter={() => onHoveredPayslipCategoryChange(category.category)}
+            onMouseEnter={() =>
+              onHoveredPayslipCategoryChange(category.category)
+            }
             onMouseLeave={() => onHoveredPayslipCategoryChange(null)}
           >
             <span
