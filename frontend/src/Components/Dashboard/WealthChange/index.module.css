@@ -8,19 +8,6 @@
   padding-top: var(--space-6xl);
 }
 
-.wealthChangeChartTitle {
-  width: 100%;
-  min-height: var(--control-row-height);
-  display: flex;
-  align-items: center;
-  margin: 0;
-  color: var(--color-ink);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  line-height: 1.2;
-  text-align: left;
-}
-
 .wealthChangeZeroLine {
   stroke: var(--color-text);
   stroke-width: 0.5;

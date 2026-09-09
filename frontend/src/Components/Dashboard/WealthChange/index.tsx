@@ -32,7 +32,7 @@ const WealthChangeModule = ({
   return (
     <section className={styles.wealthChangeSection}>
       <div className={`${shared.chartFrame} ${shared.chartFrameTight}`}>
-        <h2 className={styles.wealthChangeChartTitle}>Wealth change</h2>
+        <h2 className={shared.dashboardCardTitle}>Wealth change</h2>
         {wealthChangeChart.bars.length === 0 ? (
           <p className={shared.emptyText}>No wealth change data yet.</p>
         ) : (

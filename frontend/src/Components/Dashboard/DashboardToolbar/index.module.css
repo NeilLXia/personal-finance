@@ -37,7 +37,7 @@
   cursor: pointer;
   font: inherit;
   font-size: var(--text-md);
-  font-weight: 700;
+  font-weight: var(--font-weight-control);
   line-height: 1;
   padding: 0 var(--space-lg);
 }
@@ -112,7 +112,7 @@
   cursor: pointer;
   font: inherit;
   font-size: var(--text-md);
-  font-weight: 700;
+  font-weight: var(--font-weight-control);
   padding: var(--space-sm) var(--space-md);
   text-align: left;
 }

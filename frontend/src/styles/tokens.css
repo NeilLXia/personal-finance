@@ -55,6 +55,16 @@
     sans-serif;
   --font-mono: Inconsolata, Consolas, "Courier New", monospace;
 
+  --font-weight-label: 700;
+  --font-weight-control: 700;
+  --font-weight-title: 800;
+  --font-weight-value: 800;
+  --dashboard-meta-size: var(--text-xs);
+  --dashboard-label-size: var(--text-sm);
+  --dashboard-control-size: var(--text-sm);
+  --dashboard-card-title-size: var(--text-xl);
+  --dashboard-section-title-size: var(--text-2xl);
+
   /* ---- Colour: text --------------------------------------------------------- */
   --color-ink: #172033; /* headings, primary values */
   --color-text: #405064; /* default body text */
