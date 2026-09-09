@@ -12,6 +12,14 @@ const compactCurrencyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
 });
 
+const tooltipCompactCurrencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  notation: "compact",
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
 const signedCurrencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -24,6 +32,11 @@ export const formatCurrency = (value: string | number | null | undefined) =>
 export const formatCompactCurrency = (value: number) =>
   compactCurrencyFormatter.format(value);
 
+export const formatTooltipCompactCurrency = (value: number) =>
+  Math.abs(value) >= 1000
+    ? tooltipCompactCurrencyFormatter.format(value)
+    : compactCurrencyFormatter.format(value);
+
 export const maskCurrency = (
   value: string | number | null | undefined,
   isMasked: boolean,
@@ -31,6 +44,9 @@ export const maskCurrency = (
 
 export const maskCompactCurrency = (value: number, isMasked: boolean) =>
   isMasked ? "$XXX,XXX" : formatCompactCurrency(value);
+
+export const maskTooltipCompactCurrency = (value: number, isMasked: boolean) =>
+  isMasked ? "$XXX,XXX" : formatTooltipCompactCurrency(value);
 
 export const formatTransactionAmount = (value: string | number) => {
   const amount = Number(value);
