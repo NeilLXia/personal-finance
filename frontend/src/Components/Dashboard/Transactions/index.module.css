@@ -507,8 +507,8 @@
 }
 
 .transactionName {
-  color: var(--color-text) !important;
-  font-size: var(--text-sm) !important;
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
 }
 
 .transactionCategories {
