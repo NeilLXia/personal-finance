@@ -635,6 +635,12 @@
       gap: var(--space-sm);
     }
 
+  .transactionSelectCell {
+      width: 100%;
+      justify-content: flex-end;
+      padding-top: 0;
+    }
+
   .debit {
       text-align: left;
     }
