@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { MouseEvent } from "react";
 
 import {
@@ -12,6 +12,10 @@ import {
   maskTooltipCompactCurrency,
 } from "../shared/formatters";
 import shared from "../dashboard.shared.module.css";
+import ChartTooltip, {
+  chartTooltipMetrics,
+  getChartTooltipHeight,
+} from "../shared/ChartTooltip";
 import RangeSelector from "../shared/RangeSelector";
 import styles from "./index.module.css";
 import type {
@@ -25,14 +29,6 @@ type NetWorthChartProps = {
   trailingMonths: NetWorthTrailingMonths;
   onTrailingMonthsChange: (trailingMonths: NetWorthTrailingMonths) => void;
 };
-
-const tooltipWidth = 66;
-const tooltipPadding = 4;
-const tooltipLabelXOffset = 7;
-const tooltipHeaderBaselineOffset = 5;
-const tooltipRowStartOffset = 12;
-const tooltipRowHeight = 5.6;
-const tooltipValueXOffset = tooltipWidth - 4;
 
 const getTooltipCategoryLabel = (
   category: NetWorthChartData["hoverPoints"][number]["categories"][number],
@@ -78,12 +74,15 @@ const NetWorthChart = ({
     setHoveredPoint(nearestPoint);
   };
   const tooltipHeight = hoveredPoint
-    ? 12 + hoveredPoint.categories.length * tooltipRowHeight
+    ? getChartTooltipHeight(hoveredPoint.categories.length)
     : 0;
   const tooltipX = hoveredPoint
     ? Math.min(
-        Math.max(hoveredPoint.x + tooltipPadding, chartBounds.left),
-        chartBounds.right - tooltipWidth,
+        Math.max(
+          hoveredPoint.x + chartTooltipMetrics.padding,
+          chartBounds.left,
+        ),
+        chartBounds.right - chartTooltipMetrics.width,
       )
     : 0;
   const tooltipY = hoveredPoint
@@ -192,7 +191,7 @@ const NetWorthChart = ({
               height={chartBounds.bottom - chartBounds.top}
             />
             {hoveredPoint && (
-              <g className={styles.netWorthTooltip}>
+              <g>
                 <line
                   className={styles.netWorthHoverLine}
                   x1={hoveredPoint.x}
@@ -206,65 +205,18 @@ const NetWorthChart = ({
                   cy={hoveredPoint.y}
                   r="1.6"
                 />
-                <rect
-                  className={styles.netWorthTooltipBox}
+                <ChartTooltip
+                  title={formatShortDate(hoveredPoint.date)}
+                  value={formatBalanceValue(hoveredPoint.total)}
                   x={tooltipX}
                   y={tooltipY}
-                  width={tooltipWidth}
-                  height={tooltipHeight}
-                  rx="2"
+                  rows={hoveredPoint.categories.map((category) => ({
+                    key: category.key,
+                    label: getTooltipCategoryLabel(category),
+                    value: formatBalanceValue(category.value),
+                    color: category.color,
+                  }))}
                 />
-                <text
-                  className={styles.netWorthTooltipTitle}
-                  x={tooltipX + 3}
-                  y={tooltipY + tooltipHeaderBaselineOffset}
-                >
-                  {formatShortDate(hoveredPoint.date)}
-                </text>
-                <text
-                  className={styles.netWorthTooltipTotal}
-                  x={tooltipX + tooltipValueXOffset}
-                  y={tooltipY + tooltipHeaderBaselineOffset}
-                >
-                  {formatBalanceValue(hoveredPoint.total)}
-                </text>
-                {hoveredPoint.categories.map((category, index) => (
-                  <Fragment key={category.key}>
-                    <circle
-                      cx={tooltipX + 4}
-                      cy={
-                        tooltipY +
-                        tooltipRowStartOffset -
-                        1 +
-                        index * tooltipRowHeight
-                      }
-                      style={{ fill: category.color }}
-                      r="0.9"
-                    />
-                    <text
-                      className={styles.netWorthTooltipText}
-                      x={tooltipX + tooltipLabelXOffset}
-                      y={
-                        tooltipY +
-                        tooltipRowStartOffset +
-                        index * tooltipRowHeight
-                      }
-                    >
-                      {getTooltipCategoryLabel(category)}
-                    </text>
-                    <text
-                      className={styles.netWorthTooltipValue}
-                      x={tooltipX + tooltipValueXOffset}
-                      y={
-                        tooltipY +
-                        tooltipRowStartOffset +
-                        index * tooltipRowHeight
-                      }
-                    >
-                      {formatBalanceValue(category.value)}
-                    </text>
-                  </Fragment>
-                ))}
               </g>
             )}
           </svg>

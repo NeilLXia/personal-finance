@@ -9,7 +9,11 @@ import CategoryRulesModal from "./Modals/CategoryRulesModal";
 import DashboardToolbar from "./DashboardToolbar";
 import ExpenseBreakdownModule from "./Transactions/Breakdown";
 import { useExpenseBreakdown } from "./Transactions/useExpenseBreakdown";
-import NetWorthModule from "./NetWorth";
+import {
+  NetWorthBreakdownPanel,
+  NetWorthChartPanel,
+  NetWorthSummary,
+} from "./NetWorth";
 import { useNetWorth } from "./NetWorth/useNetWorth";
 import PayslipUploadModal from "./Modals/PayslipUploadModal";
 import RealEstateModal from "./Modals/RealEstateModal";
@@ -49,6 +53,7 @@ const Dashboard = () => {
     isTransactionRangeLoading,
     isIncomeAllocationLoading,
     isManualRefreshLoading,
+    isSnapshotLoading,
   } = useDashboardData(filters);
   const netWorth = useNetWorth({
     data,
@@ -128,115 +133,138 @@ const Dashboard = () => {
         onLogout={logout}
       />
 
-      <div className={styles.summaryGrid}>
-        <NetWorthModule
-          currentNetWorth={netWorth.currentNetWorth}
-          chart={netWorth.chart}
-          breakdown={netWorth.breakdown}
-          breakdownDates={netWorth.breakdownDates}
-          tableColumns={netWorth.tableColumns}
-          trailingMonths={netWorth.trailingMonths}
-          areBalancesHidden={netWorth.areBalancesHidden}
-          openCategories={netWorth.openCategories}
-          onTrailingMonthsChange={netWorth.setTrailingMonths}
-          onToggleCategory={netWorth.toggleCategory}
-        />
-        <div className={styles.rightColumn}>
-          <WealthChangeModule
-            wealthChangeChart={wealthChange.wealthChangeChart}
-            categories={wealthChange.wealthChangeCategories}
-            hoveredBarId={wealthChange.hoveredWealthChangeBarId}
-            onHoveredBarChange={wealthChange.setHoveredWealthChangeBarId}
-          />
-          <IncomeAllocationModule
-            areBalancesHidden={netWorth.areBalancesHidden}
-            incomeLabel={data.income_allocation.label}
-            income={incomeAllocation.income}
-            mode={incomeAllocation.incomeAllocationMode}
-            range={incomeAllocation.incomeAllocationRange}
-            customRange={incomeAllocation.incomeAllocationCustomRange}
-            segments={incomeAllocation.incomeAllocationSegments}
-            isLoading={isIncomeAllocationLoading}
-            onModeChange={incomeAllocation.setIncomeAllocationMode}
-            onRangeChange={incomeAllocation.setIncomeAllocationRange}
-            onCustomRangeChange={
-              incomeAllocation.setIncomeAllocationCustomRange
-            }
-          />
+      <div className={styles.dashboardContent} aria-busy={isSnapshotLoading}>
+        {isSnapshotLoading && (
+          <div className={styles.snapshotLoadingOverlay} aria-hidden="true" />
+        )}
+        <div className={styles.summaryGrid}>
+          <div className={styles.netWorthSummaryArea}>
+            <NetWorthSummary
+              areBalancesHidden={netWorth.areBalancesHidden}
+              currentNetWorth={netWorth.currentNetWorth}
+            />
+          </div>
+          <div className={styles.netWorthChartArea}>
+            <NetWorthChartPanel
+              areBalancesHidden={netWorth.areBalancesHidden}
+              chart={netWorth.chart}
+              trailingMonths={netWorth.trailingMonths}
+              onTrailingMonthsChange={netWorth.setTrailingMonths}
+            />
+          </div>
+          <div className={styles.wealthChangeArea}>
+            <WealthChangeModule
+              wealthChangeChart={wealthChange.wealthChangeChart}
+              categories={wealthChange.wealthChangeCategories}
+              hoveredBarId={wealthChange.hoveredWealthChangeBarId}
+              onHoveredBarChange={wealthChange.setHoveredWealthChangeBarId}
+            />
+          </div>
+          <div className={styles.netWorthBreakdownArea}>
+            <NetWorthBreakdownPanel
+              areBalancesHidden={netWorth.areBalancesHidden}
+              breakdown={netWorth.breakdown}
+              breakdownDates={netWorth.breakdownDates}
+              openCategories={netWorth.openCategories}
+              tableColumns={netWorth.tableColumns}
+              onToggleCategory={netWorth.toggleCategory}
+            />
+          </div>
+          <div className={styles.incomeAllocationArea}>
+            <IncomeAllocationModule
+              areBalancesHidden={netWorth.areBalancesHidden}
+              incomeLabel={data.income_allocation.label}
+              income={incomeAllocation.income}
+              mode={incomeAllocation.incomeAllocationMode}
+              range={incomeAllocation.incomeAllocationRange}
+              customRange={incomeAllocation.incomeAllocationCustomRange}
+              segments={incomeAllocation.incomeAllocationSegments}
+              isLoading={isIncomeAllocationLoading}
+              onModeChange={incomeAllocation.setIncomeAllocationMode}
+              onRangeChange={incomeAllocation.setIncomeAllocationRange}
+              onCustomRangeChange={
+                incomeAllocation.setIncomeAllocationCustomRange
+              }
+            />
+          </div>
         </div>
+
+        <ExpenseBreakdownModule
+          activeTab={expenseBreakdown.activeBreakdownTab}
+          monthLabel={expenseBreakdown.transactionRangeLabel}
+          expenseTotal={expenseBreakdown.transactionExpenseTotal}
+          expenseCategories={expenseBreakdown.expenseCategorySummaries}
+          pieSlices={expenseBreakdown.transactionPieSlices}
+          payslipGrossTotal={incomeBreakdown.payslipGrossTotal}
+          payslipCategories={incomeBreakdown.payslipCategories}
+          payslipPieSlices={incomeBreakdown.payslipPieSlices}
+          hoveredPayslipCategory={incomeBreakdown.hoveredPayslipCategory}
+          openPayslipGroups={incomeBreakdown.openPayslipGroups}
+          transactionRange={expenseBreakdown.transactionRange}
+          transactionCustomRange={expenseBreakdown.transactionCustomRange}
+          isLoading={isTransactionRangeLoading}
+          selectedCategories={expenseBreakdown.selectedTransactionCategories}
+          openGroups={expenseBreakdown.openExpenseCategoryGroups}
+          hoveredCategory={expenseBreakdown.hoveredTransactionCategory}
+          onHoveredCategoryChange={
+            expenseBreakdown.setHoveredTransactionCategory
+          }
+          onHoveredPayslipCategoryChange={
+            incomeBreakdown.setHoveredPayslipCategory
+          }
+          onTogglePayslipGroup={incomeBreakdown.togglePayslipGroup}
+          onToggleGroup={expenseBreakdown.toggleExpenseCategoryGroup}
+          onToggleCategory={expenseBreakdown.toggleTransactionCategory}
+          onToggleCategoryGroupSelection={
+            expenseBreakdown.toggleTransactionCategoryGroupSelection
+          }
+          onActiveTabChange={expenseBreakdown.changeBreakdownTab}
+          onTransactionRangeChange={expenseBreakdown.changeTransactionRange}
+          onTransactionCustomRangeChange={
+            expenseBreakdown.changeTransactionCustomRange
+          }
+          onSelectAll={() =>
+            expenseBreakdown.setSelectedTransactionCategories(
+              expenseBreakdown.transactionCategoryNames,
+            )
+          }
+          onClearAll={() =>
+            expenseBreakdown.setSelectedTransactionCategories([])
+          }
+        />
+
+        <TransactionsModule
+          monthLabel={expenseBreakdown.transactionRangeLabel}
+          breakdownTab={expenseBreakdown.activeBreakdownTab}
+          activeTab={activeTransactionTab}
+          transactions={transactions.filteredTransactions}
+          payslips={data.payslips}
+          isLoading={isTransactionRangeLoading}
+          excludedCategories={transactions.excludedCategories}
+          selectedExcludedCategories={transactions.selectedExcludedCategories}
+          isShowingExpenseReviewOnly={transactions.isShowingExpenseReviewOnly}
+          savingCategoryTransactionId={transactions.savingCategoryTransactionId}
+          savingDateTransactionId={transactions.savingDateTransactionId}
+          onActiveTabChange={transactions.setActiveTransactionTab}
+          onToggleExcludedCategory={transactions.toggleExcludedCategory}
+          onSelectAllExcluded={() =>
+            transactions.setSelectedExcludedCategories(
+              transactions.excludedCategoryNames,
+            )
+          }
+          onClearAllExcluded={() =>
+            transactions.setSelectedExcludedCategories([])
+          }
+          onToggleExpenseReviewOnly={() =>
+            transactions.setIsShowingExpenseReviewOnly(
+              (isShowingReviewOnly) => !isShowingReviewOnly,
+            )
+          }
+          onSaveManualCategory={transactions.saveManualCategory}
+          onBulkSaveManualCategory={transactions.saveBulkManualCategory}
+          onSaveManualDate={transactions.saveManualDate}
+        />
       </div>
-
-      <ExpenseBreakdownModule
-        activeTab={expenseBreakdown.activeBreakdownTab}
-        monthLabel={expenseBreakdown.transactionRangeLabel}
-        expenseTotal={expenseBreakdown.transactionExpenseTotal}
-        expenseCategories={expenseBreakdown.expenseCategorySummaries}
-        pieSlices={expenseBreakdown.transactionPieSlices}
-        payslipGrossTotal={incomeBreakdown.payslipGrossTotal}
-        payslipCategories={incomeBreakdown.payslipCategories}
-        payslipPieSlices={incomeBreakdown.payslipPieSlices}
-        hoveredPayslipCategory={incomeBreakdown.hoveredPayslipCategory}
-        openPayslipGroups={incomeBreakdown.openPayslipGroups}
-        transactionRange={expenseBreakdown.transactionRange}
-        transactionCustomRange={expenseBreakdown.transactionCustomRange}
-        isLoading={isTransactionRangeLoading}
-        selectedCategories={expenseBreakdown.selectedTransactionCategories}
-        openGroups={expenseBreakdown.openExpenseCategoryGroups}
-        hoveredCategory={expenseBreakdown.hoveredTransactionCategory}
-        onHoveredCategoryChange={expenseBreakdown.setHoveredTransactionCategory}
-        onHoveredPayslipCategoryChange={
-          incomeBreakdown.setHoveredPayslipCategory
-        }
-        onTogglePayslipGroup={incomeBreakdown.togglePayslipGroup}
-        onToggleGroup={expenseBreakdown.toggleExpenseCategoryGroup}
-        onToggleCategory={expenseBreakdown.toggleTransactionCategory}
-        onToggleCategoryGroupSelection={
-          expenseBreakdown.toggleTransactionCategoryGroupSelection
-        }
-        onActiveTabChange={expenseBreakdown.changeBreakdownTab}
-        onTransactionRangeChange={expenseBreakdown.changeTransactionRange}
-        onTransactionCustomRangeChange={
-          expenseBreakdown.changeTransactionCustomRange
-        }
-        onSelectAll={() =>
-          expenseBreakdown.setSelectedTransactionCategories(
-            expenseBreakdown.transactionCategoryNames,
-          )
-        }
-        onClearAll={() => expenseBreakdown.setSelectedTransactionCategories([])}
-      />
-
-      <TransactionsModule
-        monthLabel={expenseBreakdown.transactionRangeLabel}
-        breakdownTab={expenseBreakdown.activeBreakdownTab}
-        activeTab={activeTransactionTab}
-        transactions={transactions.filteredTransactions}
-        payslips={data.payslips}
-        isLoading={isTransactionRangeLoading}
-        excludedCategories={transactions.excludedCategories}
-        selectedExcludedCategories={transactions.selectedExcludedCategories}
-        isShowingExpenseReviewOnly={transactions.isShowingExpenseReviewOnly}
-        savingCategoryTransactionId={transactions.savingCategoryTransactionId}
-        savingDateTransactionId={transactions.savingDateTransactionId}
-        onActiveTabChange={transactions.setActiveTransactionTab}
-        onToggleExcludedCategory={transactions.toggleExcludedCategory}
-        onSelectAllExcluded={() =>
-          transactions.setSelectedExcludedCategories(
-            transactions.excludedCategoryNames,
-          )
-        }
-        onClearAllExcluded={() =>
-          transactions.setSelectedExcludedCategories([])
-        }
-        onToggleExpenseReviewOnly={() =>
-          transactions.setIsShowingExpenseReviewOnly(
-            (isShowingReviewOnly) => !isShowingReviewOnly,
-          )
-        }
-        onSaveManualCategory={transactions.saveManualCategory}
-        onBulkSaveManualCategory={transactions.saveBulkManualCategory}
-        onSaveManualDate={transactions.saveManualDate}
-      />
       {isCategoryRulesModalOpen && (
         <CategoryRulesModal
           onClose={() => setIsCategoryRulesModalOpen(false)}

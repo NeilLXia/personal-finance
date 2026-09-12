@@ -52,10 +52,6 @@
   pointer-events: all;
 }
 
-.netWorthTooltip {
-  pointer-events: none;
-}
-
 .netWorthHoverLine {
   stroke: var(--color-ink);
   stroke-dasharray: 2 2;
@@ -67,56 +63,6 @@
   fill: var(--color-ink);
   stroke: var(--color-surface);
   stroke-width: 0.7;
-}
-
-.netWorthTooltipBox {
-  fill: var(--color-scrim);
-  stroke: var(--color-border);
-  stroke-width: 0.45;
-}
-
-.netWorthTooltipTitle {
-  fill: var(--color-ink);
-  font-weight: 800;
-}
-
-.netWorthTooltipTotal {
-  fill: var(--color-ink);
-  font-weight: 800;
-}
-
-.netWorthTooltipText {
-  fill: var(--color-ink);
-  font-weight: 800;
-}
-
-.netWorthTooltipValue {
-  fill: var(--color-ink);
-  font-weight: 800;
-}
-
-.netWorthTooltipTitle {
-  font-size: 0.4rem;
-}
-
-.netWorthTooltipTotal {
-  font-size: 0.4rem;
-}
-
-.netWorthTooltipText {
-  font-size: 0.3rem;
-}
-
-.netWorthTooltipValue {
-  font-size: 0.3rem;
-}
-
-.netWorthTooltipTotal {
-  text-anchor: end;
-}
-
-.netWorthTooltipValue {
-  text-anchor: end;
 }
 
 .netWorthTable {

@@ -121,6 +121,8 @@ export type NetWorthPoint = {
   tax_advantaged: number;
   real_estate: number;
   other_assets: number;
+  balance_change?: number;
+  balance_changes?: Partial<Record<NetWorthCategoryKey, number>>;
   total: number;
 };
 
@@ -185,6 +187,11 @@ export type WealthChangeMonth = {
   savings: number;
   real_estate_equity: number;
   asset_appreciation?: number;
+  asset_appreciation_breakdown?: Array<{
+    key: NetWorthCategoryKey;
+    label: string;
+    value: number;
+  }>;
   total: number;
 };
 
@@ -200,6 +207,11 @@ export type WealthChangeChart = {
     height: number;
     value: number;
     color: string;
+    breakdown?: Array<{
+      key: NetWorthCategoryKey;
+      label: string;
+      value: number;
+    }>;
   }>;
   zeroY: number;
   yTicks: Array<{ value: number; y: number }>;

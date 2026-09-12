@@ -2,12 +2,21 @@ import {
   chartBounds,
   chartViewBoxValue,
   defaultWealthChangeCategories,
+  netWorthCategoryColors,
   negativeWealthChangeColor,
   wealthChangeColors,
 } from "../shared/constants";
-import { formatCompactCurrency, formatCurrency } from "../shared/formatters";
+import {
+  formatCompactCurrency,
+  formatCurrency,
+  formatTooltipCompactCurrency,
+} from "../shared/formatters";
 import styles from "./index.module.css";
 import shared from "../dashboard.shared.module.css";
+import ChartTooltip, {
+  chartTooltipMetrics,
+  getChartTooltipHeight,
+} from "../shared/ChartTooltip";
 import type { WealthChangeChart, WealthChangeCategory } from "../shared/types";
 
 type WealthChangeModuleProps = {
@@ -25,6 +34,30 @@ const WealthChangeModule = ({
 }: WealthChangeModuleProps) => {
   const hoveredBar =
     wealthChangeChart.bars.find((bar) => bar.id === hoveredBarId) || null;
+  const isHoveringAssetAppreciation =
+    hoveredBar?.category === "asset_appreciation" &&
+    hoveredBar.breakdown &&
+    hoveredBar.breakdown.length > 0;
+  const assetBreakdownTooltipHeight = getChartTooltipHeight(
+    hoveredBar?.breakdown?.length || 0,
+  );
+  const assetBreakdownTooltipX = hoveredBar
+    ? Math.min(
+        chartBounds.right - chartTooltipMetrics.width,
+        Math.max(
+          chartBounds.left,
+          hoveredBar.x + hoveredBar.width / 2 - chartTooltipMetrics.width / 2,
+        ),
+      )
+    : 0;
+  const assetBreakdownTooltipY = hoveredBar
+    ? hoveredBar.value > 0
+      ? Math.max(4, hoveredBar.y - assetBreakdownTooltipHeight - 2)
+      : Math.min(
+          chartBounds.bottom - assetBreakdownTooltipHeight,
+          hoveredBar.y + hoveredBar.height + 2,
+        )
+    : 0;
 
   return (
     <section className={styles.wealthChangeSection}>
@@ -57,23 +90,34 @@ const WealthChangeModule = ({
                   </text>
                 </g>
               ))}
-              {wealthChangeChart.bars.map((bar) => (
-                <rect
-                  key={bar.id}
-                  x={bar.x}
-                  y={bar.y}
-                  width={bar.width}
-                  height={Math.max(bar.height, 0.6)}
-                  style={{ fill: bar.color }}
-                  onMouseEnter={() => onHoveredBarChange(bar.id)}
-                  onMouseLeave={() => onHoveredBarChange(null)}
-                >
-                  <title>
-                    {bar.label}: {formatCurrency(bar.value)}
-                  </title>
-                </rect>
-              ))}
-              {hoveredBar && (
+              {wealthChangeChart.bars.map((bar) => {
+                const title =
+                  bar.category === "asset_appreciation" && bar.breakdown
+                    ? [
+                        `${bar.label}: ${formatCurrency(bar.value)}`,
+                        ...bar.breakdown.map(
+                          (item) =>
+                            `${item.label}: ${formatCurrency(item.value)}`,
+                        ),
+                      ].join("\n")
+                    : `${bar.label}: ${formatCurrency(bar.value)}`;
+
+                return (
+                  <rect
+                    key={bar.id}
+                    x={bar.x}
+                    y={bar.y}
+                    width={bar.width}
+                    height={Math.max(bar.height, 0.6)}
+                    style={{ fill: bar.color }}
+                    onMouseEnter={() => onHoveredBarChange(bar.id)}
+                    onMouseLeave={() => onHoveredBarChange(null)}
+                  >
+                    <title>{title}</title>
+                  </rect>
+                );
+              })}
+              {hoveredBar && !isHoveringAssetAppreciation && (
                 <text
                   className={styles.wealthChangeValueLabel}
                   x={hoveredBar.x + hoveredBar.width / 2}
@@ -85,6 +129,22 @@ const WealthChangeModule = ({
                 >
                   {formatCurrency(hoveredBar.value)}
                 </text>
+              )}
+              {hoveredBar && isHoveringAssetAppreciation && (
+                <ChartTooltip
+                  title={hoveredBar.label}
+                  value={formatTooltipCompactCurrency(hoveredBar.value)}
+                  x={assetBreakdownTooltipX}
+                  y={assetBreakdownTooltipY}
+                  rows={
+                    hoveredBar.breakdown?.map((item) => ({
+                      key: item.key,
+                      label: item.label,
+                      value: formatTooltipCompactCurrency(item.value),
+                      color: netWorthCategoryColors[item.key],
+                    })) || []
+                  }
+                />
               )}
               {wealthChangeChart.xTicks.map((tick) => (
                 <g key={`${tick.label}-${tick.x}`}>

@@ -182,6 +182,39 @@
   opacity: 0.9;
 }
 
+.chartTooltip {
+  pointer-events: none;
+}
+
+.chartTooltipBox {
+  fill: var(--color-scrim);
+  stroke: var(--color-border);
+  stroke-width: 0.45;
+}
+
+.chartTooltipTitle,
+.chartTooltipTotal,
+.chartTooltipText,
+.chartTooltipValue {
+  fill: var(--color-ink);
+  font-weight: 800;
+}
+
+.chartTooltipTitle,
+.chartTooltipTotal {
+  font-size: 0.4rem;
+}
+
+.chartTooltipText,
+.chartTooltipValue {
+  font-size: 0.3rem;
+}
+
+.chartTooltipTotal,
+.chartTooltipValue {
+  text-anchor: end;
+}
+
 .chartLegend {
   width: 100%;
   display: flex;
