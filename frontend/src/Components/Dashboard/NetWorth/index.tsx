@@ -11,17 +11,85 @@ import type {
   NetWorthTrailingMonths,
 } from "../shared/types";
 
-type NetWorthModuleProps = {
+type NetWorthSummaryProps = {
   currentNetWorth: number;
+  areBalancesHidden: boolean;
+};
+
+type NetWorthChartPanelProps = {
+  areBalancesHidden: boolean;
   chart: NetWorthChartData;
+  trailingMonths: NetWorthTrailingMonths;
+  onTrailingMonthsChange: (trailingMonths: NetWorthTrailingMonths) => void;
+};
+
+type NetWorthBreakdownPanelProps = {
+  areBalancesHidden: boolean;
   breakdown: NetWorthBreakdownCategory[];
   breakdownDates: string[];
   tableColumns: CSSProperties;
-  trailingMonths: NetWorthTrailingMonths;
-  areBalancesHidden: boolean;
   openCategories: Partial<Record<NetWorthCategoryKey, boolean>>;
-  onTrailingMonthsChange: (trailingMonths: NetWorthTrailingMonths) => void;
   onToggleCategory: (categoryKey: NetWorthCategoryKey) => void;
+};
+
+type NetWorthModuleProps = NetWorthSummaryProps &
+  NetWorthChartPanelProps &
+  NetWorthBreakdownPanelProps;
+
+export const NetWorthSummary = ({
+  currentNetWorth,
+  areBalancesHidden,
+}: NetWorthSummaryProps) => {
+  const formatBalanceValue = (value: number | string | null | undefined) =>
+    maskCurrency(value, areBalancesHidden);
+
+  return (
+    <section className={styles.netWorthTopRow}>
+      <div className={styles.netWorthSummary}>
+        <p className={styles.sectionLabel}>Net worth</p>
+        <strong className={styles.totalBalance}>
+          {formatBalanceValue(currentNetWorth)}
+        </strong>
+      </div>
+    </section>
+  );
+};
+
+export const NetWorthChartPanel = ({
+  chart,
+  trailingMonths,
+  areBalancesHidden,
+  onTrailingMonthsChange,
+}: NetWorthChartPanelProps) => (
+  <NetWorthChart
+    areBalancesHidden={areBalancesHidden}
+    chart={chart}
+    trailingMonths={trailingMonths}
+    onTrailingMonthsChange={onTrailingMonthsChange}
+  />
+);
+
+export const NetWorthBreakdownPanel = ({
+  breakdown,
+  breakdownDates,
+  tableColumns,
+  areBalancesHidden,
+  openCategories,
+  onToggleCategory,
+}: NetWorthBreakdownPanelProps) => {
+  const formatBalanceValue = (value: number | string | null | undefined) =>
+    maskCurrency(value, areBalancesHidden);
+
+  return (
+    <NetWorthBreakdownTable
+      breakdown={breakdown}
+      breakdownDates={breakdownDates}
+      formatBalanceValue={formatBalanceValue}
+      openCategories={openCategories}
+      tableColumns={tableColumns}
+      onToggleCategory={onToggleCategory}
+    />
+  );
 };
 
 const NetWorthModule = ({
@@ -36,29 +104,22 @@ const NetWorthModule = ({
   onTrailingMonthsChange,
   onToggleCategory,
 }: NetWorthModuleProps) => {
-  const formatBalanceValue = (value: number | string | null | undefined) =>
-    maskCurrency(value, areBalancesHidden);
-
   return (
     <section className={styles.netWorthSection}>
-      <div className={styles.netWorthTopRow}>
-        <div className={styles.netWorthSummary}>
-          <p className={styles.sectionLabel}>Net worth</p>
-          <strong className={styles.totalBalance}>
-            {formatBalanceValue(currentNetWorth)}
-          </strong>
-        </div>
-      </div>
-      <NetWorthChart
+      <NetWorthSummary
+        areBalancesHidden={areBalancesHidden}
+        currentNetWorth={currentNetWorth}
+      />
+      <NetWorthChartPanel
         areBalancesHidden={areBalancesHidden}
         chart={chart}
         trailingMonths={trailingMonths}
         onTrailingMonthsChange={onTrailingMonthsChange}
       />
-      <NetWorthBreakdownTable
+      <NetWorthBreakdownPanel
+        areBalancesHidden={areBalancesHidden}
         breakdown={breakdown}
         breakdownDates={breakdownDates}
-        formatBalanceValue={formatBalanceValue}
         openCategories={openCategories}
         tableColumns={tableColumns}
         onToggleCategory={onToggleCategory}

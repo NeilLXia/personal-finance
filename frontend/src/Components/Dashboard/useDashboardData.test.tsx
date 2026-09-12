@@ -85,6 +85,31 @@ const renderDashboardData = () =>
     { wrapper: createQueryClientWrapper() },
   );
 
+const renderDashboardDataWithMonthState = () =>
+  renderHook(
+    () => {
+      const [selectedMonth, setSelectedMonth] = useState("2026-08");
+      const [transactionRange, setTransactionRange] =
+        useState<TransactionRange>(1);
+      const [transactionCustomRange, setTransactionCustomRange] =
+        useState<DateRange>({ startDate: "2026-08-01", endDate: "2026-08-31" });
+
+      return {
+        ...useDashboardData({
+          selectedMonth,
+          transactionRange,
+          transactionCustomRange,
+          incomeAllocationRange: 12,
+          incomeAllocationCustomRange,
+          setTransactionRange,
+          setTransactionCustomRange,
+        }),
+        setSelectedMonth,
+      };
+    },
+    { wrapper: createQueryClientWrapper() },
+  );
+
 describe("useDashboardData", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -158,5 +183,76 @@ describe("useDashboardData", () => {
       expect(result.current.isTransactionRangeLoading).toBe(false),
     );
     expect(result.current.data?.transaction_range.label).toBe("3 months");
+  });
+
+  it("shows the snapshot loading state only while a selected month change settles", async () => {
+    const nextDashboard = createDashboardData({
+      dashboard_month: {
+        start_date: "2026-09-01",
+        end_date: "2026-09-30",
+        label: "September 2026",
+      },
+    });
+    const nextTransactionSlice = {
+      ...transactionSlice,
+      transaction_range: {
+        ...transactionSlice.transaction_range,
+        start_date: "2026-09-01",
+        end_date: "2026-09-30",
+      },
+    } satisfies TransactionSlice;
+    const nextIncomeAllocationSlice = {
+      income_allocation: {
+        ...incomeAllocationSlice.income_allocation,
+        label: "Next income slice",
+      },
+    } satisfies Pick<DashboardData, "income_allocation">;
+    const dashboardDeferred = createDeferred<DashboardData>();
+    const transactionDeferred = createDeferred<typeof transactionSlice>();
+    const incomeAllocationDeferred =
+      createDeferred<typeof incomeAllocationSlice>();
+
+    dashboardApi.fetchDashboard
+      .mockResolvedValueOnce(createDashboardData())
+      .mockReturnValueOnce(dashboardDeferred.promise);
+    dashboardApi.fetchDashboardTransactions
+      .mockResolvedValueOnce(transactionSlice)
+      .mockReturnValueOnce(transactionDeferred.promise);
+    dashboardApi.fetchDashboardIncomeAllocation
+      .mockResolvedValueOnce(incomeAllocationSlice)
+      .mockReturnValueOnce(incomeAllocationDeferred.promise);
+
+    const { result } = renderDashboardDataWithMonthState();
+
+    await waitFor(() => expect(result.current.data).not.toBeNull());
+    expect(result.current.isSnapshotLoading).toBe(false);
+
+    act(() => {
+      result.current.setSelectedMonth("2026-09");
+    });
+
+    await waitFor(() => expect(result.current.isSnapshotLoading).toBe(true));
+
+    await act(async () => {
+      dashboardDeferred.resolve(nextDashboard);
+      await dashboardDeferred.promise;
+    });
+
+    expect(result.current.isSnapshotLoading).toBe(true);
+
+    await act(async () => {
+      transactionDeferred.resolve(nextTransactionSlice);
+      incomeAllocationDeferred.resolve(nextIncomeAllocationSlice);
+      await Promise.all([
+        transactionDeferred.promise,
+        incomeAllocationDeferred.promise,
+      ]);
+    });
+
+    await waitFor(() => expect(result.current.isSnapshotLoading).toBe(false));
+    expect(result.current.data?.dashboard_month.label).toBe("September 2026");
+    expect(result.current.data?.income_allocation.label).toBe(
+      "Next income slice",
+    );
   });
 });

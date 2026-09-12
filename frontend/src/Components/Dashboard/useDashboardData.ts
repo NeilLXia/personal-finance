@@ -79,7 +79,11 @@ export const useDashboardData = ({
   // Errors surfaced imperatively — mutation failures, modal callbacks, range
   // validation. Query load errors are derived below, not mirrored into state.
   const [actionError, setActionError] = useState<string | null>(null);
+  const [snapshotReloadMonth, setSnapshotReloadMonth] = useState<string | null>(
+    null,
+  );
   const queryClient = useQueryClient();
+  const selectedMonthRef = useRef(selectedMonth);
   const scrollPositionRef = useRef<number | null>(null);
 
   const reportError = useCallback((message: string) => {
@@ -175,11 +179,21 @@ export const useDashboardData = ({
 
   const isPayloadFresh =
     baseQuery.isSuccess &&
-    transactionSliceQuery.isSuccess &&
-    incomeAllocationSliceQuery.isSuccess &&
+    (transactionSliceQuery.isSuccess || !isTransactionQueryEnabled) &&
+    (incomeAllocationSliceQuery.isSuccess || !isIncomeAllocationQueryEnabled) &&
     !baseQuery.isPlaceholderData &&
-    !transactionSliceQuery.isPlaceholderData &&
-    !incomeAllocationSliceQuery.isPlaceholderData;
+    (!transactionSliceQuery.isPlaceholderData || !isTransactionQueryEnabled) &&
+    (!incomeAllocationSliceQuery.isPlaceholderData ||
+      !isIncomeAllocationQueryEnabled);
+
+  useEffect(() => {
+    if (selectedMonthRef.current === selectedMonth) {
+      return;
+    }
+
+    selectedMonthRef.current = selectedMonth;
+    setSnapshotReloadMonth(selectedMonth);
+  }, [selectedMonth]);
 
   // Drop a stale imperative error once every slice has refetched cleanly — e.g.
   // after a mutation invalidates the payload and all three queries succeed.
@@ -188,6 +202,12 @@ export const useDashboardData = ({
       setActionError(null);
     }
   }, [isPayloadFresh, queryError]);
+
+  useEffect(() => {
+    if (snapshotReloadMonth === selectedMonth && isPayloadFresh) {
+      setSnapshotReloadMonth(null);
+    }
+  }, [isPayloadFresh, selectedMonth, snapshotReloadMonth]);
 
   // Restore the pre-refresh scroll position once the new payload has rendered.
   useEffect(() => {
@@ -253,6 +273,7 @@ export const useDashboardData = ({
       transactionSliceQuery.isLoading ||
       incomeAllocationSliceQuery.isLoading,
     error,
+    isSnapshotLoading: snapshotReloadMonth !== null,
     reportError,
     clearError,
     changeTransactionCustomRange,

@@ -1,5 +1,6 @@
 import {
   chartBounds,
+  defaultNetWorthCategories,
   negativeWealthChangeColor,
   wealthChangeColors,
 } from "../shared/constants";
@@ -15,6 +16,109 @@ import type {
 const getNetWorthAmount = (point: NetWorthPoint) =>
   Number(point.total || point.amount || 0);
 
+const getNetWorthBalanceChange = (point: NetWorthPoint) =>
+  point.balance_change === undefined ? undefined : Number(point.balance_change);
+
+const getNetWorthCategoryChanges = ({
+  currentPoint,
+  previousPoint,
+}: {
+  currentPoint?: NetWorthPoint;
+  previousPoint?: NetWorthPoint;
+}) => {
+  if (!currentPoint) {
+    return {};
+  }
+
+  if (currentPoint.balance_changes) {
+    return currentPoint.balance_changes;
+  }
+
+  if (!previousPoint) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    defaultNetWorthCategories.map((category) => [
+      category.key,
+      Number(currentPoint[category.key] || 0) -
+        Number(previousPoint[category.key] || 0),
+    ]),
+  );
+};
+
+const roundChartMoney = (value: number) => Number(value.toFixed(2));
+
+const allocateKnownCashFlows = ({
+  assetAppreciation,
+  categoryChanges,
+  month,
+}: {
+  assetAppreciation: number;
+  categoryChanges: Partial<
+    Record<(typeof defaultNetWorthCategories)[number]["key"], number>
+  >;
+  month: WealthChangeMonth;
+}) => {
+  const values = Object.fromEntries(
+    defaultNetWorthCategories.map((category) => [
+      category.key,
+      Number(categoryChanges[category.key] || 0),
+    ]),
+  );
+
+  values.cash = values.cash - Number(month.expenses || 0);
+  values.real_estate =
+    values.real_estate - Number(month.real_estate_equity || 0);
+
+  const savings = Number(month.savings || 0);
+  const savingsCategories = [
+    "personal_equity",
+    "tax_advantaged",
+    "other_assets",
+  ] as const;
+  const savingsBasis = savingsCategories.map((key) =>
+    savings >= 0
+      ? Math.max(values[key], 0)
+      : Math.abs(Math.min(values[key], 0)),
+  );
+  const totalSavingsBasis = savingsBasis.reduce(
+    (total, value) => total + value,
+    0,
+  );
+
+  if (savings !== 0) {
+    if (totalSavingsBasis === 0) {
+      values.personal_equity = values.personal_equity - savings;
+    } else {
+      savingsCategories.forEach((key, index) => {
+        values[key] =
+          values[key] - savings * (savingsBasis[index] / totalSavingsBasis);
+      });
+    }
+  }
+
+  const breakdown = defaultNetWorthCategories.map((category) => ({
+    key: category.key,
+    label: category.label,
+    value: roundChartMoney(values[category.key]),
+  }));
+  const roundedTotal = roundChartMoney(
+    breakdown.reduce((total, category) => total + category.value, 0),
+  );
+  const roundingDelta = roundChartMoney(assetAppreciation - roundedTotal);
+
+  if (roundingDelta !== 0) {
+    const adjustmentCategory =
+      breakdown.find((category) => category.value !== 0) || breakdown[0];
+    adjustmentCategory.value = roundChartMoney(
+      adjustmentCategory.value + roundingDelta,
+    );
+  }
+
+  return breakdown;
+};
+
 export const addAssetAppreciation = ({
   months,
   netWorthHistory,
@@ -22,7 +126,10 @@ export const addAssetAppreciation = ({
   months: WealthChangeMonth[];
   netWorthHistory: NetWorthPoint[];
 }): WealthChangeMonth[] => {
-  const netWorthByMonth = new Map<string, number>();
+  const netWorthByMonth = new Map<
+    string,
+    { balanceChange?: number; point: NetWorthPoint; total: number }
+  >();
 
   netWorthHistory
     .slice()
@@ -30,18 +137,24 @@ export const addAssetAppreciation = ({
       firstPoint.date.localeCompare(secondPoint.date),
     )
     .forEach((point) => {
-      netWorthByMonth.set(getMonthKey(point.date), getNetWorthAmount(point));
+      netWorthByMonth.set(getMonthKey(point.date), {
+        balanceChange: getNetWorthBalanceChange(point),
+        point,
+        total: getNetWorthAmount(point),
+      });
     });
 
   return months.map((month) => {
-    const currentNetWorth = netWorthByMonth.get(month.month);
-    const previousNetWorth = netWorthByMonth.get(
+    const currentNetWorthPoint = netWorthByMonth.get(month.month);
+    const previousNetWorthPoint = netWorthByMonth.get(
       getPreviousMonthKey(month.month),
     );
-    const netWorthChange =
-      currentNetWorth === undefined || previousNetWorth === undefined
+    const aggregateNetWorthChange =
+      currentNetWorthPoint === undefined || previousNetWorthPoint === undefined
         ? 0
-        : currentNetWorth - previousNetWorth;
+        : currentNetWorthPoint.total - previousNetWorthPoint.total;
+    const netWorthChange =
+      currentNetWorthPoint?.balanceChange ?? aggregateNetWorthChange;
     const shownWealthChangeImpact =
       Number(month.expenses || 0) +
       Number(month.savings || 0) +
@@ -49,10 +162,19 @@ export const addAssetAppreciation = ({
     const assetAppreciation = Number(
       (netWorthChange - shownWealthChangeImpact).toFixed(2),
     );
+    const assetAppreciationBreakdown = allocateKnownCashFlows({
+      assetAppreciation,
+      categoryChanges: getNetWorthCategoryChanges({
+        currentPoint: currentNetWorthPoint?.point,
+        previousPoint: previousNetWorthPoint?.point,
+      }),
+      month,
+    });
 
     return {
       ...month,
       asset_appreciation: assetAppreciation,
+      asset_appreciation_breakdown: assetAppreciationBreakdown,
       total: Number((Number(month.total || 0) + assetAppreciation).toFixed(2)),
     };
   });
@@ -170,6 +292,10 @@ export const buildWealthChangeChart = (
           category.key === "asset_appreciation" && value < 0
             ? negativeWealthChangeColor
             : wealthChangeColors[category.key],
+        breakdown:
+          category.key === "asset_appreciation"
+            ? month.asset_appreciation_breakdown
+            : undefined,
       });
 
       if (value > 0) {
