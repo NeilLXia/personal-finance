@@ -162,7 +162,8 @@
   --chart-c-roth: #52adee;
   --chart-c-social-security-tax: #acb3bc;
   --chart-c-venmo: #eaa65b;
-  --chart-asset-appreciation: #22c989;
+  --chart-asset-appreciation: #0891b2;
+  --chart-asset-depreciation: #b91c1c;
 
   /* ---- Elevation & overlays ------------------------------------------- */
   --shadow-sm: 0 0.6rem 1.8rem rgba(15, 23, 42, 0.1);
@@ -260,7 +261,8 @@
   --chart-c-roth: color-mix(in oklab, #52adee 66%, #000);
   --chart-c-social-security-tax: color-mix(in oklab, #acb3bc 66%, #000);
   --chart-c-venmo: color-mix(in oklab, #eaa65b 66%, #000);
-  --chart-asset-appreciation: color-mix(in oklab, #22c989 66%, #000);
+  --chart-asset-appreciation: color-mix(in oklab, #0891b2 66%, #000);
+  --chart-asset-depreciation: color-mix(in oklab, #b91c1c 66%, #000);
 
   --shadow-sm: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.4);
   --shadow-md: 0 1.2rem 3rem rgba(0, 0, 0, 0.5);

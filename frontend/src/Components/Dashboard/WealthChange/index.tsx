@@ -11,6 +11,7 @@ import {
   formatCurrency,
   formatTooltipCompactCurrency,
 } from "../shared/formatters";
+import type { CSSProperties } from "react";
 import styles from "./index.module.css";
 import shared from "../dashboard.shared.module.css";
 import ChartTooltip, {
@@ -105,11 +106,20 @@ const WealthChangeModule = ({
                 return (
                   <rect
                     key={bar.id}
+                    className={styles.wealthChangeBar}
+                    data-category={bar.category}
+                    data-month={bar.month}
+                    data-value={bar.value}
                     x={bar.x}
                     y={bar.y}
                     width={bar.width}
                     height={Math.max(bar.height, 0.6)}
-                    style={{ fill: bar.color }}
+                    fill={bar.color}
+                    style={
+                      {
+                        "--wealth-change-bar-color": bar.color,
+                      } as CSSProperties
+                    }
                     onMouseEnter={() => onHoveredBarChange(bar.id)}
                     onMouseLeave={() => onHoveredBarChange(null)}
                   >

@@ -159,7 +159,7 @@ export const wealthChangeColors: Record<WealthChangeCategoryKey, string> = {
   real_estate_equity: incomeAllocationColors.realEstateEquity,
   asset_appreciation: "var(--chart-asset-appreciation)",
 };
-export const negativeWealthChangeColor = dashboardPalette.fitness;
+export const negativeWealthChangeColor = "var(--chart-asset-depreciation)";
 
 export const defaultWealthChangeCategories: WealthChangeCategory[] = [
   { key: "expenses", label: "Expenses" },

@@ -23,6 +23,11 @@
   text-anchor: middle;
 }
 
+.wealthChangeBar {
+  fill: var(--wealth-change-bar-color, var(--chart-neutral));
+  shape-rendering: crispEdges;
+}
+
 .assetMovementLegendSwatch {
   width: 1rem;
   height: 1rem;
