@@ -1,11 +1,12 @@
 import {
   chartBounds,
   defaultNetWorthCategories,
+  defaultWealthChangeCategories,
   negativeWealthChangeColor,
   wealthChangeColors,
 } from "../shared/constants";
 import { roundDownTo, roundUpTo, scaleLinearY } from "../shared/chartScale";
-import { getMonthKey, getPreviousMonthKey } from "../shared/date";
+import { getMonthKey } from "../shared/date";
 import type {
   NetWorthPoint,
   WealthChangeChart,
@@ -13,41 +14,39 @@ import type {
   WealthChangeMonth,
 } from "../shared/types";
 
-const getNetWorthAmount = (point: NetWorthPoint) =>
-  Number(point.total || point.amount || 0);
-
 const getNetWorthBalanceChange = (point: NetWorthPoint) =>
   point.balance_change === undefined ? undefined : Number(point.balance_change);
 
 const getNetWorthCategoryChanges = ({
   currentPoint,
-  previousPoint,
 }: {
   currentPoint?: NetWorthPoint;
-  previousPoint?: NetWorthPoint;
 }) => {
   if (!currentPoint) {
-    return {};
+    return null;
   }
 
-  if (currentPoint.balance_changes) {
-    return currentPoint.balance_changes;
-  }
-
-  if (!previousPoint) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    defaultNetWorthCategories.map((category) => [
-      category.key,
-      Number(currentPoint[category.key] || 0) -
-        Number(previousPoint[category.key] || 0),
-    ]),
-  );
+  return currentPoint.balance_changes || null;
 };
 
 const roundChartMoney = (value: number) => Number(value.toFixed(2));
+
+export const getWealthChangeCategories = (
+  categories: WealthChangeCategory[] = [],
+) => {
+  const providedCategories =
+    categories.length > 0 ? categories : defaultWealthChangeCategories;
+  const categoryKeys = new Set(
+    providedCategories.map((category) => category.key),
+  );
+
+  return [
+    ...providedCategories,
+    ...defaultWealthChangeCategories.filter(
+      (category) => !categoryKeys.has(category.key),
+    ),
+  ];
+};
 
 const allocateKnownCashFlows = ({
   assetAppreciation,
@@ -57,9 +56,13 @@ const allocateKnownCashFlows = ({
   assetAppreciation: number;
   categoryChanges: Partial<
     Record<(typeof defaultNetWorthCategories)[number]["key"], number>
-  >;
+  > | null;
   month: WealthChangeMonth;
 }) => {
+  if (!categoryChanges) {
+    return [];
+  }
+
   const values = Object.fromEntries(
     defaultNetWorthCategories.map((category) => [
       category.key,
@@ -128,7 +131,7 @@ export const addAssetAppreciation = ({
 }): WealthChangeMonth[] => {
   const netWorthByMonth = new Map<
     string,
-    { balanceChange?: number; point: NetWorthPoint; total: number }
+    { balanceChange?: number; point: NetWorthPoint }
   >();
 
   netWorthHistory
@@ -140,21 +143,21 @@ export const addAssetAppreciation = ({
       netWorthByMonth.set(getMonthKey(point.date), {
         balanceChange: getNetWorthBalanceChange(point),
         point,
-        total: getNetWorthAmount(point),
       });
     });
 
   return months.map((month) => {
     const currentNetWorthPoint = netWorthByMonth.get(month.month);
-    const previousNetWorthPoint = netWorthByMonth.get(
-      getPreviousMonthKey(month.month),
-    );
-    const aggregateNetWorthChange =
-      currentNetWorthPoint === undefined || previousNetWorthPoint === undefined
-        ? 0
-        : currentNetWorthPoint.total - previousNetWorthPoint.total;
-    const netWorthChange =
-      currentNetWorthPoint?.balanceChange ?? aggregateNetWorthChange;
+    const netWorthChange = currentNetWorthPoint?.balanceChange;
+
+    if (netWorthChange === undefined) {
+      return {
+        ...month,
+        asset_appreciation: 0,
+        asset_appreciation_breakdown: [],
+      };
+    }
+
     const shownWealthChangeImpact =
       Number(month.expenses || 0) +
       Number(month.savings || 0) +
@@ -166,7 +169,6 @@ export const addAssetAppreciation = ({
       assetAppreciation,
       categoryChanges: getNetWorthCategoryChanges({
         currentPoint: currentNetWorthPoint?.point,
-        previousPoint: previousNetWorthPoint?.point,
       }),
       month,
     });
@@ -197,8 +199,8 @@ export const buildWealthChangeChart = (
   }
 
   const snapAmount = 1000;
-  const visibleCategories = categories.filter((category) =>
-    months.some((month) => Number(month[category.key] || 0) !== 0),
+  const visibleCategories = getWealthChangeCategories(categories).filter(
+    (category) => months.some((month) => Number(month[category.key] || 0) !== 0),
   );
   const monthTotals = months.map((month) =>
     visibleCategories.reduce(

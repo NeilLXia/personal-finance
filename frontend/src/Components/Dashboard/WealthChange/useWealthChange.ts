@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { defaultWealthChangeCategories } from "../shared/constants";
 import type { DashboardData } from "../shared/types";
-import { addAssetAppreciation, buildWealthChangeChart } from "./chartUtils";
+import {
+  addAssetAppreciation,
+  buildWealthChangeChart,
+  getWealthChangeCategories,
+} from "./chartUtils";
 
 export const useWealthChange = ({ data }: { data: DashboardData | null }) => {
   const [hoveredWealthChangeBarId, setHoveredWealthChangeBarId] = useState<
@@ -10,18 +13,7 @@ export const useWealthChange = ({ data }: { data: DashboardData | null }) => {
   >(null);
 
   const wealthChangeCategories = useMemo(() => {
-    const categoryKeys = new Set(
-      (data?.monthly_cash_flow.categories || []).map(
-        (category) => category.key,
-      ),
-    );
-
-    return [
-      ...(data?.monthly_cash_flow.categories || defaultWealthChangeCategories),
-      ...defaultWealthChangeCategories.filter(
-        (category) => !categoryKeys.has(category.key),
-      ),
-    ];
+    return getWealthChangeCategories(data?.monthly_cash_flow.categories);
   }, [data?.monthly_cash_flow.categories]);
 
   const wealthChangeChart = useMemo(() => {

@@ -91,6 +91,33 @@ describe("addAssetAppreciation", () => {
     expect(result.total).toBe(-63109.29);
   });
 
+  it("does not derive category rows from gross category totals when matched balance_change has no category breakdown", () => {
+    const [result] = addAssetAppreciation({
+      months: [
+        month({
+          month: "2026-09",
+          expenses: -5684.53,
+          savings: 0,
+          real_estate_equity: 1093.33,
+          total: -4591.2,
+        }),
+      ],
+      netWorthHistory: [
+        {
+          ...nwPoint("2026-08-01", 786092.47, -12211.89),
+          cash: 346.5,
+        },
+        {
+          ...nwPoint("2026-09-12", 828610.18, -63109.29),
+          cash: 10135.04,
+        },
+      ],
+    });
+
+    expect(result.asset_appreciation).toBe(-58518.09);
+    expect(result.asset_appreciation_breakdown).toEqual([]);
+  });
+
   it("does not treat a missing account balance as a monthly loss", () => {
     const [result] = addAssetAppreciation({
       months: [month({ month: "2026-02", savings: 200, total: 200 })],
@@ -104,7 +131,7 @@ describe("addAssetAppreciation", () => {
     expect(result.total).toBe(300);
   });
 
-  it("falls back to aggregate net-worth changes for legacy history points", () => {
+  it("does not infer balance movement from aggregate net-worth changes when balance_change is missing", () => {
     const [result] = addAssetAppreciation({
       months: [
         month({ month: "2026-02", expenses: -100, savings: 200, total: 100 }),
@@ -115,8 +142,8 @@ describe("addAssetAppreciation", () => {
       ],
     });
 
-    expect(result.asset_appreciation).toBe(300);
-    expect(result.total).toBe(400);
+    expect(result.asset_appreciation).toBe(0);
+    expect(result.total).toBe(100);
   });
 
   it("is zero when a bordering net-worth point is missing", () => {
@@ -210,6 +237,36 @@ describe("buildWealthChangeChart", () => {
         value: -300,
       }),
     ]);
+  });
+
+  it("includes asset movement even when the API categories only include cash-flow categories", () => {
+    const chart = buildWealthChangeChart(
+      [
+        month({
+          month: "2026-09",
+          expenses: -5684.53,
+          real_estate_equity: 1093.33,
+          asset_appreciation: -58518.09,
+          total: -63109.29,
+        }),
+      ],
+      [
+        { key: "expenses", label: "Expenses" },
+        { key: "real_estate_equity", label: "Real estate equity" },
+        { key: "savings", label: "Savings" },
+      ],
+    );
+
+    expect(chart.bars).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "2026-09-asset_appreciation",
+          category: "asset_appreciation",
+          label: "Asset depreciation",
+          value: -58518.09,
+        }),
+      ]),
+    );
   });
 
   it("attaches the asset appreciation breakdown to the asset movement bar", () => {
