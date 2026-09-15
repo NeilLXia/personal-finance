@@ -27,6 +27,7 @@ const authUser = {
   name: null,
   avatar_url: null,
   is_demo: false,
+  account_type: "admin",
 };
 
 const renderApp = () =>

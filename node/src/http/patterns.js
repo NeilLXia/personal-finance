@@ -4,6 +4,7 @@
 module.exports = {
   datePattern: /^\d{4}-\d{2}-\d{2}$/,
   monthPattern: /^\d{4}-\d{2}$/,
+  monthOfYearPattern: /^(0[1-9]|1[0-2])$/,
   numericIdPattern: /^\d+$/,
   // Trailing-month selector shared by the dashboard's transaction and
   // income-allocation ranges.

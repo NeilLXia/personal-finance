@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
+import ChipSelect from "../../shared/ChipSelect";
+import ChipSelector from "../../shared/ChipSelector";
 import { manualExpenseCategories } from "../shared/constants";
 import { formatCurrency } from "../shared/formatters";
 import styles from "./index.module.css";
@@ -94,8 +96,6 @@ const TransactionsModule = ({
   const [expandedPayslipId, setExpandedPayslipId] = useState<number | null>(
     null,
   );
-  const [editingCategoryTransactionId, setEditingCategoryTransactionId] =
-    useState<number | null>(null);
   const [selectedTransactionIds, setSelectedTransactionIds] = useState<
     number[]
   >([]);
@@ -286,29 +286,16 @@ const TransactionsModule = ({
               Clear all
             </button>
           </div>
-          <div className={styles.excludedCategoryChips}>
-            {excludedCategories.map((category) => {
-              const selectionKey = getCategorySelectionKey(category);
-              const isSelected =
-                selectedExcludedCategories.includes(selectionKey);
-
-              return (
-                <button
-                  type="button"
-                  className={
-                    isSelected
-                      ? styles.excludedCategoryChipActive
-                      : styles.excludedCategoryChip
-                  }
-                  key={selectionKey}
-                  onClick={() => onToggleExcludedCategory(selectionKey)}
-                >
-                  <span>{category.category}</span>
-                  <strong>{formatCurrency(category.amount)}</strong>
-                </button>
-              );
-            })}
-          </div>
+          <ChipSelector
+            ariaLabel="Excluded categories"
+            options={excludedCategories.map((category) => ({
+              value: getCategorySelectionKey(category),
+              label: category.category,
+              detail: formatCurrency(category.amount),
+            }))}
+            selectedValues={selectedExcludedCategories}
+            onToggle={onToggleExcludedCategory}
+          />
         </div>
       )}
       {activeTab === "expenses" && (
@@ -344,21 +331,18 @@ const TransactionsModule = ({
               ? "1 selected"
               : `${selectedVisibleTransactionIds.length} selected`}
           </span>
-          <select
-            className={`${styles.transactionCategorySelect} ${styles.bulkCategorySelect}`}
+          <ChipSelect
             disabled={
               selectedVisibleTransactionIds.length === 0 || isBulkSavingCategory
             }
-            onChange={(event) => setBulkCategory(event.target.value)}
+            options={manualExpenseCategories.map((category) => ({
+              value: category,
+              label: category,
+            }))}
+            placeholder="Move selected to"
             value={bulkCategory}
-          >
-            <option value="">Move selected to</option>
-            {manualExpenseCategories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+            onChange={setBulkCategory}
+          />
           <button
             className={styles.categoryActionButton}
             disabled={
@@ -417,7 +401,6 @@ const TransactionsModule = ({
         ) : (
           <TransactionRows
             activeTab={activeTab}
-            editingCategoryTransactionId={editingCategoryTransactionId}
             isBulkSavingCategory={isBulkSavingCategory}
             savingCategoryTransactionId={savingCategoryTransactionId}
             savingDateTransactionId={savingDateTransactionId}
@@ -425,9 +408,6 @@ const TransactionsModule = ({
             selectedTransactionIds={selectedTransactionIds}
             sortColumn={sortColumn}
             visibleTransactions={visibleTransactions}
-            onEditingCategoryTransactionIdChange={
-              setEditingCategoryTransactionId
-            }
             onSaveManualCategory={onSaveManualCategory}
             onSaveManualDate={onSaveManualDate}
             onToggleTransactionSelection={toggleTransactionSelection}

@@ -156,6 +156,7 @@ const toPublicUser = (user) => ({
   name: user.name,
   avatar_url: user.avatar_url,
   is_demo: Boolean(user.is_demo),
+  account_type: user.account_type || 'user',
   demo_expires_at: user.demo_expires_at || null,
 });
 
@@ -190,7 +191,7 @@ const attachSessionContext = async (request, response, next) => {
 
   if (models.users.isExpiredDemoUser(user)) {
     clearSessionCookie(response);
-    await clearDemoSessionData(user.id);
+    await clearDemoSessionData(user);
     user = null;
   }
 
@@ -313,7 +314,7 @@ const logout = async ({ response }) => {
   clearSessionCookie(response);
 
   if (user?.is_demo) {
-    await clearDemoSessionData(user.id);
+    await clearDemoSessionData(user);
   }
 
   return { authenticated: false, user: null };

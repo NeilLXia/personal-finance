@@ -37,6 +37,13 @@ type LoginResponse = {
   user: AuthUser;
 };
 
+const demoLoadingMessages = [
+  "Creating demo account",
+  "Instantiating demo data",
+  "Loading transactions",
+  "Preparing dashboard",
+];
+
 const googleScriptId = "google-identity-services";
 let initializedGoogleClientId: string | null = null;
 let googleCredentialHandler:
@@ -47,6 +54,7 @@ const Login = ({ onAuthenticated }: LoginProps) => {
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
+  const [demoLoadingMessageIndex, setDemoLoadingMessageIndex] = useState(0);
 
   const completeLogin = useCallback(
     async (data: LoginResponse) => {
@@ -144,8 +152,24 @@ const Login = ({ onAuthenticated }: LoginProps) => {
     };
   }, [completeLogin, googleClientId]);
 
+  useEffect(() => {
+    if (!isDemoLoading) {
+      setDemoLoadingMessageIndex(0);
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      setDemoLoadingMessageIndex(
+        (index) => (index + 1) % demoLoadingMessages.length,
+      );
+    }, 1400);
+
+    return () => window.clearInterval(intervalId);
+  }, [isDemoLoading]);
+
   const viewDemo = async () => {
     setIsDemoLoading(true);
+    setDemoLoadingMessageIndex(0);
     setError(null);
 
     try {
@@ -186,7 +210,9 @@ const Login = ({ onAuthenticated }: LoginProps) => {
             onClick={viewDemo}
             disabled={isDemoLoading}
           >
-            {isDemoLoading ? "Loading demo" : "View as demo user"}
+            {isDemoLoading
+              ? demoLoadingMessages[demoLoadingMessageIndex]
+              : "View as demo user"}
           </button>
         </div>
         {error && <div className={styles.alert}>{error}</div>}

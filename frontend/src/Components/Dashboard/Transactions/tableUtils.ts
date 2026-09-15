@@ -14,8 +14,14 @@ export const getTransactionSearchName = (transaction: Transaction) =>
   [
     transaction.merchant_name,
     transaction.name,
+    transaction.manual_category,
+    transaction.original_category,
+    transaction.category,
+    transaction.display_category,
+    transaction.description,
     transaction.account_name,
     transaction.account_mask,
+    transaction.institution_name,
   ]
     .filter(Boolean)
     .join(" ")

@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-import BudgetTargetsModal from "./Modals/BudgetTargetsModal";
+import CreditCardRewardsPage from "../CreditCardRewards";
+import { useCreditCardRewards } from "../CreditCardRewards/useCreditCardRewards";
 import WealthChangeModule from "./WealthChange";
 import { useWealthChange } from "./WealthChange/useWealthChange";
 import IncomeAllocationModule from "./IncomeAllocation";
 import { useIncomeAllocation } from "./IncomeAllocation/useIncomeAllocation";
-import CategoryRulesModal from "./Modals/CategoryRulesModal";
 import DashboardToolbar from "./DashboardToolbar";
 import ExpenseBreakdownModule from "./Transactions/Breakdown";
 import { useExpenseBreakdown } from "./Transactions/useExpenseBreakdown";
@@ -17,6 +17,7 @@ import {
 import { useNetWorth } from "./NetWorth/useNetWorth";
 import PayslipUploadModal from "./Modals/PayslipUploadModal";
 import RealEstateModal from "./Modals/RealEstateModal";
+import SettingsModal from "./Modals/SettingsModal";
 import TransactionsModule from "./Transactions";
 import { useAppContext } from "../../Context";
 import { useIncomeBreakdown } from "./Transactions/useIncomeBreakdown";
@@ -28,19 +29,19 @@ import { useTransactions } from "./Transactions/useTransactions";
 import type { TransactionTableTab } from "./shared/types";
 
 const Dashboard = () => {
-  const { dispatch } = useAppContext();
+  const { authUser, dispatch } = useAppContext();
   const logout = useDashboardLogout(dispatch);
   const filters = useDashboardFilters();
   const { selectedMonth } = filters;
-  const [isCategoryRulesModalOpen, setIsCategoryRulesModalOpen] =
-    useState(false);
-  const [isBudgetTargetsModalOpen, setIsBudgetTargetsModalOpen] =
-    useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isRealEstateModalOpen, setIsRealEstateModalOpen] = useState(false);
   const [isPayslipUploadModalOpen, setIsPayslipUploadModalOpen] =
     useState(false);
   const [activeTransactionTab, setActiveTransactionTab] =
     useState<TransactionTableTab>("expenses");
+  const [activePage, setActivePage] = useState<
+    "dashboard" | "credit-card-rewards"
+  >("dashboard");
 
   const {
     data,
@@ -55,6 +56,7 @@ const Dashboard = () => {
     isManualRefreshLoading,
     isSnapshotLoading,
   } = useDashboardData(filters);
+  const creditCardRewards = useCreditCardRewards({ selectedMonth });
   const netWorth = useNetWorth({
     data,
     selectedMonth,
@@ -113,6 +115,8 @@ const Dashboard = () => {
     return null;
   }
 
+  const isAdmin = authUser?.account_type === "admin";
+
   return (
     <main className={styles.dashboard}>
       <DashboardToolbar
@@ -126,14 +130,37 @@ const Dashboard = () => {
           netWorth.setAreBalancesHidden((areHidden) => !areHidden)
         }
         onManualRefresh={manuallyRefreshData}
-        onOpenCategoryRules={() => setIsCategoryRulesModalOpen(true)}
-        onOpenBudgetTargets={() => setIsBudgetTargetsModalOpen(true)}
+        activePage={activePage}
+        isCreditCardRewardsAvailable={true}
+        isOwner={isAdmin}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenRealEstate={() => setIsRealEstateModalOpen(true)}
         onOpenPayslips={() => setIsPayslipUploadModalOpen(true)}
+        onShowCreditCardRewards={() => setActivePage("credit-card-rewards")}
+        onShowDashboard={() => setActivePage("dashboard")}
         onLogout={logout}
       />
 
-      <div className={styles.dashboardContent} aria-busy={isSnapshotLoading}>
+      {activePage === "credit-card-rewards" ? (
+        <CreditCardRewardsPage
+          data={creditCardRewards.data}
+          error={creditCardRewards.error}
+          isCardTypeManager={isAdmin}
+          isLoading={creditCardRewards.isLoading}
+          isCreatingCardType={creditCardRewards.isCreatingCardType}
+          isDeletingCardType={creditCardRewards.isDeletingCardType}
+          isUpdating={creditCardRewards.isUpdating}
+          isUpdatingCardType={creditCardRewards.isUpdatingCardType}
+          isUpdatingPerkCompletion={creditCardRewards.isUpdatingPerkCompletion}
+          onAccountTypeChange={creditCardRewards.updateAccountType}
+          onCreateCardType={creditCardRewards.createCardType}
+          onDeleteCardType={creditCardRewards.deleteCardType}
+          onPerkCompletionChange={creditCardRewards.updatePerkCompletion}
+          onUpdateCardType={creditCardRewards.updateCardType}
+          onBackToDashboard={() => setActivePage("dashboard")}
+        />
+      ) : (
+        <div className={styles.dashboardContent} aria-busy={isSnapshotLoading}>
         {isSnapshotLoading && (
           <div className={styles.snapshotLoadingOverlay} aria-hidden="true" />
         )}
@@ -264,16 +291,11 @@ const Dashboard = () => {
           onBulkSaveManualCategory={transactions.saveBulkManualCategory}
           onSaveManualDate={transactions.saveManualDate}
         />
-      </div>
-      {isCategoryRulesModalOpen && (
-        <CategoryRulesModal
-          onClose={() => setIsCategoryRulesModalOpen(false)}
-          onError={reportError}
-        />
+        </div>
       )}
-      {isBudgetTargetsModalOpen && (
-        <BudgetTargetsModal
-          onClose={() => setIsBudgetTargetsModalOpen(false)}
+      {isSettingsModalOpen && (
+        <SettingsModal
+          onClose={() => setIsSettingsModalOpen(false)}
           onError={reportError}
         />
       )}

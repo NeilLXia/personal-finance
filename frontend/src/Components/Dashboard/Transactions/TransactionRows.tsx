@@ -1,3 +1,4 @@
+import EditableChipSelect from "../../shared/EditableChipSelect";
 import { manualExpenseCategories } from "../shared/constants";
 import {
   formatDate,
@@ -12,7 +13,6 @@ import type { TransactionSortColumn } from "./tableUtils";
 
 type TransactionRowsProps = {
   activeTab: "expenses" | "excluded" | "other_income";
-  editingCategoryTransactionId: number | null;
   isBulkSavingCategory: boolean;
   savingCategoryTransactionId: number | null;
   savingDateTransactionId: number | null;
@@ -20,7 +20,6 @@ type TransactionRowsProps = {
   selectedTransactionIds: number[];
   sortColumn: TransactionSortColumn;
   visibleTransactions: Transaction[];
-  onEditingCategoryTransactionIdChange: (transactionId: number | null) => void;
   onSaveManualCategory: (transactionId: number, manualCategory: string) => void;
   onSaveManualDate: (transactionId: number, manualDate: string) => void;
   onToggleTransactionSelection: (transactionId: number) => void;
@@ -28,7 +27,6 @@ type TransactionRowsProps = {
 
 const TransactionRows = ({
   activeTab,
-  editingCategoryTransactionId,
   isBulkSavingCategory,
   savingCategoryTransactionId,
   savingDateTransactionId,
@@ -36,7 +34,6 @@ const TransactionRows = ({
   selectedTransactionIds,
   sortColumn,
   visibleTransactions,
-  onEditingCategoryTransactionIdChange,
   onSaveManualCategory,
   onSaveManualDate,
   onToggleTransactionSelection,
@@ -57,7 +54,6 @@ const TransactionRows = ({
 
   return visibleTransactions.map((transaction) => {
     const venmoDetails = getVenmoDetails(transaction);
-    const isEditingCategory = editingCategoryTransactionId === transaction.id;
     const isSavingCategory = savingCategoryTransactionId === transaction.id;
 
     return (
@@ -98,40 +94,20 @@ const TransactionRows = ({
             {transaction.account_mask ? ` **${transaction.account_mask}` : ""}
           </p>
           <div className={styles.transactionCategories}>
-            {isEditingCategory ? (
-              <select
-                autoFocus
-                className={styles.transactionCategorySelect}
-                disabled={isSavingCategory}
-                onBlur={() => onEditingCategoryTransactionIdChange(null)}
-                onChange={(event) => {
-                  onEditingCategoryTransactionIdChange(null);
-                  onSaveManualCategory(transaction.id, event.target.value);
-                }}
-                value={transaction.manual_category || ""}
-              >
-                <option value="">Assign category</option>
-                {manualExpenseCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <button
-                className={styles.transactionType}
-                disabled={isSavingCategory}
-                onClick={() =>
-                  onEditingCategoryTransactionIdChange(transaction.id)
-                }
-                type="button"
-              >
-                Manual:{" "}
-                {isSavingCategory
-                  ? "Saving..."
-                  : transaction.manual_category || "Assign category"}
-              </button>
-            )}
+            <EditableChipSelect
+              aria-label={`Manual category for ${transaction.name}`}
+              disabled={isSavingCategory}
+              options={manualExpenseCategories.map((category) => ({
+                value: category,
+                label: category,
+              }))}
+              placeholder="Assign category"
+              value={transaction.manual_category || ""}
+              getDisplayLabel={(label) =>
+                `Manual: ${isSavingCategory ? "Saving..." : label}`
+              }
+              onChange={(value) => onSaveManualCategory(transaction.id, value)}
+            />
             <span className={styles.transactionOriginalType}>
               Plaid:{" "}
               {transaction.original_category ||

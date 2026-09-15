@@ -40,6 +40,7 @@ describe("Login", () => {
         name: "Demo",
         avatar_url: null,
         is_demo: true,
+        account_type: "user",
       },
     });
     const { onAuthenticated } = renderLogin();
@@ -65,5 +66,14 @@ describe("Login", () => {
 
     expect(await screen.findByText("Demo is unavailable")).toBeTruthy();
     expect(onAuthenticated).not.toHaveBeenCalled();
+  });
+
+  it("shows progress copy while the demo account is being prepared", async () => {
+    mockPostJson.mockImplementation(() => new Promise(() => {}));
+    renderLogin();
+
+    fireEvent.click(screen.getByRole("button", { name: /demo user/i }));
+
+    expect(await screen.findByText("Creating demo account")).toBeTruthy();
   });
 });

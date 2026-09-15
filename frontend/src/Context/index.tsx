@@ -7,6 +7,7 @@ export type AuthUser = {
   name: string | null;
   avatar_url: string | null;
   is_demo: boolean;
+  account_type: "admin" | "user";
 };
 
 interface AppState {

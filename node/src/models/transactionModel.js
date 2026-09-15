@@ -145,11 +145,51 @@ const findByUserIdEnvironmentAndDateRange = async ({
         accounts.user_id = $1
         AND plaid_items.plaid_environment = $2
         AND plaid_items.is_active = TRUE
+        AND transactions.pending = FALSE
         AND COALESCE(transactions.manual_date, transactions.date) >= $3
         AND COALESCE(transactions.manual_date, transactions.date) <= $4
       ORDER BY COALESCE(transactions.manual_date, transactions.date) DESC, transactions.id DESC
     `,
     [userId, plaidEnvironment, startDate, endDate],
+  );
+
+  return rows;
+};
+
+/**
+ * One round trip for many accounts, each with its own date range - avoids an
+ * N+1 query per account (e.g. one per credit card when computing reward-cycle
+ * spend for every card at once).
+ */
+const findByAccountIdsAndDateRanges = async (accountRanges) => {
+  if (accountRanges.length === 0) {
+    return [];
+  }
+
+  const values = accountRanges
+    .map(
+      (_, index) =>
+        `($${index * 3 + 1}::bigint, $${index * 3 + 2}::date, $${index * 3 + 3}::date)`,
+    )
+    .join(', ');
+  const params = accountRanges.flatMap((range) => [
+    range.accountId,
+    range.startDate,
+    range.endDate,
+  ]);
+
+  const { rows } = await db.query(
+    `
+      SELECT transactions.*
+      FROM transactions
+      INNER JOIN (VALUES ${values}) AS ranges(account_id, start_date, end_date)
+        ON transactions.account_id = ranges.account_id
+      WHERE
+        transactions.pending = FALSE
+        AND COALESCE(transactions.manual_date, transactions.date) >= ranges.start_date
+        AND COALESCE(transactions.manual_date, transactions.date) <= ranges.end_date
+    `,
+    params,
   );
 
   return rows;
@@ -227,6 +267,7 @@ module.exports = {
   findByIdForUserId,
   updateManualCategoryForUserId,
   updateManualDateForUserId,
+  findByAccountIdsAndDateRanges,
   findByUserIdEnvironmentAndDateRange,
   findIncomeMatchForPayslip,
   deleteByPlaidTransactionIdsForUserId,

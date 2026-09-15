@@ -20,7 +20,12 @@ const clearDemoUserData = async (userId) => {
   await db.query('DELETE FROM accounts WHERE user_id = $1', [userId]);
 };
 
-const clearDemoSessionData = async (userId) => {
+const getUserId = (userOrId) =>
+  userOrId && typeof userOrId === 'object' ? userOrId.id : userOrId;
+
+const clearDemoSessionData = async (userOrId) => {
+  const userId = getUserId(userOrId);
+
   try {
     await deleteDemoUser(userId);
   } catch (error) {

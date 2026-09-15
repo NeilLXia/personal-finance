@@ -18,32 +18,40 @@ import ThemeToggle from "../../ThemeToggle";
 import DashboardActionsMenu from "./DashboardActionsMenu";
 
 type DashboardToolbarProps = {
+  activePage: "dashboard" | "credit-card-rewards";
   institutions: InstitutionStatus[];
   selectedMonth: string;
   areBalancesHidden: boolean;
+  isCreditCardRewardsAvailable: boolean;
   isManualRefreshLoading: boolean;
+  isOwner: boolean;
   onSelectedMonthChange: (month: string) => void;
   onError: (message: string) => void;
   onToggleBalanceVisibility: () => void;
   onManualRefresh: () => void;
-  onOpenCategoryRules: () => void;
-  onOpenBudgetTargets: () => void;
+  onShowCreditCardRewards: () => void;
+  onShowDashboard: () => void;
+  onOpenSettings: () => void;
   onOpenRealEstate: () => void;
   onOpenPayslips: () => void;
   onLogout: () => void;
 };
 
 const DashboardToolbar = ({
+  activePage,
   institutions,
   selectedMonth,
   areBalancesHidden,
+  isCreditCardRewardsAvailable,
   isManualRefreshLoading,
+  isOwner,
   onSelectedMonthChange,
   onError,
   onToggleBalanceVisibility,
   onManualRefresh,
-  onOpenCategoryRules,
-  onOpenBudgetTargets,
+  onShowCreditCardRewards,
+  onShowDashboard,
+  onOpenSettings,
   onOpenRealEstate,
   onOpenPayslips,
   onLogout,
@@ -209,11 +217,12 @@ const DashboardToolbar = ({
             {areBalancesHidden ? "Show values" : "Hide values"}
           </button>
           <DashboardActionsMenu
-            isManualRefreshLoading={isManualRefreshLoading}
+            activePage={activePage}
+            isCreditCardRewardsAvailable={isCreditCardRewardsAvailable}
             onOpenConnections={() => setIsConnectionsModalOpen(true)}
-            onManualRefresh={onManualRefresh}
-            onOpenCategoryRules={onOpenCategoryRules}
-            onOpenBudgetTargets={onOpenBudgetTargets}
+            onShowCreditCardRewards={onShowCreditCardRewards}
+            onShowDashboard={onShowDashboard}
+            onOpenSettings={onOpenSettings}
             onOpenRealEstate={onOpenRealEstate}
             onOpenPayslips={onOpenPayslips}
             onLogout={onLogout}
@@ -225,9 +234,12 @@ const DashboardToolbar = ({
         <ConnectionsModal
           institutions={institutions}
           canConnectAccount={Boolean(activeLinkToken && ready)}
+          isManualRefreshLoading={isManualRefreshLoading}
+          isOwner={isOwner}
           onClose={() => setIsConnectionsModalOpen(false)}
           onConnectAccount={connectAccount}
           onError={onError}
+          onManualRefresh={onManualRefresh}
           onReconnect={(plaidItemId) => void reconnectAccount(plaidItemId)}
         />
       )}

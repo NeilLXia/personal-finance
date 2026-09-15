@@ -4,7 +4,7 @@ export default {
   fetch(request, env) {
     const url = new URL(request.url);
 
-    if (url.pathname.startsWith("/api/")) {
+    if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/health")) {
       return proxyApiRequest(request, env);
     }
 

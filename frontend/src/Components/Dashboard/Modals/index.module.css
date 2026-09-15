@@ -4,9 +4,88 @@
   width: min(100%, 54rem);
 }
 
+.settingsLayout {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.settingsTabList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.settingsTabList button {
+  min-height: 3.8rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-control);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+}
+
+.settingsTabList button:hover {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+.settingsTabList .settingsTabActive {
+  border-color: var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+
+.settingsPanel {
+  min-width: 0;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  overflow-y: auto;
+  padding-right: var(--space-2xs);
+}
+
+.settingsPanelHeader h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-title);
+  line-height: 1.2;
+}
+
+.settingsPanelHeader p {
+  margin: var(--space-2xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+}
+
 .connectionModalActions {
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
   justify-content: flex-start;
+}
+
+.connectionStatus {
+  margin: calc(-1 * var(--space-sm)) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-label);
+  line-height: 1.4;
+}
+
+.connectionStatusError {
+  color: var(--color-negative);
 }
 
 .connectionTileGrid {
@@ -131,6 +210,28 @@
   opacity: 0.5;
 }
 
+.secondaryActionButton {
+  min-height: 3.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-control);
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.secondaryActionButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.secondaryActionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .institutions {
   display: flex;
   flex-direction: column;
@@ -222,6 +323,11 @@
   background: var(--color-surface);
   box-shadow: var(--shadow-lg);
   padding: var(--space-xl);
+}
+
+.settingsModal {
+  width: min(100%, 86rem);
+  height: min(72rem, calc(100vh - (var(--space-2xl) * 2)));
 }
 
 .modalHeader {
@@ -1011,6 +1117,21 @@
 }
 
 @media (max-width: 720px) {
+  .settingsLayout {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .settingsTabList {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .settingsTabList button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
   .payslipRow {
     grid-template-columns: 1fr;
   }

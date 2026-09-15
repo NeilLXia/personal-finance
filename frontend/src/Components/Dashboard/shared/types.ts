@@ -263,6 +263,7 @@ export type Transaction = {
   original_category?: string | null;
   manual_category?: string | null;
   display_category?: string | null;
+  description?: string | null;
   cash_flow_type?: string | null;
   is_expense?: boolean;
   pending: boolean;

@@ -124,6 +124,15 @@
   background: var(--color-canvas);
 }
 
+.actionsMenu button:disabled {
+  color: var(--color-text-faint);
+  cursor: not-allowed;
+}
+
+.actionsMenu button:disabled:hover {
+  background: transparent;
+}
+
 .monthSelector {
   display: inline-flex;
   gap: var(--space-sm);

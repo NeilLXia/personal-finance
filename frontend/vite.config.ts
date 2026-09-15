@@ -5,7 +5,9 @@ import { resolve } from "node:path";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const rootEnv = loadEnv(mode, resolve(process.cwd(), ".."), "");
-  const backendPort = env.APP_PORT || rootEnv.APP_PORT || "8001";
+  const apiHost = process.env.API_HOST;
+  const backendPort =
+    process.env.APP_PORT || env.APP_PORT || rootEnv.APP_PORT || "8001";
 
   return {
     plugins: [react()],
@@ -13,10 +15,11 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         "/api": {
-          target:
-            env.API_HOST ||
-            rootEnv.API_HOST ||
-            `http://127.0.0.1:${backendPort}`,
+          target: apiHost || `http://127.0.0.1:${backendPort}`,
+          changeOrigin: true,
+        },
+        "/health": {
+          target: apiHost || `http://127.0.0.1:${backendPort}`,
           changeOrigin: true,
         },
       },

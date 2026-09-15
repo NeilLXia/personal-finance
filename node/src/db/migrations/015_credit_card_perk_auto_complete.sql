@@ -1,0 +1,2 @@
+ALTER TABLE credit_card_perk_awards
+  ADD COLUMN IF NOT EXISTS auto_complete BOOLEAN NOT NULL DEFAULT FALSE;

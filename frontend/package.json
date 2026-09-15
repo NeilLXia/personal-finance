@@ -31,6 +31,7 @@
   },
   "scripts": {
     "start": "vite",
+    "start:local-backend": "API_HOST=http://127.0.0.1:8001 vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",

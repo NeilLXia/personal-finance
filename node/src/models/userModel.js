@@ -16,15 +16,17 @@ const upsertFromGoogleProfile = async ({
         google_sub,
         avatar_url,
         is_demo,
+        account_type,
         demo_expires_at
       )
-      VALUES ($1, $2, $3, $4, FALSE, NULL)
+      VALUES ($1, $2, $3, $4, FALSE, 'user', NULL)
       ON CONFLICT (email) DO UPDATE
       SET
         name = COALESCE(EXCLUDED.name, users.name),
         google_sub = COALESCE(users.google_sub, EXCLUDED.google_sub),
         avatar_url = EXCLUDED.avatar_url,
         is_demo = FALSE,
+        account_type = users.account_type,
         demo_expires_at = NULL,
         updated_at = NOW()
       RETURNING *

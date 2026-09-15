@@ -43,16 +43,24 @@ describe("getSignedTransactionAmount", () => {
 });
 
 describe("getTransactionSearchName", () => {
-  it("concatenates identity fields lowercased", () => {
+  it("concatenates searchable non-date, non-amount fields lowercased", () => {
     expect(
       getTransactionSearchName(
         transaction({
           merchant_name: "Blue Bottle",
           name: "BLUEBOTTLE SF",
+          manual_category: "Coffee",
+          category: "Food and Drink",
+          original_category: "Restaurants",
+          display_category: "Dining",
+          description: "Latte run",
           account_mask: "1234",
+          institution_name: "Big Bank",
         }),
       ),
-    ).toBe("blue bottle bluebottle sf checking 1234");
+    ).toBe(
+      "blue bottle bluebottle sf coffee restaurants food and drink dining latte run checking 1234 big bank",
+    );
   });
 });
 
@@ -133,6 +141,21 @@ describe("buildSortedTransactions", () => {
       sortDirection: "desc",
     });
     expect(sorted.map((r) => r.id)).toEqual([2]);
+  });
+
+  it("filters the name search across transaction text fields beyond name", () => {
+    const sorted = buildSortedTransactions({
+      transactions: [
+        transaction({ id: 1, name: "Alpha", manual_category: "Groceries" }),
+        transaction({ id: 2, name: "Bravo", category: "Travel" }),
+        transaction({ id: 3, name: "Charlie", description: "Vet visit" }),
+      ],
+      searchTerms: { name: "vet", date: "", amount: "" },
+      sortColumn: "date",
+      sortDirection: "desc",
+    });
+
+    expect(sorted.map((r) => r.id)).toEqual([3]);
   });
 });
 

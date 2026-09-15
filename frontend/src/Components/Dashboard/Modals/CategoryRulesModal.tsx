@@ -30,6 +30,11 @@ type CategoryRulesModalProps = {
   onError: (message: string) => void;
 };
 
+type CategoryRulesPanelProps = {
+  onError: (message: string) => void;
+  showHeader?: boolean;
+};
+
 type CategoryRulesResponse = {
   rules?: TransactionCategoryRule[];
 };
@@ -54,7 +59,10 @@ const ruleMatchTypeOptions: Array<{
   { label: "Exact", value: "exact" },
 ];
 
-const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
+export const CategoryRulesPanel = ({
+  onError,
+  showHeader = true,
+}: CategoryRulesPanelProps) => {
   const [form, setForm] = useState<CategoryRuleForm>(emptyRuleForm);
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingRuleId, setDeletingRuleId] = useState<number | null>(null);
@@ -200,16 +208,13 @@ const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
   };
 
   return (
-    <ModalShell ariaLabel="Transaction category rules" onClose={onClose}>
-      <div className={styles.modalHeader}>
-        <div>
-          <h2>Category rules</h2>
+    <>
+      {showHeader && (
+        <div className={styles.settingsPanelHeader}>
+          <h3>Category rules</h3>
           <p>Match Plaid category and vendor to a manual category.</p>
         </div>
-        <button type="button" onClick={onClose}>
-          Close
-        </button>
-      </div>
+      )}
 
       <form
         className={styles.ruleForm}
@@ -337,6 +342,23 @@ const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
           ))
         )}
       </div>
+    </>
+  );
+};
+
+const CategoryRulesModal = ({ onClose, onError }: CategoryRulesModalProps) => {
+  return (
+    <ModalShell ariaLabel="Transaction category rules" onClose={onClose}>
+      <div className={styles.modalHeader}>
+        <div>
+          <h2>Category rules</h2>
+          <p>Match Plaid category and vendor to a manual category.</p>
+        </div>
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </div>
+      <CategoryRulesPanel onError={onError} showHeader={false} />
     </ModalShell>
   );
 };

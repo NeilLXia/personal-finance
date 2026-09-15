@@ -1,0 +1,63 @@
+.searchableChipSelect {
+  position: relative;
+  width: min(100%, 24rem);
+}
+
+.searchInput {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-control);
+  line-height: 1.2;
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.searchInput:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.listbox {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + var(--space-2xs));
+  left: 0;
+  right: 0;
+  max-height: 16rem;
+  margin: 0;
+  padding: var(--space-2xs);
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  list-style: none;
+}
+
+.option {
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.option:hover,
+.optionHighlighted {
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+
+.optionSelected {
+  color: var(--color-ink);
+  font-weight: var(--font-weight-control);
+}
+
+.emptyOption {
+  color: var(--color-text-muted);
+  cursor: default;
+}

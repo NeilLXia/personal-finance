@@ -7,6 +7,7 @@ const { absMoney, negateMoney, roundMoney } = require('../../utils/money');
 const {
   getTransactionProfile,
   getAutomaticManualCategory,
+  isExcludedFromTransactionCalculations,
   normalizeCategoryRuleText,
 } = require('./transactionCategory');
 
@@ -82,6 +83,10 @@ const getCashFlowTransactionType = (transaction) => {
     accountType === 'credit' ||
     ['checking', 'venmo', 'paypal'].includes(accountSubtype);
 
+  if (isExcludedFromTransactionCalculations(transaction)) {
+    return null;
+  }
+
   if (isCreditCardPayment) {
     return null;
   }
@@ -136,6 +141,10 @@ const getSavingsCashFlowAmount = (transaction) => {
 };
 
 const getManualCashFlowTransactionType = (transaction) => {
+  if (isExcludedFromTransactionCalculations(transaction)) {
+    return null;
+  }
+
   const manualCategory = normalizeCategoryRuleText(
     transaction.manual_category || transaction.display_category,
   );

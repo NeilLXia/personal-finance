@@ -5,6 +5,8 @@ import {
   getExcludedTransactionCategory,
   getTransactionDisplayCategory,
   getVenmoDetails,
+  isExcludedFromTransactionCalculations,
+  isPlaidBankFeeTransaction,
   normalizeDashboardData,
   summarizeExcludedTransactions,
   summarizeTransactionsByDisplayCategory,
@@ -53,6 +55,37 @@ describe("getExcludedTransactionCategory", () => {
   });
 });
 
+describe("isPlaidBankFeeTransaction", () => {
+  it("matches Bank Fees from the raw Plaid category", () => {
+    expect(isPlaidBankFeeTransaction(transaction({ category: "Bank Fees" }))).toBe(
+      true,
+    );
+    expect(
+      isPlaidBankFeeTransaction(
+        transaction({ category: "Bank Fees, Overdraft Fees" }),
+      ),
+    ).toBe(true);
+    expect(isPlaidBankFeeTransaction(transaction({ category: "Utilities" }))).toBe(
+      false,
+    );
+  });
+});
+
+describe("isExcludedFromTransactionCalculations", () => {
+  it("excludes annual membership fees through Plaid's Bank Fees category", () => {
+    expect(
+      isExcludedFromTransactionCalculations(
+        transaction({
+          account_name: "Credit card",
+          amount: 95,
+          category: "Bank Fees",
+          name: "ANNUAL MEMBERSHIP FEE",
+        }),
+      ),
+    ).toBe(true);
+  });
+});
+
 describe("summarizeTransactionsByDisplayCategory", () => {
   it("groups by category, flips the sign, and sorts by magnitude", () => {
     const result = summarizeTransactionsByDisplayCategory([
@@ -72,6 +105,20 @@ describe("summarizeTransactionsByDisplayCategory", () => {
       transaction({ amount: -25, category: "Refunds" }),
     ]);
     expect(row).toMatchObject({ category: "Refunds", amount: 25 });
+  });
+
+  it("excludes Plaid bank fees from expense summaries", () => {
+    const result = summarizeTransactionsByDisplayCategory([
+      transaction({ id: 1, amount: 10, category: "Dining" }),
+      transaction({
+        id: 2,
+        amount: 95,
+        category: "Bank Fees",
+        name: "ANNUAL MEMBERSHIP FEE",
+      }),
+    ]);
+
+    expect(result).toEqual([{ category: "Dining", amount: -10, count: 1 }]);
   });
 });
 
@@ -97,6 +144,14 @@ describe("summarizeExcludedTransactions", () => {
     expect(summary?.kind).toBe("excluded");
     expect(summary?.count).toBe(2);
     expect(summary?.children[0].category).toBe("Unassigned");
+  });
+
+  it("excludes Plaid bank fees from excluded summaries", () => {
+    const summary = summarizeExcludedTransactions([
+      transaction({ id: 1, amount: 35, category: "Bank Fees", is_expense: false }),
+    ]);
+
+    expect(summary).toBeNull();
   });
 });
 

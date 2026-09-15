@@ -3,22 +3,24 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
 
 type DashboardActionsMenuProps = {
-  isManualRefreshLoading: boolean;
+  activePage: "dashboard" | "credit-card-rewards";
+  isCreditCardRewardsAvailable: boolean;
   onOpenConnections: () => void;
-  onManualRefresh: () => void;
-  onOpenCategoryRules: () => void;
-  onOpenBudgetTargets: () => void;
+  onShowCreditCardRewards: () => void;
+  onShowDashboard: () => void;
+  onOpenSettings: () => void;
   onOpenRealEstate: () => void;
   onOpenPayslips: () => void;
   onLogout: () => void;
 };
 
 const DashboardActionsMenu = ({
-  isManualRefreshLoading,
+  activePage,
+  isCreditCardRewardsAvailable,
   onOpenConnections,
-  onManualRefresh,
-  onOpenCategoryRules,
-  onOpenBudgetTargets,
+  onShowCreditCardRewards,
+  onShowDashboard,
+  onOpenSettings,
   onOpenRealEstate,
   onOpenPayslips,
   onLogout,
@@ -82,24 +84,21 @@ const DashboardActionsMenu = ({
           </button>
           <button
             type="button"
-            onClick={() => runMenuAction(onManualRefresh)}
-            disabled={isManualRefreshLoading}
+            onClick={() =>
+              runMenuAction(
+                activePage === "credit-card-rewards"
+                  ? onShowDashboard
+                  : onShowCreditCardRewards,
+              )
+            }
+            disabled={!isCreditCardRewardsAvailable}
           >
-            {isManualRefreshLoading
-              ? "Refreshing data"
-              : "Manually refresh data"}
+            {activePage === "credit-card-rewards"
+              ? "Dashboard"
+              : "Credit card rewards"}
           </button>
-          <button
-            type="button"
-            onClick={() => runMenuAction(onOpenCategoryRules)}
-          >
-            Category rules
-          </button>
-          <button
-            type="button"
-            onClick={() => runMenuAction(onOpenBudgetTargets)}
-          >
-            Budget targets
+          <button type="button" onClick={() => runMenuAction(onOpenSettings)}>
+            Settings
           </button>
           <button type="button" onClick={() => runMenuAction(onOpenRealEstate)}>
             Real estate

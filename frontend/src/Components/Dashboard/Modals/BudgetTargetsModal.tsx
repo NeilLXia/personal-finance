@@ -21,6 +21,12 @@ type BudgetTargetsModalProps = {
   onError: (message: string) => void;
 };
 
+type BudgetTargetsPanelProps = {
+  onError: (message: string) => void;
+  onSaved?: () => void;
+  showHeader?: boolean;
+};
+
 type BudgetTargetsResponse = {
   targets?: BudgetTarget[];
 };
@@ -84,7 +90,11 @@ const buildDraftsFromTargets = (targets: BudgetTarget[] = []) => {
   });
 };
 
-const BudgetTargetsModal = ({ onClose, onError }: BudgetTargetsModalProps) => {
+export const BudgetTargetsPanel = ({
+  onError,
+  onSaved,
+  showHeader = true,
+}: BudgetTargetsPanelProps) => {
   const [drafts, setDrafts] = useState<BudgetTargetDraft[]>(createEmptyDrafts);
   const queryClient = useQueryClient();
   const calculatedNetTarget = useMemo(
@@ -140,7 +150,7 @@ const BudgetTargetsModal = ({ onClose, onError }: BudgetTargetsModalProps) => {
         }),
         queryClient.invalidateQueries({ queryKey: dashboardPayloadKeys.root }),
       ]);
-      onClose();
+      onSaved?.();
     },
     onError: (requestError) => {
       onError(
@@ -206,16 +216,13 @@ const BudgetTargetsModal = ({ onClose, onError }: BudgetTargetsModalProps) => {
   };
 
   return (
-    <ModalShell ariaLabel="Budget targets" onClose={onClose}>
-      <div className={styles.modalHeader}>
-        <div>
-          <h2>Budget targets</h2>
+    <>
+      {showHeader && (
+        <div className={styles.settingsPanelHeader}>
+          <h3>Budget targets</h3>
           <p>Set income allocation target percentages.</p>
         </div>
-        <button type="button" onClick={onClose}>
-          Close
-        </button>
-      </div>
+      )}
 
       <form
         className={styles.budgetTargetFixedForm}
@@ -287,6 +294,27 @@ const BudgetTargetsModal = ({ onClose, onError }: BudgetTargetsModalProps) => {
           {saveTargetsMutation.isPending ? "Saving" : "Save targets"}
         </button>
       </form>
+    </>
+  );
+};
+
+const BudgetTargetsModal = ({ onClose, onError }: BudgetTargetsModalProps) => {
+  return (
+    <ModalShell ariaLabel="Budget targets" onClose={onClose}>
+      <div className={styles.modalHeader}>
+        <div>
+          <h2>Budget targets</h2>
+          <p>Set income allocation target percentages.</p>
+        </div>
+        <button type="button" onClick={onClose}>
+          Close
+        </button>
+      </div>
+      <BudgetTargetsPanel
+        onError={onError}
+        onSaved={onClose}
+        showHeader={false}
+      />
     </ModalShell>
   );
 };

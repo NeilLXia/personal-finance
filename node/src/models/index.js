@@ -6,6 +6,7 @@ module.exports = {
   accounts: require('./accountModel'),
   accountBalanceHistory: require('./accountBalanceHistoryModel'),
   budgetTargets: require('./budgetTargetModel'),
+  creditCardRewards: require('./creditCardRewardsModel'),
   payslips: require('./payslipModel'),
   properties: require('./propertyModel'),
   transactionCategoryRules: require('./transactionCategoryRuleModel'),

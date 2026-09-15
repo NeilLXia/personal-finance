@@ -17,6 +17,15 @@ export const getTransactionDisplayCategory = (transaction: Transaction) =>
   transaction.category ||
   "Uncategorized";
 
+export const isPlaidBankFeeTransaction = (transaction: Transaction) =>
+  (transaction.category || "")
+    .split(",")
+    .map((category) => category.trim().toLowerCase())
+    .includes("bank fees");
+
+export const isExcludedFromTransactionCalculations = (transaction: Transaction) =>
+  isPlaidBankFeeTransaction(transaction);
+
 export const excludedTransactionCategory = "Excluded";
 export const excludedUnassignedCategory = "Unassigned";
 export const getExcludedCategorySelectionKey = (category: string) =>
@@ -46,25 +55,27 @@ const getExpenseCategoryGroupLabel = (category: string) => {
 export const summarizeTransactionsByDisplayCategory = (
   transactions: Transaction[],
 ): CategoryTotal[] => {
-  const categoriesByName = transactions.reduce<Record<string, CategoryTotal>>(
-    (categories, transaction) => {
-      const category = getTransactionDisplayCategory(transaction);
+  const categoriesByName = transactions
+    .filter((transaction) => !isExcludedFromTransactionCalculations(transaction))
+    .reduce<Record<string, CategoryTotal>>(
+      (categories, transaction) => {
+        const category = getTransactionDisplayCategory(transaction);
 
-      if (!categories[category]) {
-        categories[category] = {
-          category,
-          amount: 0,
-          count: 0,
-        };
-      }
+        if (!categories[category]) {
+          categories[category] = {
+            category,
+            amount: 0,
+            count: 0,
+          };
+        }
 
-      categories[category].amount += getTransactionSignedAmount(transaction);
-      categories[category].count += 1;
+        categories[category].amount += getTransactionSignedAmount(transaction);
+        categories[category].count += 1;
 
-      return categories;
-    },
-    {},
-  );
+        return categories;
+      },
+      {},
+    );
 
   return Object.values(categoriesByName)
     .map((category) => ({
@@ -76,7 +87,9 @@ export const summarizeTransactionsByDisplayCategory = (
 
 export const summarizeExcludedTransactions = (transactions: Transaction[]) => {
   const excludedTransactions = transactions.filter(
-    (transaction) => !transaction.is_expense,
+    (transaction) =>
+      !transaction.is_expense &&
+      !isExcludedFromTransactionCalculations(transaction),
   );
 
   if (excludedTransactions.length === 0) {

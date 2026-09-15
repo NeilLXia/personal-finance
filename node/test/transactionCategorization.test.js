@@ -61,6 +61,35 @@ test('getCashFlowTransactionType: transfers and CC payments have no cash-flow ef
   );
 });
 
+test('getCashFlowTransactionType: Plaid bank fees have no cash-flow effect', () => {
+  assert.equal(
+    getCashFlowTransactionType({
+      ...checking,
+      amount: 35,
+      category: 'Bank Fees',
+    }),
+    null,
+  );
+  assert.equal(
+    getCashFlowTransactionType({
+      ...checking,
+      amount: 35,
+      category: 'Bank Fees, Overdraft Fees',
+    }),
+    null,
+  );
+  assert.equal(
+    getCashFlowTransactionType({
+      account_type: 'credit',
+      account_subtype: 'credit card',
+      amount: 95,
+      category: 'Bank Fees',
+      name: 'ANNUAL MEMBERSHIP FEE',
+    }),
+    null,
+  );
+});
+
 test('getCashFlowTransactionType: any movement on an equity account is savings', () => {
   assert.equal(getCashFlowTransactionType({ ...brokerage, amount: 250 }), 'savings');
 });
@@ -101,6 +130,25 @@ test('applyTransactionCategoryRules stamps display/cash-flow fields', () => {
   assert.equal(row.display_category, 'Groceries');
   assert.equal(row.is_expense, true);
   assert.equal(row.cash_flow_type, 'expenses');
+});
+
+test('applyTransactionCategoryRules excludes Plaid bank fees even with a manual category', () => {
+  const [row] = applyTransactionCategoryRules(
+    [
+      {
+        ...checking,
+        category: 'Bank Fees',
+        manual_category: 'Utilities',
+        name: 'ANNUAL MEMBERSHIP FEE',
+        amount: 12,
+        date: '2026-03-01',
+      },
+    ],
+    [],
+  );
+
+  assert.equal(row.cash_flow_type, null);
+  assert.equal(row.is_expense, false);
 });
 
 test('summarizeTransactionsByCategory groups and sign-flips amounts', () => {

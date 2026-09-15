@@ -70,6 +70,18 @@ const getTransactionCategory = (transaction) =>
     ? transaction.category
     : 'Uncategorized';
 
+const isPlaidBankFeeTransaction = (transaction) => {
+  const categoryParts = getTransactionCategory(transaction)
+    .split(',')
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean);
+
+  return categoryParts.includes('bank fees');
+};
+
+const isExcludedFromTransactionCalculations = (transaction) =>
+  isPlaidBankFeeTransaction(transaction);
+
 const canonicalizeExpenseCategory = (category) => {
   const cleanCategory = (category || '').trim();
   const categoryParts = cleanCategory
@@ -140,6 +152,8 @@ module.exports = {
   getTransactionProfile,
   getAutomaticManualCategory,
   getTransactionCategory,
+  isPlaidBankFeeTransaction,
+  isExcludedFromTransactionCalculations,
   canonicalizeExpenseCategory,
   normalizeCategoryRuleText,
   normalizeBudgetCategoryKey,

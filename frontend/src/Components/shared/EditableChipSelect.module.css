@@ -1,0 +1,26 @@
+.chipButton {
+  border: 0;
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-control);
+  line-height: 1.2;
+  padding: var(--space-2xs) var(--space-xs);
+  text-align: left;
+}
+
+.chipButton:hover:not(:disabled) {
+  background: var(--color-border);
+  color: var(--color-ink);
+}
+
+.chipButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
