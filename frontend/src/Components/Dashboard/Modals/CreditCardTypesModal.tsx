@@ -173,8 +173,13 @@ const getReviewCards = (cardTypes: CreditCardType[]) =>
     (cardType) =>
       cardType.status === "in_review" ||
       Boolean(cardType.review_reason) ||
-      cardType.earning_rewards.some((reward) => reward.status !== "included") ||
-      cardType.perk_awards.some((award) => award.status !== "included"),
+      // "excluded" is a deliberate, resolved state (e.g. a combo reward we
+      // can't safely track) - only "needs_review" means a benefit is still
+      // waiting on admin attention. Treating excluded the same as
+      // needs_review here would keep a fully-reviewed card in this list
+      // forever just because it has an intentionally-excluded benefit.
+      cardType.earning_rewards.some((reward) => reward.status === "needs_review") ||
+      cardType.perk_awards.some((award) => award.status === "needs_review"),
   );
 
 const countBenefitsByStatus = (cardType: CreditCardType) => {

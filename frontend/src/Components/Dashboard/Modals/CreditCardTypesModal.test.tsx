@@ -434,4 +434,36 @@ describe("CreditCardTypesPanel", () => {
     );
     expect(screen.getByText(/review transaction labels/i)).toBeTruthy();
   });
+
+  it("does not keep a fully-reviewed card in the review list just because it has an excluded benefit", () => {
+    renderPanel({
+      cardTypes: [
+        {
+          id: 41,
+          name: "Resolved Card",
+          annual_fee: 0,
+          status: "active",
+          review_reason: null,
+          earning_rewards: [
+            {
+              id: 42,
+              category: "Unmapped earning",
+              reward_percent: 0,
+              keywords: null,
+              status: "excluded",
+              status_reason: "Reward category does not map to a tracked transaction category.",
+            },
+          ],
+          perk_awards: [],
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /review imports/i }));
+
+    expect(
+      screen.getByText(/no imported cards or benefits need review/i),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /resolved card/i })).toBeNull();
+  });
 });

@@ -156,6 +156,34 @@ test('updateCardTypeWithRewards rolls back when a perk id does not belong to the
   );
 });
 
+test('cardNeedsReview ignores intentionally-excluded benefits but flags needs_review ones', () => {
+  const { model } = loadCreditCardRewardsModel({ queryResults: [] });
+
+  assert.equal(
+    model.cardNeedsReview({
+      earningRewards: [{ status: 'included' }, { status: 'excluded' }],
+      perkAwards: [{ status: 'excluded' }],
+    }),
+    false,
+  );
+
+  assert.equal(
+    model.cardNeedsReview({
+      earningRewards: [{ status: 'included' }, { status: 'needs_review' }],
+      perkAwards: [],
+    }),
+    true,
+  );
+
+  assert.equal(
+    model.cardNeedsReview({
+      earningRewards: [],
+      perkAwards: [{ status: 'needs_review' }],
+    }),
+    true,
+  );
+});
+
 test('findByUserIdEnvironmentAndDateRange excludes pending transactions', async () => {
   restore();
   delete require.cache[transactionModelPath];

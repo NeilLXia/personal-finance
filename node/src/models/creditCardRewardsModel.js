@@ -850,6 +850,14 @@ const mergeImportedBenefits = async ({
   return summary;
 };
 
+// "excluded" is a deliberate, resolved state (e.g. a combo reward we can't
+// safely track) - only "needs_review" means a benefit is still waiting on
+// admin attention. A card should not keep counting as needing review just
+// because it has an intentionally-excluded benefit.
+const cardNeedsReview = (card) =>
+  card.earningRewards.some((reward) => reward.status === 'needs_review') ||
+  card.perkAwards.some((award) => award.status === 'needs_review');
+
 const mergeVectorMintCardCatalog = async ({ cards, matchCardTypeId }) => {
   const client = await db.getClient();
   const summary = {
@@ -1001,10 +1009,7 @@ const mergeVectorMintCardCatalog = async ({ cards, matchCardTypeId }) => {
         summary.updated_count += 1;
       }
 
-      if (
-        card.earningRewards.some((reward) => reward.status !== 'included') ||
-        card.perkAwards.some((award) => award.status !== 'included')
-      ) {
+      if (cardNeedsReview(card)) {
         summary.review_required_count += 1;
       }
     }
@@ -1020,6 +1025,7 @@ const mergeVectorMintCardCatalog = async ({ cards, matchCardTypeId }) => {
 };
 
 module.exports = {
+  cardNeedsReview,
   createCardTypeWithRewards,
   deleteAccountType,
   deleteCardType,
