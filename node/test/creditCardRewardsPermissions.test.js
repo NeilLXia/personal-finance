@@ -31,11 +31,19 @@ const restore = () => {
   });
 };
 
-const loadServiceForUser = (user) => {
+const loadServiceForUser = (user, overrides = {}) => {
   restore();
   delete require.cache[servicePath];
 
   const writeCalls = [];
+  const accountRanges = [];
+  const userTransactionRanges = [];
+  const catalog = overrides.catalog || {
+    cardTypes: [],
+    earningRewards: [],
+    perkAwards: [],
+  };
+  const accounts = overrides.accounts || [];
 
   require.cache[authServicePath] = {
     id: authServicePath,
@@ -60,18 +68,30 @@ const loadServiceForUser = (user) => {
         deleteCardType: async () => {
           writeCalls.push('delete');
         },
-        findCreditCardTypeById: async () => ({ id: 1 }),
-        findRewardCatalog: async () => ({
-          cardTypes: [],
-          earningRewards: [],
-          perkAwards: [],
-        }),
-        findCreditAccountsByUserId: async () => [],
+        findCreditCardTypeById: async (cardTypeId) =>
+          overrides.cardType ||
+          catalog.cardTypes.find(
+            (cardType) => Number(cardType.id) === Number(cardTypeId),
+          ) ||
+          { id: 1 },
+        findCreditAccountByIdForUser: async () =>
+          overrides.creditAccount || null,
+        findRewardCatalog: async () => catalog,
+        findCreditAccountsByUserId: async () => accounts,
         findPerkCompletionsForAccountCycles: async () => [],
+        upsertAccountType: async () => {
+          writeCalls.push('assign');
+        },
       },
       transactions: {
-        findByUserIdEnvironmentAndDateRange: async () => [],
-        findByAccountIdsAndDateRanges: async () => [],
+        findByUserIdEnvironmentAndDateRange: async (params) => {
+          userTransactionRanges.push(params);
+          return [];
+        },
+        findByAccountIdsAndDateRanges: async (ranges) => {
+          accountRanges.push(...ranges);
+          return [];
+        },
       },
       transactionCategoryRules: {
         findByUserId: async () => [],
@@ -104,7 +124,9 @@ const loadServiceForUser = (user) => {
   };
 
   return {
+    accountRanges,
     service: require(servicePath),
+    userTransactionRanges,
     writeCalls,
   };
 };
@@ -167,4 +189,122 @@ test('admin accounts can manage card types', async () => {
   });
 
   assert.deepEqual(writeCalls, ['create']);
+});
+
+test('reward earning calculations request transactions by each card benefit cycle', async () => {
+  const { accountRanges, service, userTransactionRanges } = loadServiceForUser(
+    {
+      id: 2,
+      email: 'user@example.com',
+      is_demo: false,
+      account_type: 'user',
+    },
+    {
+      catalog: {
+        cardTypes: [{ id: 11, name: 'Rewards Card', annual_fee: 95 }],
+        earningRewards: [
+          {
+            id: 21,
+            credit_card_type_id: 11,
+            category: 'Base rate',
+            reward_percent: 1,
+            keywords: null,
+          },
+        ],
+        perkAwards: [],
+      },
+      accounts: [
+        {
+          id: 7,
+          credit_card_type_id: 11,
+          effective_month: '2000-11-01',
+        },
+        {
+          id: 8,
+          credit_card_type_id: 11,
+          effective_month: '2000-07-01',
+        },
+      ],
+    },
+  );
+
+  await service.getCreditCardRewards({ selectedMonth: '2026-08' });
+
+  assert.deepEqual(userTransactionRanges, []);
+  assert.deepEqual(
+    accountRanges.sort((left, right) => left.accountId - right.accountId),
+    [
+      {
+        accountId: 7,
+        startDate: '2025-11-01',
+        endDate: '2026-08-31',
+      },
+      {
+        accountId: 8,
+        startDate: '2026-07-01',
+        endDate: '2026-08-31',
+      },
+    ],
+  );
+});
+
+test('credit card assignment rejects card types that are still in review', async () => {
+  const { service, writeCalls } = loadServiceForUser(
+    {
+      id: 2,
+      email: 'user@example.com',
+      is_demo: false,
+      account_type: 'user',
+    },
+    {
+      creditAccount: { id: 7, user_id: 2, type: 'credit' },
+      catalog: {
+        cardTypes: [
+          {
+            id: 11,
+            name: 'Imported Card',
+            annual_fee: 95,
+            status: 'in_review',
+          },
+        ],
+        earningRewards: [],
+        perkAwards: [],
+      },
+    },
+  );
+
+  await assert.rejects(
+    () =>
+      service.setAccountCreditCardType({
+        accountId: 7,
+        creditCardTypeId: 11,
+        effectiveMonth: '2000-01-01',
+      }),
+    {
+      status: 400,
+      message: 'Credit card type is still in review.',
+    },
+  );
+
+  assert.deepEqual(writeCalls, []);
+});
+
+test('reward optimization runs only through the optimization service method', async () => {
+  const { service, userTransactionRanges } = loadServiceForUser({
+    id: 2,
+    email: 'user@example.com',
+    is_demo: false,
+    account_type: 'user',
+  });
+
+  await service.getCreditCardRewardOptimization({ selectedMonth: '2026-08' });
+
+  assert.deepEqual(userTransactionRanges, [
+    {
+      userId: 2,
+      plaidEnvironment: 'sandbox',
+      startDate: '2025-09-01',
+      endDate: '2026-08-31',
+    },
+  ]);
 });

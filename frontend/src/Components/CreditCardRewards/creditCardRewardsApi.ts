@@ -1,5 +1,10 @@
 import { getJson, postJson, putJson, request } from "../../shared/apiClient";
-import type { CreateCreditCardTypeInput, CreditCardRewardsData } from "./types";
+import type {
+  CreateCreditCardTypeInput,
+  CreditCardRewardOptimizationData,
+  CreditCardRewardsData,
+  VectorMintImportResult,
+} from "./types";
 
 const buildRewardsPath = (selectedMonth: string) => {
   const params = new URLSearchParams({ month: selectedMonth });
@@ -12,6 +17,15 @@ export const fetchCreditCardRewards = (selectedMonth: string) =>
     buildRewardsPath(selectedMonth),
     {},
     "Credit card rewards request failed",
+  );
+
+export const fetchCreditCardRewardOptimization = (selectedMonth: string) =>
+  getJson<CreditCardRewardOptimizationData>(
+    `/api/credit-card-rewards/optimization?${new URLSearchParams({
+      month: selectedMonth,
+    }).toString()}`,
+    {},
+    "Credit card reward optimization request failed",
   );
 
 export const updateCreditCardAccountType = ({
@@ -106,4 +120,16 @@ export const updateCreditCardPerkCompletion = ({
     },
     {},
     "Perk completion update failed",
+  );
+
+export const importVectorMintCardCatalog = ({
+  selectedMonth,
+}: {
+  selectedMonth: string;
+}) =>
+  postJson<VectorMintImportResult>(
+    "/api/credit-card-rewards/vector-mint/import",
+    { selected_month: selectedMonth },
+    {},
+    "VectorMint card import failed",
   );

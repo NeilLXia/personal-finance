@@ -7,6 +7,7 @@ import type { CreditCardRewardsData } from "./types";
 
 const creditCardRewardsApi = vi.hoisted(() => ({
   createCreditCardType: vi.fn(),
+  fetchCreditCardRewardOptimization: vi.fn(),
   fetchCreditCardRewards: vi.fn(),
   updateCreditCardAccountType: vi.fn(),
   updateCreditCardPerkCompletion: vi.fn(),
@@ -25,6 +26,23 @@ describe("useCreditCardRewards", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     creditCardRewardsApi.fetchCreditCardRewards.mockResolvedValue(rewardsData);
+    creditCardRewardsApi.fetchCreditCardRewardOptimization.mockResolvedValue({
+      optimization: {
+        period_start: "2025-10-01",
+        period_end: "2026-09-30",
+        actual_reward_value: 0,
+        optimized_reward_value: 0,
+        missed_reward_value: 0,
+        recommendation_groups: [],
+      },
+      card_recommendations: {
+        period_start: "2025-10-01",
+        period_end: "2026-09-30",
+        best_overall: null,
+        best_no_annual_fee: null,
+        recommendations: [],
+      },
+    });
     creditCardRewardsApi.createCreditCardType.mockResolvedValue(rewardsData);
     creditCardRewardsApi.updateCreditCardAccountType.mockResolvedValue(
       rewardsData,
@@ -45,6 +63,31 @@ describe("useCreditCardRewards", () => {
         "2026-09",
       ),
     );
+    expect(
+      creditCardRewardsApi.fetchCreditCardRewardOptimization,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("loads reward optimization only when requested", async () => {
+    const { result } = renderHook(
+      () => useCreditCardRewards({ selectedMonth: "2026-09" }),
+      {
+        wrapper: createQueryClientWrapper(),
+      },
+    );
+
+    await waitFor(() =>
+      expect(creditCardRewardsApi.fetchCreditCardRewards).toHaveBeenCalled(),
+    );
+    expect(
+      creditCardRewardsApi.fetchCreditCardRewardOptimization,
+    ).not.toHaveBeenCalled();
+
+    await result.current.loadOptimization();
+
+    expect(
+      creditCardRewardsApi.fetchCreditCardRewardOptimization,
+    ).toHaveBeenCalledWith("2026-09");
   });
 
   it("ties perk completion updates to the selected dashboard month", async () => {

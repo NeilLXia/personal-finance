@@ -3,7 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createCreditCardType,
   deleteCreditCardType,
+  fetchCreditCardRewardOptimization,
   fetchCreditCardRewards,
+  importVectorMintCardCatalog,
   updateCreditCardAccountType,
   updateCreditCardPerkCompletion,
   updateCreditCardType,
@@ -13,6 +15,9 @@ import type { CreateCreditCardTypeInput, CreditCardRewardsData } from "./types";
 export const creditCardRewardsQueryKey = (selectedMonth: string) =>
   ["credit-card-rewards", selectedMonth] as const;
 
+export const creditCardRewardOptimizationQueryKey = (selectedMonth: string) =>
+  ["credit-card-rewards", selectedMonth, "optimization"] as const;
+
 export const useCreditCardRewards = ({
   selectedMonth,
 }: {
@@ -20,9 +25,17 @@ export const useCreditCardRewards = ({
 }) => {
   const queryClient = useQueryClient();
   const queryKey = creditCardRewardsQueryKey(selectedMonth);
+  const optimizationQueryKey =
+    creditCardRewardOptimizationQueryKey(selectedMonth);
   const rewardsQuery = useQuery({
     queryKey,
     queryFn: () => fetchCreditCardRewards(selectedMonth),
+    retry: false,
+  });
+  const optimizationQuery = useQuery({
+    queryKey: optimizationQueryKey,
+    queryFn: () => fetchCreditCardRewardOptimization(selectedMonth),
+    enabled: false,
     retry: false,
   });
   const assignmentMutation = useMutation({
@@ -72,6 +85,12 @@ export const useCreditCardRewards = ({
       queryClient.setQueryData(queryKey, data);
     },
   });
+  const importVectorMintMutation = useMutation({
+    mutationFn: () => importVectorMintCardCatalog({ selectedMonth }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKey, data.rewards);
+    },
+  });
   const isCurrentSnapshot =
     rewardsQuery.data?.selected_month === selectedMonth;
 
@@ -82,11 +101,17 @@ export const useCreditCardRewards = ({
     isCreatingCardType: createCardTypeMutation.isPending,
     isDeletingCardType: deleteCardTypeMutation.isPending,
     isLoading: rewardsQuery.isLoading,
+    isImportingVectorMintCards: importVectorMintMutation.isPending,
+    isOptimizationLoading: optimizationQuery.isFetching,
     isUpdating: assignmentMutation.isPending,
     isUpdatingCardType: updateCardTypeMutation.isPending,
     isUpdatingPerkCompletion: perkCompletionMutation.isPending,
+    optimizationData: optimizationQuery.data || null,
+    optimizationError: optimizationQuery.error,
     createCardType: createCardTypeMutation.mutateAsync,
     deleteCardType: deleteCardTypeMutation.mutateAsync,
+    loadOptimization: optimizationQuery.refetch,
+    importVectorMintCards: importVectorMintMutation.mutateAsync,
     updateAccountType: assignmentMutation.mutate,
     updateCardType: updateCardTypeMutation.mutateAsync,
     updatePerkCompletion: perkCompletionMutation.mutate,

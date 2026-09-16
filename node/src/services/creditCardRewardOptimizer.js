@@ -12,6 +12,15 @@ const {
 const MIN_MISSED_REWARD = 0.01;
 const MIN_NET_ANNUAL_CARD_VALUE = 12;
 
+const isIncludedBenefit = (benefit) =>
+  !benefit.status || benefit.status === 'included';
+
+const isActiveCardType = (cardType) =>
+  !cardType.status || cardType.status === 'active';
+
+const getIncludedEarningRewards = (cardType) =>
+  (cardType.earning_rewards || []).filter(isIncludedBenefit);
+
 const toNumber = (value) =>
   value === null || value === undefined ? null : Number(value);
 
@@ -67,8 +76,13 @@ const getOwnedCardTypes = ({ accounts, cardTypes }) => {
     .forEach((account) => {
       const cardType = cardTypeById.get(Number(account.credit_card_type_id));
 
-      if (cardType && cardType.earning_rewards.length > 0) {
-        ownedCardTypesById.set(cardType.id, cardType);
+      const earningRewards = cardType ? getIncludedEarningRewards(cardType) : [];
+
+      if (cardType && isActiveCardType(cardType) && earningRewards.length > 0) {
+        ownedCardTypesById.set(cardType.id, {
+          ...cardType,
+          earning_rewards: earningRewards,
+        });
       }
     });
 
@@ -77,7 +91,7 @@ const getOwnedCardTypes = ({ accounts, cardTypes }) => {
 
 const getCardRewardValue = ({ cardType, transaction }) => {
   const result = getEarningRewardAmountForTransaction({
-    earningRewards: cardType.earning_rewards,
+    earningRewards: getIncludedEarningRewards(cardType),
     transaction,
   });
 
@@ -270,7 +284,11 @@ const buildCreditCardRewardOptimization = ({
     const account = accountById.get(Number(transaction.account_id));
     const actualCardType = cardTypeById.get(Number(account.credit_card_type_id));
 
-    if (!actualCardType || actualCardType.earning_rewards.length === 0) {
+    if (
+      !actualCardType ||
+      !isActiveCardType(actualCardType) ||
+      getIncludedEarningRewards(actualCardType).length === 0
+    ) {
       return;
     }
 
@@ -484,7 +502,9 @@ const buildNewCardRecommendations = ({
   );
   const eligibleCandidates = candidateCardTypes.filter(
     (cardType) =>
-      !ownedCardTypeIds.has(cardType.id) && cardType.earning_rewards.length > 0,
+      !ownedCardTypeIds.has(cardType.id) &&
+      isActiveCardType(cardType) &&
+      getIncludedEarningRewards(cardType).length > 0,
   );
   const spendTransactions = transactions.filter(
     (transaction) =>

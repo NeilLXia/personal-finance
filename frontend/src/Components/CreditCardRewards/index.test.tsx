@@ -1,350 +1,15 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import CreditCardRewardsPage from "./index";
-import type { CreditCardRewardsData } from "./types";
-
-const rewardsData: CreditCardRewardsData = {
-  selected_month: "2026-08",
-  accounts: [],
-  card_types: [],
-};
-
-const renderRewardsPage = ({
-  onCreateCardType = vi.fn().mockResolvedValue(undefined),
-} = {}) => {
-  render(
-    <CreditCardRewardsPage
-      data={rewardsData}
-      error={null}
-      isCreatingCardType={false}
-      isDeletingCardType={false}
-        isCardTypeManager={true}
-      isLoading={false}
-      isUpdating={false}
-      isUpdatingCardType={false}
-      isUpdatingPerkCompletion={false}
-      onAccountTypeChange={vi.fn()}
-      onBackToDashboard={vi.fn()}
-      onCreateCardType={onCreateCardType}
-      onDeleteCardType={vi.fn()}
-      onPerkCompletionChange={vi.fn()}
-      onUpdateCardType={vi.fn()}
-    />,
-  );
-
-  return { onCreateCardType };
-};
-
-const selectCardTypeToEdit = (cardTypeName: string) => {
-  const input = screen.getByRole("combobox", { name: /card type to edit/i });
-
-  fireEvent.focus(input);
-  fireEvent.change(input, { target: { value: cardTypeName } });
-  fireEvent.click(screen.getByRole("option", { name: cardTypeName }));
-};
 
 describe("CreditCardRewardsPage", () => {
-  it("creates a credit card type with earning rates and perks", async () => {
-    const { onCreateCardType } = renderRewardsPage();
-
-    fireEvent.click(screen.getByRole("button", { name: /manage card types/i }));
-    fireEvent.change(screen.getByLabelText("Credit card type"), {
-      target: { value: "Chase Sapphire Preferred" },
-    });
-    fireEvent.change(screen.getByLabelText("Annual fee"), {
-      target: { value: "1,095" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /add earning rate/i }));
-    fireEvent.change(screen.getAllByLabelText("Category")[1], {
-      target: { value: "Dining" },
-    });
-    fireEvent.change(screen.getAllByLabelText("Rate")[1], {
-      target: { value: "3" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /add perk/i }));
-    fireEvent.change(screen.getByLabelText("Perk"), {
-      target: { value: "Travel credit" },
-    });
-    fireEvent.change(screen.getByLabelText("Value"), {
-      target: { value: "50" },
-    });
-    fireEvent.change(screen.getByLabelText("Times"), {
-      target: { value: "2" },
-    });
-    fireEvent.change(screen.getByLabelText("Frequency"), {
-      target: { value: "per_month" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /save card type/i }));
-
-    await waitFor(() =>
-      expect(onCreateCardType).toHaveBeenCalledWith({
-        name: "Chase Sapphire Preferred",
-        annual_fee: 1095,
-        earning_rewards: [
-          {
-            id: undefined,
-            category: "Base rate",
-            keywords: null,
-            reward_percent: 0,
-          },
-          {
-            id: undefined,
-            category: "Dining",
-            keywords: null,
-            reward_percent: 3,
-          },
-        ],
-        perk_awards: [
-          {
-            id: undefined,
-            name: "Travel credit",
-            dollar_value: 50,
-            frequency_count: 2,
-            frequency_period: "per_month",
-            auto_complete: false,
-          },
-        ],
-      }),
-    );
-  });
-
-  it("creates a custom keyword category earning rate with a display name and comma-separated keywords", async () => {
-    const { onCreateCardType } = renderRewardsPage();
-
-    fireEvent.click(screen.getByRole("button", { name: /manage card types/i }));
-    fireEvent.change(screen.getByLabelText("Credit card type"), {
-      target: { value: "Coffee Card" },
-    });
-    fireEvent.change(screen.getByLabelText("Annual fee"), {
-      target: { value: "0" },
-    });
-
-    fireEvent.change(screen.getAllByLabelText("Category")[0], {
-      target: { value: "__custom_category__" },
-    });
-    fireEvent.change(screen.getByLabelText("Display name"), {
-      target: { value: "Coffee shops" },
-    });
-    fireEvent.change(screen.getByLabelText("Keywords (comma-separated)"), {
-      target: { value: "starbucks, blue bottle" },
-    });
-    fireEvent.change(screen.getAllByLabelText("Rate")[0], {
-      target: { value: "5" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /save card type/i }));
-
-    await waitFor(() =>
-      expect(onCreateCardType).toHaveBeenCalledWith(
-        expect.objectContaining({
-          earning_rewards: [
-            {
-              id: undefined,
-              category: "Coffee shops",
-              keywords: "starbucks, blue bottle",
-              reward_percent: 5,
-            },
-          ],
-        }),
-      ),
-    );
-  });
-
-  it("selecting an existing card type in Manage card types populates the form for editing, preserving reward/perk ids on save", async () => {
-    const onUpdateCardType = vi.fn().mockResolvedValue(undefined);
-
-    render(
-      <CreditCardRewardsPage
-        data={{
-          selected_month: "2026-08",
-          card_types: [
-            {
-              id: 11,
-              name: "Travel Card",
-              annual_fee: 100,
-              earning_rewards: [
-                {
-                  id: 21,
-                  category: "Base rate",
-                  reward_percent: 1,
-                  keywords: null,
-                },
-              ],
-              perk_awards: [
-                {
-                  id: 31,
-                  name: "Travel credit",
-                  dollar_value: 50,
-                  completion_amount: 0,
-                  frequency_count: 1,
-                  frequency_period: "per_year",
-                  auto_complete: false,
-                },
-              ],
-            },
-          ],
-          accounts: [],
-        }}
-        error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
-        isLoading={false}
-        isUpdating={false}
-        isUpdatingCardType={false}
-        isUpdatingPerkCompletion={false}
-        onAccountTypeChange={vi.fn()}
-        onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
-        onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={onUpdateCardType}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage card types/i }));
-    selectCardTypeToEdit("Travel Card");
-
-    expect((screen.getByLabelText("Credit card type") as HTMLInputElement).value).toBe(
-      "Travel Card",
-    );
-    expect((screen.getAllByLabelText("Category")[0] as HTMLSelectElement).value).toBe(
-      "Base rate",
-    );
-
-    fireEvent.change(screen.getAllByLabelText("Rate")[0], {
-      target: { value: "2" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: /add earning rate/i }));
-    fireEvent.change(screen.getAllByLabelText("Category")[1], {
-      target: { value: "Dining" },
-    });
-    fireEvent.change(screen.getAllByLabelText("Rate")[1], {
-      target: { value: "3" },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
-
-    await waitFor(() =>
-      expect(onUpdateCardType).toHaveBeenCalledWith({
-        cardTypeId: 11,
-        input: {
-          name: "Travel Card",
-          annual_fee: 100,
-          earning_rewards: [
-            { id: 21, category: "Base rate", keywords: null, reward_percent: 2 },
-            {
-              id: undefined,
-              category: "Dining",
-              keywords: null,
-              reward_percent: 3,
-            },
-          ],
-          perk_awards: [
-            {
-              id: 31,
-              name: "Travel credit",
-              dollar_value: 50,
-              frequency_count: 1,
-              frequency_period: "per_year",
-              auto_complete: false,
-            },
-          ],
-        },
-      }),
-    );
-  });
-
-  it("filters card types in the management selector by typed text", () => {
-    render(
-      <CreditCardRewardsPage
-        data={{
-          selected_month: "2026-08",
-          card_types: [
-            {
-              id: 11,
-              name: "Chase Sapphire Preferred",
-              annual_fee: 95,
-              earning_rewards: [],
-              perk_awards: [],
-            },
-            {
-              id: 12,
-              name: "Chase Freedom Unlimited",
-              annual_fee: 0,
-              earning_rewards: [],
-              perk_awards: [],
-            },
-          ],
-          accounts: [],
-        }}
-        error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
-        isLoading={false}
-        isUpdating={false}
-        isUpdatingCardType={false}
-        isUpdatingPerkCompletion={false}
-        onAccountTypeChange={vi.fn()}
-        onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
-        onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage card types/i }));
-
-    const input = screen.getByRole("combobox", { name: /card type to edit/i });
-    fireEvent.focus(input);
-    fireEvent.change(input, { target: { value: "sapp" } });
-
-    expect(
-      screen.queryByRole("option", { name: "Chase Freedom Unlimited" }),
-    ).toBeNull();
-
-    fireEvent.click(
-      screen.getByRole("option", { name: "Chase Sapphire Preferred" }),
-    );
-
-    expect((screen.getByLabelText("Credit card type") as HTMLInputElement).value).toBe(
-      "Chase Sapphire Preferred",
-    );
-  });
-
   it("shows database fixed-scale reward percentages without trailing zeros", () => {
     render(
       <CreditCardRewardsPage
         data={{
           selected_month: "2026-08",
-          card_types: [
-            {
-              id: 11,
-              name: "Rewards Card",
-              annual_fee: 0,
-              earning_rewards: [
-                {
-                  id: 21,
-                  category: "Drug Stores",
-                  reward_percent: "3.0000" as unknown as number,
-                  keywords: "Pharmacy",
-                },
-                {
-                  id: 22,
-                  category: "Base rate",
-                  reward_percent: "2.7500" as unknown as number,
-                  keywords: null,
-                },
-              ],
-              perk_awards: [],
-            },
-          ],
+          card_types: [],
           accounts: [
             {
               id: 1,
@@ -382,86 +47,19 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage card types/i }));
-    selectCardTypeToEdit("Rewards Card");
-
-    expect((screen.getAllByLabelText("Rate")[0] as HTMLInputElement).value).toBe(
-      "3",
-    );
-    expect((screen.getAllByLabelText("Rate")[1] as HTMLInputElement).value).toBe(
-      "2.75",
     );
 
     fireEvent.click(screen.getByRole("button", { name: /card details/i }));
 
     expect(screen.queryByText("3%")).not.toBeNull();
     expect(screen.queryByText("2.75%")).not.toBeNull();
-  });
-
-  it("shows a Delete card type button only when editing an existing type, and confirms before deleting", async () => {
-    const onDeleteCardType = vi.fn().mockResolvedValue(undefined);
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
-
-    render(
-      <CreditCardRewardsPage
-        data={{
-          selected_month: "2026-08",
-          card_types: [
-            {
-              id: 11,
-              name: "Travel Card",
-              annual_fee: 100,
-              earning_rewards: [],
-              perk_awards: [],
-            },
-          ],
-          accounts: [],
-        }}
-        error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
-        isLoading={false}
-        isUpdating={false}
-        isUpdatingCardType={false}
-        isUpdatingPerkCompletion={false}
-        onAccountTypeChange={vi.fn()}
-        onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={onDeleteCardType}
-        onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /manage card types/i }));
-    expect(
-      screen.queryByRole("button", { name: /delete card type/i }),
-    ).toBeNull();
-
-    selectCardTypeToEdit("Travel Card");
-    fireEvent.click(screen.getByRole("button", { name: /delete card type/i }));
-
-    expect(confirmSpy).toHaveBeenCalled();
-    await waitFor(() => expect(onDeleteCardType).toHaveBeenCalledWith(11));
-
-    confirmSpy.mockRestore();
   });
 
   it("shows earning reward amounts computed by the server instead of a flat $0", () => {
@@ -503,19 +101,12 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -585,19 +176,12 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -664,19 +248,12 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -738,19 +315,12 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={onPerkCompletionChange}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -817,19 +387,12 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={onPerkCompletionChange}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -866,7 +429,7 @@ describe("CreditCardRewardsPage", () => {
     });
   });
 
-  it("shows an effective month dropdown on the tile once a card type is assigned, and reports changes to it", () => {
+  it("shows a benefit cycle chip with month-only selection and snaps after changes", () => {
     const onAccountTypeChange = vi.fn();
 
     render(
@@ -892,7 +455,7 @@ describe("CreditCardRewardsPage", () => {
               type: "credit",
               institution_name: "Test Bank",
               credit_card_type_id: 11,
-              effective_month: "03",
+              effective_month: "11",
               perk_completions: [],
               earning_reward_totals: [],
               credit_card_type: {
@@ -906,19 +469,12 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={onAccountTypeChange}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -926,15 +482,36 @@ describe("CreditCardRewardsPage", () => {
       screen.getByRole("button", { name: "Card details for Travel Card" }),
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Effective month for Rewards card" }),
-    );
-    const effectiveMonthSelect = screen.getByLabelText(
-      "Effective month for Rewards card",
-    );
-    expect((effectiveMonthSelect as HTMLSelectElement).value).toBe("03");
+    expect(screen.getByText("Benefit cycle")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Benefit cycle for Rewards card" })
+        .textContent,
+    ).toBe("November 2025 - October 2026");
 
-    fireEvent.change(effectiveMonthSelect, { target: { value: "07" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Benefit cycle for Rewards card" }),
+    );
+    expect(
+      screen.getByRole("listbox", { name: "Benefit cycle for Rewards card" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("option", { name: "Benefit cycle" })).toBeNull();
+    const selectedMonthOption = screen.getByRole("option", { name: "November" });
+    expect(selectedMonthOption.getAttribute("aria-selected")).toBe("true");
+    expect(document.activeElement).toBe(selectedMonthOption);
+    const julyOption = screen.getByRole("option", { name: "July" });
+    expect(julyOption).toBeTruthy();
+
+    fireEvent.click(julyOption);
+
+    expect(
+      screen.queryByRole("listbox", {
+        name: "Benefit cycle for Rewards card",
+      }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Benefit cycle for Rewards card" })
+        .textContent,
+    ).toBe("July 2026 - June 2027");
 
     expect(onAccountTypeChange).toHaveBeenCalledWith({
       accountId: 7,
@@ -943,7 +520,7 @@ describe("CreditCardRewardsPage", () => {
     });
   });
 
-  it("uses the editable chip selector for assigning a card type on a tile", () => {
+  it("uses the searchable chip selector for assigning a card type on a tile", () => {
     const onAccountTypeChange = vi.fn();
 
     render(
@@ -977,19 +554,12 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={onAccountTypeChange}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -997,12 +567,12 @@ describe("CreditCardRewardsPage", () => {
       screen.getByRole("button", { name: "Card details for Rewards card" }),
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Card type for Rewards card" }),
-    );
-    fireEvent.change(screen.getByLabelText("Card type for Rewards card"), {
-      target: { value: "11" },
+    const cardTypeInput = screen.getByRole("combobox", {
+      name: "Card type for Rewards card",
     });
+
+    fireEvent.focus(cardTypeInput);
+    fireEvent.click(screen.getByRole("option", { name: "Travel Card" }));
 
     expect(onAccountTypeChange).toHaveBeenCalledWith({
       accountId: 7,
@@ -1012,6 +582,8 @@ describe("CreditCardRewardsPage", () => {
   });
 
   it("opens owned-card optimization from the summary button", () => {
+    const onLoadOptimization = vi.fn();
+
     render(
       <CreditCardRewardsPage
         data={{
@@ -1033,6 +605,8 @@ describe("CreditCardRewardsPage", () => {
               credit_card_type: null,
             },
           ],
+        }}
+        optimizationData={{
           optimization: {
             period_start: "2025-09-01",
             period_end: "2026-08-31",
@@ -1058,21 +632,52 @@ describe("CreditCardRewardsPage", () => {
               },
             ],
           },
+          card_recommendations: {
+            period_start: "2025-09-01",
+            period_end: "2026-08-31",
+            best_overall: null,
+            best_no_annual_fee: null,
+            recommendations: [],
+          },
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
+        onLoadOptimization={onLoadOptimization}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /optimize my earnings/i }));
+
+    expect(onLoadOptimization).toHaveBeenCalled();
+    expect(
+      screen.getByRole("dialog", { name: /optimize my earnings/i }),
+    ).toBeTruthy();
+    expect(screen.getByText("Owned card optimization")).toBeTruthy();
+    expect(screen.getByText("Dining")).toBeTruthy();
+    expect(screen.getByText("Use Dining Card instead of Flat Card")).toBeTruthy();
+  });
+
+  it("keeps the optimization modal open while analysis is loading", () => {
+    render(
+      <CreditCardRewardsPage
+        data={{
+          selected_month: "2026-08",
+          card_types: [],
+          accounts: [],
+        }}
+        isOptimizationLoading
+        error={null}
+        isLoading={false}
+        isUpdating={false}
+        isUpdatingPerkCompletion={false}
+        onAccountTypeChange={vi.fn()}
+        onBackToDashboard={vi.fn()}
+        onPerkCompletionChange={vi.fn()}
       />,
     );
 
@@ -1081,9 +686,7 @@ describe("CreditCardRewardsPage", () => {
     expect(
       screen.getByRole("dialog", { name: /optimize my earnings/i }),
     ).toBeTruthy();
-    expect(screen.getByText("Owned card optimization")).toBeTruthy();
-    expect(screen.getByText("Dining")).toBeTruthy();
-    expect(screen.getByText("Use Dining Card instead of Flat Card")).toBeTruthy();
+    expect(screen.getByText("Analyzing rewards activity.")).toBeTruthy();
   });
 
   it("shows new-card recommendations and drills into the transactions behind one", () => {
@@ -1108,6 +711,16 @@ describe("CreditCardRewardsPage", () => {
               credit_card_type: null,
             },
           ],
+        }}
+        optimizationData={{
+          optimization: {
+            period_start: "2025-09-01",
+            period_end: "2026-08-31",
+            actual_reward_value: 0,
+            optimized_reward_value: 0,
+            missed_reward_value: 0,
+            recommendation_groups: [],
+          },
           card_recommendations: {
             period_start: "2025-09-01",
             period_end: "2026-08-31",
@@ -1176,19 +789,12 @@ describe("CreditCardRewardsPage", () => {
           },
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -1220,6 +826,16 @@ describe("CreditCardRewardsPage", () => {
           selected_month: "2026-08",
           card_types: [],
           accounts: [],
+        }}
+        optimizationData={{
+          optimization: {
+            period_start: "2025-09-01",
+            period_end: "2026-08-31",
+            actual_reward_value: 0,
+            optimized_reward_value: 0,
+            missed_reward_value: 0,
+            recommendation_groups: [],
+          },
           card_recommendations: {
             period_start: "2025-09-01",
             period_end: "2026-08-31",
@@ -1229,19 +845,12 @@ describe("CreditCardRewardsPage", () => {
           },
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -1310,19 +919,12 @@ describe("CreditCardRewardsPage", () => {
           ],
         }}
         error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={true}
         isLoading={false}
         isUpdating={false}
-        isUpdatingCardType={false}
         isUpdatingPerkCompletion={false}
         onAccountTypeChange={vi.fn()}
         onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
         onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
       />,
     );
 
@@ -1334,31 +936,5 @@ describe("CreditCardRewardsPage", () => {
     expect(
       screen.getByRole("button", { name: /optimize my earnings/i }),
     ).toBeTruthy();
-  });
-
-  it("does not show card type management to non-managers", () => {
-    render(
-      <CreditCardRewardsPage
-        data={rewardsData}
-        error={null}
-        isCreatingCardType={false}
-        isDeletingCardType={false}
-        isCardTypeManager={false}
-        isLoading={false}
-        isUpdating={false}
-        isUpdatingCardType={false}
-        isUpdatingPerkCompletion={false}
-        onAccountTypeChange={vi.fn()}
-        onBackToDashboard={vi.fn()}
-        onCreateCardType={vi.fn()}
-        onDeleteCardType={vi.fn()}
-        onPerkCompletionChange={vi.fn()}
-        onUpdateCardType={vi.fn()}
-      />,
-    );
-
-    expect(
-      screen.queryByRole("button", { name: /manage card types/i }),
-    ).toBeNull();
   });
 });

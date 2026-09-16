@@ -11,6 +11,12 @@ const createStaleCardTypeChildError = (childType) => {
   return error;
 };
 
+const getBenefitStatus = (value) => value || 'included';
+
+const getBenefitSource = (value) => value || 'manual';
+
+const normalizeNullableText = (value) => value || null;
+
 const findRewardCatalog = async () => {
   const [cardTypes, earningRewards, perkAwards] = await Promise.all([
     db.query(
@@ -157,9 +163,11 @@ const createCardTypeWithRewards = async ({
       `
         INSERT INTO credit_card_types (
           name,
-          annual_fee
+          annual_fee,
+          status,
+          source
         )
-        VALUES ($1, $2)
+        VALUES ($1, $2, 'active', 'manual')
         RETURNING *
       `,
       [name, annualFee],
@@ -173,11 +181,28 @@ const createCardTypeWithRewards = async ({
             credit_card_type_id,
             category,
             reward_percent,
-            keywords
+            keywords,
+            status,
+            source,
+            source_description,
+            status_reason,
+            match_strategy,
+            source_fingerprint
           )
-          VALUES ($1, $2, $3, $4)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `,
-        [cardType.id, reward.category, reward.rewardPercent, reward.keywords],
+        [
+          cardType.id,
+          reward.category,
+          reward.rewardPercent,
+          reward.keywords,
+          getBenefitStatus(reward.status),
+          getBenefitSource(reward.source),
+          normalizeNullableText(reward.sourceDescription),
+          normalizeNullableText(reward.statusReason),
+          normalizeNullableText(reward.matchStrategy),
+          normalizeNullableText(reward.sourceFingerprint),
+        ],
       );
     }
 
@@ -191,9 +216,15 @@ const createCardTypeWithRewards = async ({
             completion_amount,
             frequency_count,
             frequency_period,
-            auto_complete
+            auto_complete,
+            status,
+            source,
+            source_description,
+            status_reason,
+            match_strategy,
+            source_fingerprint
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         `,
         [
           cardType.id,
@@ -203,6 +234,12 @@ const createCardTypeWithRewards = async ({
           award.frequencyCount,
           award.frequencyPeriod,
           award.autoComplete,
+          getBenefitStatus(award.status),
+          getBenefitSource(award.source),
+          normalizeNullableText(award.sourceDescription),
+          normalizeNullableText(award.statusReason),
+          normalizeNullableText(award.matchStrategy),
+          normalizeNullableText(award.sourceFingerprint),
         ],
       );
     }
@@ -232,7 +269,12 @@ const updateCardTypeWithRewards = async ({
     const { rows } = await client.query(
       `
         UPDATE credit_card_types
-        SET name = $1, annual_fee = $2, updated_at = NOW()
+        SET
+          name = $1,
+          annual_fee = $2,
+          status = 'active',
+          review_reason = NULL,
+          updated_at = NOW()
         WHERE id = $3
         RETURNING *
       `,
@@ -247,13 +289,29 @@ const updateCardTypeWithRewards = async ({
         const updated = await client.query(
           `
             UPDATE credit_card_earning_rewards
-            SET category = $1, reward_percent = $2, keywords = $3, updated_at = NOW()
-            WHERE id = $4 AND credit_card_type_id = $5
+            SET
+              category = $1,
+              reward_percent = $2,
+              keywords = $3,
+              status = $4,
+              source = COALESCE($5, source),
+              source_description = $6,
+              status_reason = $7,
+              match_strategy = $8,
+              source_fingerprint = COALESCE($9, source_fingerprint),
+              updated_at = NOW()
+            WHERE id = $10 AND credit_card_type_id = $11
           `,
           [
             reward.category,
             reward.rewardPercent,
             reward.keywords,
+            getBenefitStatus(reward.status),
+            getBenefitSource(reward.source),
+            normalizeNullableText(reward.sourceDescription),
+            normalizeNullableText(reward.statusReason),
+            normalizeNullableText(reward.matchStrategy),
+            normalizeNullableText(reward.sourceFingerprint),
             reward.id,
             cardTypeId,
           ],
@@ -269,12 +327,29 @@ const updateCardTypeWithRewards = async ({
               credit_card_type_id,
               category,
               reward_percent,
-              keywords
+              keywords,
+              status,
+              source,
+              source_description,
+              status_reason,
+              match_strategy,
+              source_fingerprint
             )
-            VALUES ($1, $2, $3, $4)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id
           `,
-          [cardTypeId, reward.category, reward.rewardPercent, reward.keywords],
+          [
+            cardTypeId,
+            reward.category,
+            reward.rewardPercent,
+            reward.keywords,
+            getBenefitStatus(reward.status),
+            getBenefitSource(reward.source),
+            normalizeNullableText(reward.sourceDescription),
+            normalizeNullableText(reward.statusReason),
+            normalizeNullableText(reward.matchStrategy),
+            normalizeNullableText(reward.sourceFingerprint),
+          ],
         );
         keptEarningRewardIds.push(inserted.rows[0].id);
       }
@@ -301,8 +376,14 @@ const updateCardTypeWithRewards = async ({
               frequency_count = $3,
               frequency_period = $4,
               auto_complete = $5,
+              status = $6,
+              source = COALESCE($7, source),
+              source_description = $8,
+              status_reason = $9,
+              match_strategy = $10,
+              source_fingerprint = COALESCE($11, source_fingerprint),
               updated_at = NOW()
-            WHERE id = $6 AND credit_card_type_id = $7
+            WHERE id = $12 AND credit_card_type_id = $13
           `,
           [
             award.name,
@@ -310,6 +391,12 @@ const updateCardTypeWithRewards = async ({
             award.frequencyCount,
             award.frequencyPeriod,
             award.autoComplete,
+            getBenefitStatus(award.status),
+            getBenefitSource(award.source),
+            normalizeNullableText(award.sourceDescription),
+            normalizeNullableText(award.statusReason),
+            normalizeNullableText(award.matchStrategy),
+            normalizeNullableText(award.sourceFingerprint),
             award.id,
             cardTypeId,
           ],
@@ -328,9 +415,15 @@ const updateCardTypeWithRewards = async ({
               completion_amount,
               frequency_count,
               frequency_period,
-              auto_complete
+              auto_complete,
+              status,
+              source,
+              source_description,
+              status_reason,
+              match_strategy,
+              source_fingerprint
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING id
           `,
           [
@@ -341,6 +434,12 @@ const updateCardTypeWithRewards = async ({
             award.frequencyCount,
             award.frequencyPeriod,
             award.autoComplete,
+            getBenefitStatus(award.status),
+            getBenefitSource(award.source),
+            normalizeNullableText(award.sourceDescription),
+            normalizeNullableText(award.statusReason),
+            normalizeNullableText(award.matchStrategy),
+            normalizeNullableText(award.sourceFingerprint),
           ],
         );
         keptPerkAwardIds.push(inserted.rows[0].id);
@@ -483,6 +582,443 @@ const deletePerkCompletion = async ({
   );
 };
 
+const normalizeBenefitSignature = (values) =>
+  values
+    .map((value) => String(value || '').trim().toLowerCase())
+    .join('|');
+
+const getEarningSignature = (reward) =>
+  normalizeBenefitSignature([
+    reward.category,
+    Number(reward.rewardPercent ?? reward.reward_percent ?? 0),
+    reward.keywords,
+  ]);
+
+const getPerkSignature = (award) =>
+  normalizeBenefitSignature([
+    award.name,
+    Number(award.dollarValue ?? award.dollar_value ?? 0),
+    award.frequencyCount ?? award.frequency_count ?? 1,
+    award.frequencyPeriod ?? award.frequency_period ?? 'per_year',
+  ]);
+
+const insertImportedEarningReward = async ({ client, cardTypeId, reward }) => {
+  await client.query(
+    `
+      INSERT INTO credit_card_earning_rewards (
+        credit_card_type_id,
+        category,
+        reward_percent,
+        keywords,
+        status,
+        source,
+        external_reward_id,
+        source_description,
+        status_reason,
+        match_strategy,
+        source_fingerprint
+      )
+      VALUES ($1, $2, $3, $4, $5, 'vectormint', $6, $7, $8, $9, $10)
+      ON CONFLICT (credit_card_type_id, source, external_reward_id)
+      WHERE external_reward_id IS NOT NULL
+      DO NOTHING
+    `,
+    [
+      cardTypeId,
+      reward.category,
+      reward.rewardPercent,
+      reward.keywords,
+      getBenefitStatus(reward.status),
+      normalizeNullableText(reward.externalId),
+      normalizeNullableText(reward.sourceDescription),
+      normalizeNullableText(reward.statusReason),
+      normalizeNullableText(reward.matchStrategy),
+      normalizeNullableText(reward.sourceFingerprint),
+    ],
+  );
+};
+
+const insertImportedPerkAward = async ({ client, cardTypeId, award }) => {
+  await client.query(
+    `
+      INSERT INTO credit_card_perk_awards (
+        credit_card_type_id,
+        name,
+        dollar_value,
+        completion_amount,
+        frequency_count,
+        frequency_period,
+        auto_complete,
+        status,
+        source,
+        external_perk_id,
+        source_description,
+        status_reason,
+        match_strategy,
+        source_fingerprint
+      )
+      VALUES ($1, $2, $3, 0, $4, $5, $6, $7, 'vectormint', $8, $9, $10, $11, $12)
+      ON CONFLICT (credit_card_type_id, source, external_perk_id)
+      WHERE external_perk_id IS NOT NULL
+      DO NOTHING
+    `,
+    [
+      cardTypeId,
+      award.name,
+      award.dollarValue,
+      award.frequencyCount,
+      award.frequencyPeriod,
+      award.autoComplete,
+      getBenefitStatus(award.status),
+      normalizeNullableText(award.externalId),
+      normalizeNullableText(award.sourceDescription),
+      normalizeNullableText(award.statusReason),
+      normalizeNullableText(award.matchStrategy),
+      normalizeNullableText(award.sourceFingerprint),
+    ],
+  );
+};
+
+const mergeImportedBenefits = async ({
+  client,
+  cardTypeId,
+  earningRewards,
+  perkAwards,
+  existingEarningRewards = null,
+  existingPerkAwards = null,
+}) => {
+  const existingRewards = {
+    rows:
+      existingEarningRewards ||
+      (
+        await client.query(
+          'SELECT * FROM credit_card_earning_rewards WHERE credit_card_type_id = $1',
+          [cardTypeId],
+        )
+      ).rows,
+  };
+  const existingPerks = {
+    rows:
+      existingPerkAwards ||
+      (
+        await client.query(
+          'SELECT * FROM credit_card_perk_awards WHERE credit_card_type_id = $1',
+          [cardTypeId],
+        )
+      ).rows,
+  };
+  const summary = {
+    benefits_added_count: 0,
+    benefits_updated_count: 0,
+    benefits_preserved_count: 0,
+  };
+
+  for (const reward of earningRewards) {
+    const existing =
+      existingRewards.rows.find(
+        (row) =>
+          reward.externalId &&
+          row.external_reward_id &&
+          row.external_reward_id === reward.externalId,
+      ) ||
+      existingRewards.rows.find(
+        (row) => row.source_fingerprint === reward.sourceFingerprint,
+      ) ||
+      existingRewards.rows.find(
+        (row) => getEarningSignature(row) === getEarningSignature(reward),
+      );
+
+    if (!existing) {
+      await insertImportedEarningReward({ client, cardTypeId, reward });
+      summary.benefits_added_count += 1;
+      continue;
+    }
+
+    if (existing.source_fingerprint === reward.sourceFingerprint) {
+      summary.benefits_preserved_count += 1;
+      continue;
+    }
+
+    await client.query(
+      `
+        UPDATE credit_card_earning_rewards
+        SET
+          category = $1,
+          reward_percent = $2,
+          keywords = $3,
+          source = CASE
+            WHEN source = 'manual' AND source_fingerprint IS NULL THEN source
+            ELSE COALESCE(NULLIF(source, 'manual'), 'vectormint')
+          END,
+          external_reward_id = COALESCE(external_reward_id, $4),
+          source_description = $5,
+          status_reason = $6,
+          match_strategy = $7,
+          source_fingerprint = $8,
+          status = CASE
+            WHEN source = 'manual' AND source_fingerprint IS NULL THEN status
+            WHEN source_fingerprint IS DISTINCT FROM $8 THEN 'needs_review'
+            ELSE status
+          END,
+          updated_at = NOW()
+        WHERE id = $9
+      `,
+      [
+        reward.category,
+        reward.rewardPercent,
+        reward.keywords,
+        normalizeNullableText(reward.externalId),
+        normalizeNullableText(reward.sourceDescription),
+        normalizeNullableText(reward.statusReason),
+        normalizeNullableText(reward.matchStrategy),
+        normalizeNullableText(reward.sourceFingerprint),
+        existing.id,
+      ],
+    );
+    summary.benefits_updated_count += 1;
+  }
+
+  for (const award of perkAwards) {
+    const existing =
+      existingPerks.rows.find(
+        (row) =>
+          award.externalId &&
+          row.external_perk_id &&
+          row.external_perk_id === award.externalId,
+      ) ||
+      existingPerks.rows.find(
+        (row) => row.source_fingerprint === award.sourceFingerprint,
+      ) ||
+      existingPerks.rows.find(
+        (row) => getPerkSignature(row) === getPerkSignature(award),
+      );
+
+    if (!existing) {
+      await insertImportedPerkAward({ client, cardTypeId, award });
+      summary.benefits_added_count += 1;
+      continue;
+    }
+
+    if (existing.source_fingerprint === award.sourceFingerprint) {
+      summary.benefits_preserved_count += 1;
+      continue;
+    }
+
+    await client.query(
+      `
+        UPDATE credit_card_perk_awards
+        SET
+          name = $1,
+          dollar_value = $2,
+          frequency_count = $3,
+          frequency_period = $4,
+          auto_complete = $5,
+          source = CASE
+            WHEN source = 'manual' AND source_fingerprint IS NULL THEN source
+            ELSE COALESCE(NULLIF(source, 'manual'), 'vectormint')
+          END,
+          external_perk_id = COALESCE(external_perk_id, $6),
+          source_description = $7,
+          status_reason = $8,
+          match_strategy = $9,
+          source_fingerprint = $10,
+          status = CASE
+            WHEN source = 'manual' AND source_fingerprint IS NULL THEN status
+            WHEN source_fingerprint IS DISTINCT FROM $10 THEN 'needs_review'
+            ELSE status
+          END,
+          updated_at = NOW()
+        WHERE id = $11
+      `,
+      [
+        award.name,
+        award.dollarValue,
+        award.frequencyCount,
+        award.frequencyPeriod,
+        award.autoComplete,
+        normalizeNullableText(award.externalId),
+        normalizeNullableText(award.sourceDescription),
+        normalizeNullableText(award.statusReason),
+        normalizeNullableText(award.matchStrategy),
+        normalizeNullableText(award.sourceFingerprint),
+        existing.id,
+      ],
+    );
+    summary.benefits_updated_count += 1;
+  }
+
+  return summary;
+};
+
+const mergeVectorMintCardCatalog = async ({ cards, matchCardTypeId }) => {
+  const client = await db.getClient();
+  const summary = {
+    fetched_count: cards.length,
+    matched_count: 0,
+    created_review_count: 0,
+    updated_count: 0,
+    unchanged_count: 0,
+    benefits_added_count: 0,
+    benefits_updated_count: 0,
+    benefits_preserved_count: 0,
+    review_required_count: 0,
+    warnings: [],
+  };
+
+  try {
+    await client.query('BEGIN');
+
+    const existingCards = await client.query(
+      `
+        SELECT id, external_source, external_card_id, source_fingerprint
+        FROM credit_card_types
+      `,
+    );
+    const existingRewards = await client.query(
+      'SELECT * FROM credit_card_earning_rewards',
+    );
+    const existingPerks = await client.query(
+      'SELECT * FROM credit_card_perk_awards',
+    );
+    const cardByExternalId = new Map(
+      existingCards.rows
+        .filter((row) => row.external_source === 'vectormint' && row.external_card_id)
+        .map((row) => [row.external_card_id, row]),
+    );
+    const rewardsByCardTypeId = new Map();
+    const perksByCardTypeId = new Map();
+
+    existingRewards.rows.forEach((row) => {
+      const key = String(row.credit_card_type_id);
+      const rows = rewardsByCardTypeId.get(key) || [];
+
+      rows.push(row);
+      rewardsByCardTypeId.set(key, rows);
+    });
+    existingPerks.rows.forEach((row) => {
+      const key = String(row.credit_card_type_id);
+      const rows = perksByCardTypeId.get(key) || [];
+
+      rows.push(row);
+      perksByCardTypeId.set(key, rows);
+    });
+
+    for (const card of cards) {
+      let cardTypeId = matchCardTypeId(card);
+      let previousFingerprint = null;
+
+      if (!cardTypeId && card.sourceId) {
+        const existingCard = cardByExternalId.get(card.sourceId);
+        if (existingCard) {
+          cardTypeId = existingCard.id;
+          previousFingerprint = existingCard.source_fingerprint;
+        }
+      }
+
+      if (!cardTypeId) {
+        const { rows } = await client.query(
+          `
+            INSERT INTO credit_card_types (
+              name,
+              annual_fee,
+              status,
+              source,
+              external_source,
+              external_card_id,
+              source_description,
+              review_reason,
+              source_fingerprint,
+              last_external_sync_at
+            )
+            VALUES ($1, $2, 'in_review', 'vectormint', 'vectormint', $3, $4, $5, $6, NOW())
+            ON CONFLICT (name) DO NOTHING
+            RETURNING *
+          `,
+          [
+            card.name,
+            card.annualFee,
+            normalizeNullableText(card.sourceId),
+            normalizeNullableText(card.raw?.issuer || card.raw?.network),
+            'New VectorMint card import needs admin review.',
+            normalizeNullableText(card.sourceFingerprint),
+          ],
+        );
+
+        if (!rows[0]) {
+          summary.warnings.push(`Skipped duplicate card name: ${card.name}`);
+          continue;
+        }
+
+        cardTypeId = rows[0].id;
+        previousFingerprint = null;
+        rewardsByCardTypeId.set(String(cardTypeId), []);
+        perksByCardTypeId.set(String(cardTypeId), []);
+        summary.created_review_count += 1;
+      } else {
+        const { rows } = await client.query(
+          `
+            UPDATE credit_card_types
+            SET
+              external_source = COALESCE(external_source, 'vectormint'),
+              external_card_id = COALESCE(external_card_id, $1),
+              source_fingerprint = $2,
+              review_reason = CASE
+                WHEN annual_fee IS DISTINCT FROM $3 THEN 'VectorMint annual fee differs from stored card.'
+                WHEN source_fingerprint IS DISTINCT FROM $2 THEN review_reason
+                ELSE review_reason
+              END,
+              last_external_sync_at = NOW(),
+              updated_at = NOW()
+            WHERE id = $4
+            RETURNING source_fingerprint
+          `,
+          [
+            normalizeNullableText(card.sourceId),
+            normalizeNullableText(card.sourceFingerprint),
+            card.annualFee,
+            cardTypeId,
+          ],
+        );
+        previousFingerprint = previousFingerprint || rows[0]?.source_fingerprint;
+        summary.matched_count += 1;
+      }
+
+      const benefitSummary = await mergeImportedBenefits({
+        client,
+        cardTypeId,
+        earningRewards: card.earningRewards,
+        perkAwards: card.perkAwards,
+        existingEarningRewards: rewardsByCardTypeId.get(String(cardTypeId)) || [],
+        existingPerkAwards: perksByCardTypeId.get(String(cardTypeId)) || [],
+      });
+      summary.benefits_added_count += benefitSummary.benefits_added_count;
+      summary.benefits_updated_count += benefitSummary.benefits_updated_count;
+      summary.benefits_preserved_count += benefitSummary.benefits_preserved_count;
+
+      if (previousFingerprint === card.sourceFingerprint) {
+        summary.unchanged_count += 1;
+      } else {
+        summary.updated_count += 1;
+      }
+
+      if (
+        card.earningRewards.some((reward) => reward.status !== 'included') ||
+        card.perkAwards.some((award) => award.status !== 'included')
+      ) {
+        summary.review_required_count += 1;
+      }
+    }
+
+    await client.query('COMMIT');
+    return summary;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   createCardTypeWithRewards,
   deleteAccountType,
@@ -495,6 +1031,7 @@ module.exports = {
   findPerkAwardById,
   findPerkCompletionsForAccountCycles,
   findRewardCatalog,
+  mergeVectorMintCardCatalog,
   setPerkCompletion,
   updateCardTypeWithRewards,
   upsertAccountType,

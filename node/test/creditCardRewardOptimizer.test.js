@@ -95,6 +95,54 @@ test('buildCreditCardRewardOptimization: ranks owned-card usage changes across t
   assert.equal(result.recommendation_groups[0].recommended_card_name, 'Dining Card');
 });
 
+test('buildCreditCardRewardOptimization: excludes in-review cards and non-included benefits', () => {
+  const ownedFlatCard = cardType({
+    id: 1,
+    name: 'Flat Card',
+    rewards: [
+      { id: 1, category: 'Base rate', reward_percent: 1, keywords: null },
+      {
+        id: 2,
+        category: 'Dining',
+        reward_percent: 10,
+        keywords: null,
+        status: 'needs_review',
+      },
+    ],
+  });
+  const inReviewDiningCard = {
+    ...cardType({
+      id: 2,
+      name: 'In Review Dining Card',
+      rewards: [
+        { id: 3, category: 'Dining', reward_percent: 5, keywords: null },
+      ],
+    }),
+    status: 'in_review',
+  };
+
+  const result = buildCreditCardRewardOptimization({
+    accounts: [account({ id: 10, cardTypeId: 1 })],
+    cardTypes: [ownedFlatCard, inReviewDiningCard],
+    transactions: [
+      transaction({
+        id: 100,
+        accountId: 10,
+        amount: 100,
+        merchantName: 'Cafe',
+        displayCategory: 'Dining',
+      }),
+    ],
+    periodStart: '2025-09-01',
+    periodEnd: '2026-08-31',
+  });
+
+  assert.equal(result.actual_reward_value, 1);
+  assert.equal(result.optimized_reward_value, 1);
+  assert.equal(result.missed_reward_value, 0);
+  assert.deepEqual(result.recommendation_groups, []);
+});
+
 test('buildCreditCardRewardOptimization: orders recommendations by missed reward value', () => {
   const ownedFlatCard = cardType({
     id: 1,

@@ -451,6 +451,96 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.cardTypeTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  align-items: center;
+  border-bottom: 1px solid var(--color-surface-muted);
+  padding-bottom: var(--space-sm);
+}
+
+.cardTypeTabs button {
+  min-height: 3.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-control);
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.cardTypeTabs .cardTypeTabActive {
+  background: var(--color-surface-muted);
+}
+
+.cardTypeTabs .secondaryButton {
+  margin-left: auto;
+}
+
+.importSummary,
+.sourceNote {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-label);
+  line-height: 1.35;
+}
+
+.reviewList {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.reviewCard {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: var(--space-sm);
+  text-align: left;
+}
+
+.reviewCard:hover {
+  border-color: var(--color-accent);
+  background: var(--color-surface-muted);
+}
+
+.reviewCard span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+}
+
+.reviewCard strong {
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-title);
+}
+
+.reviewCard small {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.reviewCard > span:last-child {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--font-weight-label);
+  white-space: nowrap;
+}
+
 .accountIdentity h2 {
   color: var(--color-ink);
   font-size: var(--text-xl);
@@ -516,6 +606,16 @@
   background: var(--color-surface-muted);
 }
 
+.rewardRowExcluded {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.rewardRowExcluded:hover {
+  border-color: var(--color-surface-muted);
+  background: var(--color-surface);
+}
+
 .rewardRow > span {
   min-width: 0;
   display: flex;
@@ -576,12 +676,14 @@
 
 .optimizationModalPanel {
   width: min(100%, 112rem);
-  min-height: 0;
+  height: min(78rem, 88vh);
+  min-height: min(62rem, 88vh);
   overflow: hidden;
 }
 
 .optimizationModalLayout {
   min-height: 0;
+  flex: 1;
   display: grid;
   grid-template-columns: 18rem minmax(0, 1fr);
   gap: var(--space-lg);
@@ -626,6 +728,18 @@
 .optimizationModalContent {
   overflow-y: auto;
   padding-right: var(--space-2xs);
+}
+
+.optimizationLoadingState {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+
+.optimizationLoadingState .statusText {
+  width: min(100%, 42rem);
+  text-align: center;
 }
 
 .modalHeader {
@@ -938,12 +1052,11 @@
 
 .perkBenefitRow {
   grid-template-columns:
-    minmax(16rem, 1.2fr)
-    minmax(10rem, 0.7fr)
-    minmax(8rem, 0.5fr)
-    minmax(12rem, 0.7fr)
-    minmax(12rem, 0.8fr)
-    minmax(12rem, 0.8fr)
+    minmax(12rem, 1.2fr)
+    minmax(7rem, 0.6fr)
+    minmax(5rem, 0.4fr)
+    minmax(9rem, 0.6fr)
+    minmax(11rem, 0.7fr)
     auto;
 }
 
@@ -1120,7 +1233,13 @@
   }
 
   .modalPanel {
+    width: 100%;
     max-height: none;
+  }
+
+  .optimizationModalPanel {
+    height: auto;
+    min-height: min(62rem, 100%);
   }
 
   .formGrid,

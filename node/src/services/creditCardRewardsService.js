@@ -21,6 +21,9 @@ const {
   applyTransactionCategoryRules,
 } = require('./transactions/categoryRules');
 const { getCurrentUser } = require('./authService');
+const {
+  importVectorMintCardCatalog,
+} = require('./vectorMint/vectorMintCardImportService');
 
 const FREQUENCY_MULTIPLIERS = {
   per_year: 1,
@@ -63,11 +66,25 @@ const formatDate = (value) => {
 const toNumber = (value) =>
   value === null || value === undefined ? null : Number(value);
 
+const isIncludedBenefit = (benefit) =>
+  !benefit.status || benefit.status === 'included';
+
+const getIncludedEarningRewards = (cardType) =>
+  cardType.earning_rewards.filter(isIncludedBenefit);
+
+const getIncludedPerkAwards = (cardType) =>
+  cardType.perk_awards.filter(isIncludedBenefit);
+
 const serializeEarningReward = (reward) => ({
   id: Number(reward.id),
   category: reward.category,
   reward_percent: toNumber(reward.reward_percent),
   keywords: reward.keywords || null,
+  status: reward.status || 'included',
+  source: reward.source || 'manual',
+  source_description: reward.source_description || null,
+  status_reason: reward.status_reason || null,
+  match_strategy: reward.match_strategy || null,
 });
 
 const serializePerkAward = (award) => ({
@@ -78,6 +95,11 @@ const serializePerkAward = (award) => ({
   frequency_count: Number(award.frequency_count || 1),
   frequency_period: award.frequency_period || 'per_year',
   auto_complete: Boolean(award.auto_complete),
+  status: award.status || 'included',
+  source: award.source || 'manual',
+  source_description: award.source_description || null,
+  status_reason: award.status_reason || null,
+  match_strategy: award.match_strategy || null,
 });
 
 const serializeEarningRewardTransaction = (transaction) => ({
@@ -96,6 +118,11 @@ const serializeCardType = ({ cardType, earningRewards, perkAwards }) => ({
   id: Number(cardType.id),
   name: cardType.name,
   annual_fee: toNumber(cardType.annual_fee),
+  status: cardType.status || 'active',
+  source: cardType.source || 'manual',
+  review_reason: cardType.review_reason || null,
+  external_source: cardType.external_source || null,
+  external_card_id: cardType.external_card_id || null,
   earning_rewards: earningRewards
     .filter((reward) => String(reward.credit_card_type_id) === String(cardType.id))
     .map(serializeEarningReward),
@@ -150,7 +177,12 @@ const computeAccountEarningRewardBreakdowns = async ({
       account,
       cardType: cardTypeById.get(Number(account.credit_card_type_id)),
     }))
-    .filter(({ cardType }) => cardType && cardType.earning_rewards.length > 0);
+    .filter(
+      ({ cardType }) =>
+        cardType &&
+        cardType.status === 'active' &&
+        getIncludedEarningRewards(cardType).length > 0,
+    );
 
   if (rewardEligibleAccounts.length === 0) {
     return breakdownsByAccountId;
@@ -192,7 +224,7 @@ const computeAccountEarningRewardBreakdowns = async ({
     breakdownsByAccountId.set(
       Number(account.id),
       computeEarningRewardBreakdown({
-        earningRewards: cardType.earning_rewards,
+        earningRewards: getIncludedEarningRewards(cardType),
         transactions: transactionsByAccountId.get(Number(account.id)) || [],
       }).map((breakdown) => ({
         earning_reward_id: Number(breakdown.earning_reward_id),
@@ -214,7 +246,6 @@ const computeAccountEarningRewardBreakdowns = async ({
 
 const getCreditCardRewards = async ({ selectedMonth } = {}) => {
   const user = await getCurrentUser();
-  const dashboardPlaidEnv = await getDashboardPlaidEnvironment(user);
   const referenceDate = getReferenceDate(selectedMonth);
   const snapshotMonth = referenceDate.format('YYYY-MM');
   const [catalog, accounts, transactionCategoryRules] = await Promise.all([
@@ -266,6 +297,36 @@ const getCreditCardRewards = async ({ selectedMonth } = {}) => {
       transactionCategoryRules,
     });
 
+  return {
+    selected_month: snapshotMonth,
+    card_types: cardTypes,
+    accounts: accounts.map((account) =>
+      serializeAccount({
+        account,
+        cardTypeById,
+        perkCompletionsByAccountId,
+        earningRewardBreakdownsByAccountId,
+      }),
+    ),
+  };
+};
+
+const getCreditCardRewardOptimization = async ({ selectedMonth } = {}) => {
+  const user = await getCurrentUser();
+  const dashboardPlaidEnv = await getDashboardPlaidEnvironment(user);
+  const referenceDate = getReferenceDate(selectedMonth);
+  const [catalog, accounts, transactionCategoryRules] = await Promise.all([
+    models.creditCardRewards.findRewardCatalog(),
+    models.creditCardRewards.findCreditAccountsByUserId(user.id),
+    models.transactionCategoryRules.findByUserId(user.id),
+  ]);
+  const cardTypes = catalog.cardTypes.map((cardType) =>
+    serializeCardType({
+      cardType,
+      earningRewards: catalog.earningRewards,
+      perkAwards: catalog.perkAwards,
+    }),
+  );
   const optimizationRangeStart = referenceDate
     .clone()
     .subtract(11, 'months')
@@ -299,18 +360,8 @@ const getCreditCardRewards = async ({ selectedMonth } = {}) => {
   });
 
   return {
-    selected_month: snapshotMonth,
-    card_types: cardTypes,
     optimization,
     card_recommendations: cardRecommendations,
-    accounts: accounts.map((account) =>
-      serializeAccount({
-        account,
-        cardTypeById,
-        perkCompletionsByAccountId,
-        earningRewardBreakdownsByAccountId,
-      }),
-    ),
   };
 };
 
@@ -342,6 +393,12 @@ const setAccountCreditCardType = async ({
 
   if (!cardType) {
     const error = new Error('Credit card type was not found.');
+    error.status = 400;
+    throw error;
+  }
+
+  if (cardType.status && cardType.status !== 'active') {
+    const error = new Error('Credit card type is still in review.');
     error.status = 400;
     throw error;
   }
@@ -424,6 +481,16 @@ const updateCreditCardType = async ({
   return getCreditCardRewards({ selectedMonth });
 };
 
+const importVectorMintCreditCardTypes = async ({ selectedMonth } = {}) => {
+  const importSummary = await importVectorMintCardCatalog();
+  const rewards = await getCreditCardRewards({ selectedMonth });
+
+  return {
+    import_summary: importSummary,
+    rewards,
+  };
+};
+
 const setPerkCompletion = async ({
   accountId,
   perkAwardId,
@@ -462,6 +529,12 @@ const setPerkCompletion = async ({
     String(perkAward.credit_card_type_id) !== String(account.credit_card_type_id)
   ) {
     const error = new Error('Perk was not found for this card type.');
+    error.status = 400;
+    throw error;
+  }
+
+  if (perkAward.status && perkAward.status !== 'included') {
+    const error = new Error('This perk is excluded from reward tracking.');
     error.status = 400;
     throw error;
   }
@@ -528,7 +601,9 @@ const deleteCreditCardType = async ({ cardTypeId, selectedMonth }) => {
 module.exports = {
   createCreditCardType,
   deleteCreditCardType,
+  getCreditCardRewardOptimization,
   getCreditCardRewards,
+  importVectorMintCreditCardTypes,
   setAccountCreditCardType,
   setPerkCompletion,
   updateCreditCardType,

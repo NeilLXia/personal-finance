@@ -8,6 +8,9 @@ const { roundMoney } = require('../utils/money');
 
 const BASE_RATE_CATEGORY = 'base rate';
 
+const getIncludedEarningRewards = (earningRewards) =>
+  earningRewards.filter((reward) => !reward.status || reward.status === 'included');
+
 const parseKeywords = (keywords) =>
   (keywords || '')
     .split(',')
@@ -15,14 +18,23 @@ const parseKeywords = (keywords) =>
     .filter(Boolean);
 
 const transactionMatchesKeywords = (transaction, keywords) => {
-  const haystack = `${transaction.name || ''} ${transaction.merchant_name || ''}`
+  const haystack = [
+    transaction.name,
+    transaction.merchant_name,
+    transaction.category,
+    transaction.manual_category,
+    transaction.display_category,
+  ]
+    .filter(Boolean)
+    .join(' ')
     .toLowerCase();
 
   return keywords.some((keyword) => haystack.includes(keyword));
 };
 
 const findMatchingEarningReward = ({ earningRewards, transaction }) => {
-  const customReward = earningRewards.find((reward) => {
+  const includedEarningRewards = getIncludedEarningRewards(earningRewards);
+  const customReward = includedEarningRewards.find((reward) => {
     const keywords = parseKeywords(reward.keywords);
 
     return keywords.length > 0 && transactionMatchesKeywords(transaction, keywords);
@@ -32,7 +44,7 @@ const findMatchingEarningReward = ({ earningRewards, transaction }) => {
     return customReward;
   }
 
-  const manualCategoryReward = earningRewards.find((reward) => {
+  const manualCategoryReward = includedEarningRewards.find((reward) => {
     if (reward.keywords) {
       return false;
     }
@@ -52,7 +64,7 @@ const findMatchingEarningReward = ({ earningRewards, transaction }) => {
   }
 
   return (
-    earningRewards.find(
+    includedEarningRewards.find(
       (reward) =>
         !reward.keywords &&
         reward.category.trim().toLowerCase() === BASE_RATE_CATEGORY,
@@ -83,7 +95,7 @@ const getEarningRewardAmountForTransaction = ({ earningRewards, transaction }) =
 
 const createRewardAccumulator = (earningRewards) =>
   new Map(
-    earningRewards.map((reward) => [
+    getIncludedEarningRewards(earningRewards).map((reward) => [
       reward.id,
       {
         earning_reward_id: reward.id,
@@ -126,14 +138,15 @@ const computeEarningRewardBreakdown = ({ earningRewards, transactions }) => {
   );
   const claimedTransactionIds = new Set();
   const rewardBreakdownById = createRewardAccumulator(earningRewards);
+  const includedEarningRewards = getIncludedEarningRewards(earningRewards);
 
-  const customRewards = earningRewards.filter((reward) => reward.keywords);
-  const baseRateReward = earningRewards.find(
+  const customRewards = includedEarningRewards.filter((reward) => reward.keywords);
+  const baseRateReward = includedEarningRewards.find(
     (reward) =>
       !reward.keywords &&
       reward.category.trim().toLowerCase() === BASE_RATE_CATEGORY,
   );
-  const manualCategoryRewards = earningRewards.filter(
+  const manualCategoryRewards = includedEarningRewards.filter(
     (reward) => reward !== baseRateReward && !reward.keywords,
   );
 

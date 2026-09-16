@@ -1,13 +1,10 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 
 import EditableChipSelect from "../shared/EditableChipSelect";
 import SearchableChipSelect from "../shared/SearchableChipSelect";
-import { manualExpenseCategories } from "../Dashboard/shared/constants";
 import { formatCurrency, formatDate } from "../Dashboard/shared/formatters";
 import styles from "./index.module.css";
 import type {
-  CreateCreditCardTypeInput,
   CreditCardEarningReward,
   CreditCardEarningRewardBreakdown,
   CreditCardEarningRewardTotal,
@@ -25,20 +22,17 @@ import type {
 type CreditCardRewardsPageProps = {
   data: CreditCardRewardsData | null;
   isLoading: boolean;
-  isCreatingCardType: boolean;
-  isDeletingCardType: boolean;
-  isCardTypeManager: boolean;
+  isOptimizationLoading?: boolean;
   isUpdating: boolean;
-  isUpdatingCardType: boolean;
   isUpdatingPerkCompletion: boolean;
+  optimizationError?: unknown;
+  optimizationData?: {
+    optimization: CreditCardRewardOptimization;
+    card_recommendations: CreditCardNewCardRecommendations;
+  } | null;
   error: unknown;
   onBackToDashboard: () => void;
-  onCreateCardType: (input: CreateCreditCardTypeInput) => Promise<unknown>;
-  onUpdateCardType: (params: {
-    cardTypeId: number;
-    input: CreateCreditCardTypeInput;
-  }) => Promise<unknown>;
-  onDeleteCardType: (cardTypeId: number) => Promise<unknown>;
+  onLoadOptimization?: () => void;
   onAccountTypeChange: (params: {
     accountId: number;
     creditCardTypeId: number | null;
@@ -50,32 +44,6 @@ type CreditCardRewardsPageProps = {
     occurrenceIndex: number;
     completed: boolean;
   }) => void;
-};
-
-const CUSTOM_CATEGORY_VALUE = "__custom_category__";
-
-const EARNING_REWARD_CATEGORY_OPTIONS = [
-  "Base rate",
-  ...manualExpenseCategories,
-];
-
-type EarningRewardFormRow = {
-  id: string;
-  dbId?: number;
-  categorySelection: string;
-  customDisplayName: string;
-  customKeywords: string;
-  rewardPercent: string;
-};
-
-type PerkAwardFormRow = {
-  id: string;
-  dbId?: number;
-  name: string;
-  dollarValue: string;
-  frequencyCount: string;
-  frequencyPeriod: CreditCardPerkAward["frequency_period"];
-  autoComplete: boolean;
 };
 
 const MONTH_OPTIONS = [
@@ -99,12 +67,6 @@ const FREQUENCY_LABELS: Record<CreditCardPerkAward["frequency_period"], string> 
   per_month: "per month",
 };
 
-const FREQUENCY_LIMITS: Record<CreditCardPerkAward["frequency_period"], number> = {
-  per_year: 24,
-  per_quarter: 6,
-  per_month: 2,
-};
-
 const FREQUENCY_MULTIPLIERS: Record<
   CreditCardPerkAward["frequency_period"],
   number
@@ -120,58 +82,49 @@ const trackerCurrencyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const createLocalId = () =>
-  globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
-
 const getCurrentMonthValue = () => {
   const now = new Date();
 
   return String(now.getMonth() + 1).padStart(2, "0");
 };
 
-const createEarningRewardRow = (): EarningRewardFormRow => ({
-  id: createLocalId(),
-  categorySelection: "",
-  customDisplayName: "",
-  customKeywords: "",
-  rewardPercent: "",
-});
+const getSelectedMonthValue = (selectedMonth: string | null | undefined) => {
+  const month = String(selectedMonth || "").match(/^\d{4}-(\d{2})$/)?.[1];
 
-const createPerkAwardRow = (): PerkAwardFormRow => ({
-  id: createLocalId(),
-  name: "",
-  dollarValue: "",
-  frequencyCount: "1",
-  frequencyPeriod: "per_year",
-  autoComplete: false,
-});
+  return month || getCurrentMonthValue();
+};
 
-const createBaseRateRow = (): EarningRewardFormRow => ({
-  id: createLocalId(),
-  categorySelection: "Base rate",
-  customDisplayName: "",
-  customKeywords: "",
-  rewardPercent: "",
-});
+const getBenefitCycleLabel = (
+  effectiveMonth: string | null | undefined,
+  selectedMonth: string | null | undefined,
+) => {
+  const selectedMatch = String(selectedMonth || "").match(/^(\d{4})-(\d{2})$/);
+  const monthValue = effectiveMonth || getSelectedMonthValue(selectedMonth);
+  const cycleMonthIndex = Number(monthValue) - 1;
 
-const toNumberValue = (value: string) =>
-  Number(value.replace(/[^\d.]/g, "") || 0);
-
-const formatDollarInput = (value: string) => {
-  const normalized = value.replace(/[^\d.]/g, "");
-  const [wholeValue, decimalValue] = normalized.split(".");
-  const whole = wholeValue.replace(/^0+(?=\d)/, "");
-  const formattedWhole = whole
-    ? Number(whole).toLocaleString("en-US")
-    : wholeValue === "0"
-      ? "0"
-      : "";
-
-  if (decimalValue !== undefined) {
-    return formattedWhole ? `$${formattedWhole}.${decimalValue.slice(0, 2)}` : "";
+  if (
+    !selectedMatch ||
+    !Number.isInteger(cycleMonthIndex) ||
+    cycleMonthIndex < 0 ||
+    cycleMonthIndex > 11
+  ) {
+    return MONTH_OPTIONS[cycleMonthIndex]?.label || "Benefit cycle";
   }
 
-  return formattedWhole ? `$${formattedWhole}` : "";
+  const selectedYear = Number(selectedMatch[1]);
+  const selectedMonthIndex = Number(selectedMatch[2]) - 1;
+  const startYear =
+    cycleMonthIndex <= selectedMonthIndex ? selectedYear : selectedYear - 1;
+  const endMonthIndex = (cycleMonthIndex + 11) % 12;
+  const endYear = startYear + (endMonthIndex < cycleMonthIndex ? 1 : 0);
+  const startMonthLabel = MONTH_OPTIONS[cycleMonthIndex]?.label;
+  const endMonthLabel = MONTH_OPTIONS[endMonthIndex]?.label;
+
+  if (!startMonthLabel || !endMonthLabel) {
+    return "Benefit cycle";
+  }
+
+  return `${startMonthLabel} ${startYear} - ${endMonthLabel} ${endYear}`;
 };
 
 const formatTrackerCurrency = (value: number) =>
@@ -260,18 +213,26 @@ const EarningRewards = ({
             earningRewardBreakdowns,
             reward.id,
           );
+          const isIncluded = !reward.status || reward.status === "included";
 
           return (
             <button
-              className={styles.rewardRow}
+              className={`${styles.rewardRow} ${
+                isIncluded ? "" : styles.rewardRowExcluded
+              }`}
+              disabled={!isIncluded}
               key={reward.id}
               type="button"
-              onClick={() => onShowTransactions({ reward, breakdown })}
+              onClick={() =>
+                isIncluded && onShowTransactions({ reward, breakdown })
+              }
             >
               <span>
                 <span className={styles.rewardName}>{reward.category}</span>
                 <span className={styles.rewardDetail}>
-                  {formatRewardPercent(reward.reward_percent)}%
+                  {isIncluded
+                    ? `${formatRewardPercent(reward.reward_percent)}%`
+                    : reward.status_reason || "Excluded from calculations"}
                 </span>
               </span>
               <strong className={styles.rewardValue}>
@@ -419,6 +380,7 @@ const PerkAwards = ({
     <section className={styles.rewardSection}>
       <div className={styles.perkGrid}>
         {cardType.perk_awards.map((award) => {
+          const isIncluded = !award.status || award.status === "included";
           const annualCount = getAnnualPerkOccurrenceCount(award);
           const valuePerCheckbox = award.dollar_value;
 
@@ -430,10 +392,17 @@ const PerkAwards = ({
             });
 
             return (
-              <label className={styles.perkRowCompact} key={award.id}>
+              <label
+                className={`${styles.perkRowCompact} ${
+                  isIncluded ? "" : styles.rewardRowExcluded
+                }`}
+                key={award.id}
+              >
                 <input
                   checked={isChecked}
-                  disabled={award.auto_complete || isUpdatingPerkCompletion}
+                  disabled={
+                    !isIncluded || award.auto_complete || isUpdatingPerkCompletion
+                  }
                   type="checkbox"
                   onChange={() =>
                     onTogglePerk({
@@ -449,7 +418,9 @@ const PerkAwards = ({
                     {award.auto_complete && " (auto)"}
                   </span>
                   <span className={styles.rewardDetail}>
-                    {getPerkFrequencyText(award)}
+                    {isIncluded
+                      ? getPerkFrequencyText(award)
+                      : award.status_reason || "Excluded from calculations"}
                   </span>
                 </span>
                 <strong className={styles.rewardValue}>
@@ -467,8 +438,11 @@ const PerkAwards = ({
                   {award.auto_complete && " (auto)"}
                 </div>
                 <div className={styles.rewardDetail}>
-                  {getPerkFrequencyText(award)} -{" "}
-                  {formatCurrency(valuePerCheckbox)} each
+                  {isIncluded
+                    ? `${getPerkFrequencyText(award)} - ${formatCurrency(
+                        valuePerCheckbox,
+                      )} each`
+                    : award.status_reason || "Excluded from calculations"}
                 </div>
               </div>
               <div className={styles.perkCheckboxGrid}>
@@ -490,7 +464,11 @@ const PerkAwards = ({
                     >
                       <input
                         checked={isChecked}
-                        disabled={award.auto_complete || isUpdatingPerkCompletion}
+                        disabled={
+                          !isIncluded ||
+                          award.auto_complete ||
+                          isUpdatingPerkCompletion
+                        }
                         type="checkbox"
                         onChange={() =>
                           onTogglePerk({
@@ -521,6 +499,10 @@ const getCompletedPerkValue = ({
   perkCompletions: CreditCardPerkCompletion[];
 }) =>
   cardType.perk_awards.reduce((total, award) => {
+    if (award.status && award.status !== "included") {
+      return total;
+    }
+
     if (award.auto_complete) {
       return total + award.dollar_value * getAnnualPerkOccurrenceCount(award);
     }
@@ -560,499 +542,6 @@ const AnnualFeeTracker = ({
         />
       </div>
     </section>
-  );
-};
-
-const buildEarningRewardRow = (
-  reward: CreditCardEarningReward,
-): EarningRewardFormRow => ({
-  id: createLocalId(),
-  dbId: reward.id,
-  categorySelection: reward.keywords ? CUSTOM_CATEGORY_VALUE : reward.category,
-  customDisplayName: reward.keywords ? reward.category : "",
-  customKeywords: reward.keywords || "",
-  rewardPercent: formatRewardPercent(reward.reward_percent),
-});
-
-const buildPerkAwardRow = (award: CreditCardPerkAward): PerkAwardFormRow => ({
-  id: createLocalId(),
-  dbId: award.id,
-  name: award.name,
-  dollarValue: String(award.dollar_value),
-  frequencyCount: String(award.frequency_count),
-  frequencyPeriod: award.frequency_period,
-  autoComplete: award.auto_complete,
-});
-
-const ManageCardTypesModal = ({
-  cardTypes,
-  isDeleting,
-  isSaving,
-  onClose,
-  onCreateCardType,
-  onUpdateCardType,
-  onDeleteCardType,
-}: {
-  cardTypes: CreditCardType[];
-  isDeleting: boolean;
-  isSaving: boolean;
-  onClose: () => void;
-  onCreateCardType: CreditCardRewardsPageProps["onCreateCardType"];
-  onUpdateCardType: CreditCardRewardsPageProps["onUpdateCardType"];
-  onDeleteCardType: CreditCardRewardsPageProps["onDeleteCardType"];
-}) => {
-  const [selectedCardTypeId, setSelectedCardTypeId] = useState<number | null>(
-    null,
-  );
-  const [name, setName] = useState("");
-  const [annualFee, setAnnualFee] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
-  const [earningRewards, setEarningRewards] = useState<EarningRewardFormRow[]>(
-    [createBaseRateRow()],
-  );
-  const [perkAwards, setPerkAwards] = useState<PerkAwardFormRow[]>([]);
-
-  const selectCardType = (cardTypeId: number | null) => {
-    setSelectedCardTypeId(cardTypeId);
-    setFormError(null);
-
-    const cardType = cardTypeId
-      ? cardTypes.find((type) => type.id === cardTypeId) || null
-      : null;
-
-    if (!cardType) {
-      setName("");
-      setAnnualFee("");
-      setEarningRewards([createBaseRateRow()]);
-      setPerkAwards([]);
-      return;
-    }
-
-    setName(cardType.name);
-    setAnnualFee(formatDollarInput(String(cardType.annual_fee)));
-    setEarningRewards(
-      cardType.earning_rewards.length > 0
-        ? cardType.earning_rewards.map(buildEarningRewardRow)
-        : [createBaseRateRow()],
-    );
-    setPerkAwards(cardType.perk_awards.map(buildPerkAwardRow));
-  };
-
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setFormError(null);
-
-    const input: CreateCreditCardTypeInput = {
-      name: name.trim(),
-      annual_fee: toNumberValue(annualFee),
-      earning_rewards: earningRewards
-        .filter((reward) =>
-          reward.categorySelection === CUSTOM_CATEGORY_VALUE
-            ? reward.customDisplayName.trim()
-            : reward.categorySelection,
-        )
-        .map((reward) => {
-          const isCustom = reward.categorySelection === CUSTOM_CATEGORY_VALUE;
-
-          return {
-            id: reward.dbId,
-            category: isCustom
-              ? reward.customDisplayName.trim()
-              : reward.categorySelection,
-            keywords: isCustom ? reward.customKeywords.trim() || null : null,
-            reward_percent: toNumberValue(reward.rewardPercent),
-          };
-        }),
-      perk_awards: perkAwards
-        .filter((award) => award.name.trim())
-        .map((award) => ({
-          id: award.dbId,
-          name: award.name.trim(),
-          dollar_value: toNumberValue(award.dollarValue),
-          frequency_count: Math.max(1, Number(award.frequencyCount || 1)),
-          frequency_period: award.frequencyPeriod,
-          auto_complete: award.autoComplete,
-        })),
-    };
-
-    try {
-      if (selectedCardTypeId) {
-        await onUpdateCardType({ cardTypeId: selectedCardTypeId, input });
-      } else {
-        await onCreateCardType(input);
-      }
-
-      onClose();
-    } catch (error) {
-      setFormError(getErrorMessage(error));
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedCardTypeId) {
-      return;
-    }
-
-    const cardType = cardTypes.find((type) => type.id === selectedCardTypeId);
-
-    if (
-      !window.confirm(
-        `Delete ${cardType?.name || "this card type"}? This cannot be undone.`,
-      )
-    ) {
-      return;
-    }
-
-    setFormError(null);
-
-    try {
-      await onDeleteCardType(selectedCardTypeId);
-      onClose();
-    } catch (error) {
-      setFormError(getErrorMessage(error));
-    }
-  };
-
-  const updateEarningReward = (
-    rowId: string,
-    patch: Partial<EarningRewardFormRow>,
-  ) => {
-    setEarningRewards((rows) =>
-      rows.map((row) => (row.id === rowId ? { ...row, ...patch } : row)),
-    );
-  };
-
-  const updatePerkAward = (rowId: string, patch: Partial<PerkAwardFormRow>) => {
-    setPerkAwards((rows) =>
-      rows.map((row) => (row.id === rowId ? { ...row, ...patch } : row)),
-    );
-  };
-
-  return (
-    <div className={styles.modalBackdrop}>
-      <div
-        aria-labelledby="manage-card-types-title"
-        aria-modal="true"
-        className={styles.modalPanel}
-        role="dialog"
-      >
-        <div className={styles.modalHeader}>
-          <h2 id="manage-card-types-title">Manage card types</h2>
-          <button disabled={isSaving} type="button" onClick={onClose}>
-            Close
-          </button>
-        </div>
-
-        <form className={styles.cardTypeForm} onSubmit={submit}>
-          {formError && <p className={styles.formError}>{formError}</p>}
-
-          <label className={styles.field}>
-            <span>Card type to edit</span>
-            <SearchableChipSelect
-              aria-label="Card type to edit"
-              disabled={isSaving}
-              options={cardTypes.map((type) => ({
-                value: String(type.id),
-                label: type.name,
-              }))}
-              placeholder="New card type"
-              value={selectedCardTypeId?.toString() || ""}
-              onChange={(value) => selectCardType(value ? Number(value) : null)}
-            />
-          </label>
-
-          <div className={styles.formGrid}>
-            <label className={styles.field}>
-              <span>Credit card type</span>
-              <input
-                required
-                maxLength={120}
-                type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-            </label>
-            <label className={styles.field}>
-              <span>Annual fee</span>
-              <input
-                required
-                inputMode="decimal"
-                type="text"
-                value={annualFee}
-                onChange={(event) =>
-                  setAnnualFee(formatDollarInput(event.target.value))
-                }
-              />
-            </label>
-          </div>
-
-          <section className={styles.formSection}>
-            <div className={styles.formSectionHeader}>
-              <h3>Earning rates</h3>
-              <button
-                type="button"
-                onClick={() =>
-                  setEarningRewards((rows) => [
-                    ...rows,
-                    createEarningRewardRow(),
-                  ])
-                }
-              >
-                Add earning rate
-              </button>
-            </div>
-            {earningRewards.length === 0 ? (
-              <p className={styles.formEmptyText}>No earning rates added.</p>
-            ) : (
-              <div className={styles.benefitRows}>
-                {earningRewards.map((reward) => (
-                  <div className={styles.earningRewardRow} key={reward.id}>
-                    <div className={styles.earningRewardRowPrimary}>
-                      <label className={styles.field}>
-                        <span>Category</span>
-                        <select
-                          required
-                          value={reward.categorySelection}
-                          onChange={(event) =>
-                            updateEarningReward(reward.id, {
-                              categorySelection: event.target.value,
-                            })
-                          }
-                        >
-                          <option value="">Choose a category</option>
-                          {EARNING_REWARD_CATEGORY_OPTIONS.map((category) => (
-                            <option key={category} value={category}>
-                              {category}
-                            </option>
-                          ))}
-                          <option value={CUSTOM_CATEGORY_VALUE}>
-                            Custom category
-                          </option>
-                        </select>
-                      </label>
-                      <label className={styles.field}>
-                        <span>Rate</span>
-                        <div className={styles.percentInputWrapper}>
-                          <input
-                            min="1"
-                            max="100"
-                            step="0.01"
-                            type="number"
-                            placeholder="0"
-                            value={reward.rewardPercent}
-                            onChange={(event) =>
-                              updateEarningReward(reward.id, {
-                                rewardPercent: event.target.value,
-                              })
-                            }
-                          />
-                        </div>
-                      </label>
-                      <button
-                        className={styles.removeButton}
-                        type="button"
-                        onClick={() =>
-                          setEarningRewards((rows) =>
-                            rows.filter((row) => row.id !== reward.id),
-                          )
-                        }
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    {reward.categorySelection === CUSTOM_CATEGORY_VALUE && (
-                      <div className={styles.earningRewardCustomFields}>
-                        <label className={styles.field}>
-                          <span>Display name</span>
-                          <input
-                            required
-                            maxLength={120}
-                            type="text"
-                            value={reward.customDisplayName}
-                            onChange={(event) =>
-                              updateEarningReward(reward.id, {
-                                customDisplayName: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <label className={styles.field}>
-                          <span>Keywords (comma-separated)</span>
-                          <input
-                            required
-                            maxLength={500}
-                            placeholder="e.g. starbucks, blue bottle"
-                            type="text"
-                            value={reward.customKeywords}
-                            onChange={(event) =>
-                              updateEarningReward(reward.id, {
-                                customKeywords: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className={styles.formSection}>
-            <div className={styles.formSectionHeader}>
-              <h3>Perks</h3>
-              <button
-                type="button"
-                onClick={() =>
-                  setPerkAwards((rows) => [...rows, createPerkAwardRow()])
-                }
-              >
-                Add perk
-              </button>
-            </div>
-            {perkAwards.length === 0 ? (
-              <p className={styles.formEmptyText}>No perks added.</p>
-            ) : (
-              <div className={styles.benefitRows}>
-                {perkAwards.map((award) => (
-                  <div
-                    className={`${styles.benefitRow} ${styles.perkBenefitRow}`}
-                    key={award.id}
-                  >
-                    <label className={styles.field}>
-                      <span>Perk</span>
-                      <input
-                        required
-                        maxLength={160}
-                        type="text"
-                        value={award.name}
-                        onChange={(event) =>
-                          updatePerkAward(award.id, {
-                            name: event.target.value,
-                          })
-                        }
-                      />
-                    </label>
-                    <label className={styles.field}>
-                      <span>Value</span>
-                      <input
-                        required
-                        inputMode="decimal"
-                        type="text"
-                        value={award.dollarValue}
-                        onChange={(event) =>
-                          updatePerkAward(award.id, {
-                            dollarValue: formatDollarInput(event.target.value),
-                          })
-                        }
-                      />
-                    </label>
-                    <label className={styles.field}>
-                      <span>Times</span>
-                      <input
-                        required
-                        min="0"
-                        max={FREQUENCY_LIMITS[award.frequencyPeriod]}
-                        step="1"
-                        type="number"
-                        value={award.frequencyCount}
-                        onChange={(event) =>
-                          updatePerkAward(award.id, {
-                            frequencyCount: event.target.value,
-                          })
-                        }
-                      />
-                    </label>
-                    <label className={styles.field}>
-                      <span>Frequency</span>
-                      <select
-                        value={award.frequencyPeriod}
-                        onChange={(event) => {
-                          const frequencyPeriod = event.target
-                            .value as CreditCardPerkAward["frequency_period"];
-                          const currentCount = Number(award.frequencyCount || 1);
-
-                          updatePerkAward(award.id, {
-                            frequencyPeriod,
-                            frequencyCount: String(
-                              Math.min(
-                                currentCount,
-                                FREQUENCY_LIMITS[frequencyPeriod],
-                              ),
-                            ),
-                          });
-                        }}
-                      >
-                        <option value="per_year">per year</option>
-                        <option value="per_quarter">per quarter</option>
-                        <option value="per_month">per month</option>
-                      </select>
-                    </label>
-                    <label className={styles.autoCompleteField}>
-                      <input
-                        checked={award.autoComplete}
-                        type="checkbox"
-                        onChange={(event) =>
-                          updatePerkAward(award.id, {
-                            autoComplete: event.target.checked,
-                          })
-                        }
-                      />
-                      <span>Auto-completes each cycle</span>
-                    </label>
-                    <button
-                      className={styles.removeButton}
-                      type="button"
-                      onClick={() =>
-                        setPerkAwards((rows) =>
-                          rows.filter((row) => row.id !== award.id),
-                        )
-                      }
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <div className={styles.modalActions}>
-            {selectedCardTypeId && (
-              <button
-                className={styles.removeButton}
-                disabled={isSaving || isDeleting}
-                style={{ marginRight: "auto" }}
-                type="button"
-                onClick={handleDelete}
-              >
-                {isDeleting ? "Deleting" : "Delete card type"}
-              </button>
-            )}
-            <button
-              className={styles.secondaryButton}
-              disabled={isSaving}
-              type="button"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              className={styles.primaryButton}
-              disabled={isSaving}
-              type="submit"
-            >
-              {isSaving
-                ? "Saving"
-                : selectedCardTypeId
-                  ? "Save changes"
-                  : "Save card type"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
   );
 };
 
@@ -1623,12 +1112,16 @@ const CardRecommendationsContent = ({
 
 const RewardsOptimizationModal = ({
   cardRecommendations,
+  error,
+  isLoading,
   optimization,
   onClose,
   onSelectGroup,
   onSelectRecommendation,
 }: {
   cardRecommendations?: CreditCardNewCardRecommendations;
+  error?: unknown;
+  isLoading?: boolean;
   optimization?: CreditCardRewardOptimization;
   onClose: () => void;
   onSelectGroup: (group: CreditCardRewardOptimizationGroup) => void;
@@ -1685,16 +1178,28 @@ const RewardsOptimizationModal = ({
           </div>
 
           <div className={styles.optimizationModalContent}>
-            {activeTab === "owned" ? (
-              <RewardsOptimizationContent
-                optimization={optimization}
-                onSelectGroup={onSelectGroup}
-              />
+            {isLoading ? (
+              <div className={styles.optimizationLoadingState}>
+                <p className={styles.statusText}>Analyzing rewards activity.</p>
+              </div>
+            ) : error ? (
+              <div className={styles.optimizationLoadingState}>
+                <p className={styles.statusText}>{getErrorMessage(error)}</p>
+              </div>
             ) : (
-              <CardRecommendationsContent
-                cardRecommendations={cardRecommendations}
-                onSelectRecommendation={onSelectRecommendation}
-              />
+              <>
+                {activeTab === "owned" ? (
+                  <RewardsOptimizationContent
+                    optimization={optimization}
+                    onSelectGroup={onSelectGroup}
+                  />
+                ) : (
+                  <CardRecommendationsContent
+                    cardRecommendations={cardRecommendations}
+                    onSelectRecommendation={onSelectRecommendation}
+                  />
+                )}
+              </>
             )}
           </div>
         </div>
@@ -1706,6 +1211,7 @@ const RewardsOptimizationModal = ({
 const AccountTile = ({
   account,
   cardTypes,
+  selectedMonth,
   isExpanded,
   isUpdating,
   isUpdatingPerkCompletion,
@@ -1716,6 +1222,7 @@ const AccountTile = ({
 }: {
   account: CreditCardRewardsAccount;
   cardTypes: CreditCardType[];
+  selectedMonth: string;
   isExpanded: boolean;
   isUpdating: boolean;
   isUpdatingPerkCompletion: boolean;
@@ -1729,6 +1236,17 @@ const AccountTile = ({
   onPerkCompletionChange: CreditCardRewardsPageProps["onPerkCompletionChange"];
 }) => {
   const cardType = account.credit_card_type;
+  const [pendingEffectiveMonth, setPendingEffectiveMonth] = useState<
+    string | null
+  >(null);
+  const defaultEffectiveMonth = getSelectedMonthValue(selectedMonth);
+  const effectiveMonthValue =
+    pendingEffectiveMonth || account.effective_month || defaultEffectiveMonth;
+
+  useEffect(() => {
+    setPendingEffectiveMonth(null);
+  }, [account.id, account.effective_month]);
+
   const completedValue = cardType
     ? getCompletedPerkValue({
         cardType,
@@ -1747,13 +1265,19 @@ const AccountTile = ({
     <div className={styles.accountExpandedControls}>
       <div className={styles.typeSelector}>
         <span>Card type</span>
-        <EditableChipSelect
+        <SearchableChipSelect
           aria-label={`Card type for ${account.name}`}
           disabled={isUpdating}
           options={cardTypes.map((type) => ({
             value: String(type.id),
             label: type.name,
-          }))}
+          })).filter((option) => {
+            const cardTypeOption = cardTypes.find(
+              (type) => String(type.id) === option.value,
+            );
+
+            return cardTypeOption?.status !== "in_review";
+          })}
           placeholder="Choose card type"
           value={account.credit_card_type_id?.toString() || ""}
           onChange={(value) => {
@@ -1763,7 +1287,7 @@ const AccountTile = ({
               accountId: account.id,
               creditCardTypeId,
               effectiveMonth: creditCardTypeId
-                ? account.effective_month || getCurrentMonthValue()
+                ? account.effective_month || defaultEffectiveMonth
                 : null,
             });
           }}
@@ -1771,20 +1295,27 @@ const AccountTile = ({
       </div>
       {account.credit_card_type_id && (
         <div className={styles.typeSelector}>
-          <span>Effective month</span>
+          <span>Benefit cycle</span>
           <EditableChipSelect
-            aria-label={`Effective month for ${account.name}`}
+            aria-label={`Benefit cycle for ${account.name}`}
             disabled={isUpdating}
             options={MONTH_OPTIONS}
-            placeholder="Effective month"
-            value={account.effective_month || getCurrentMonthValue()}
-            onChange={(value) =>
+            placeholder="Benefit cycle"
+            value={effectiveMonthValue}
+            getDisplayLabel={() =>
+              getBenefitCycleLabel(effectiveMonthValue, selectedMonth)
+            }
+            showPlaceholderOption={false}
+            onChange={(value) => {
+              const nextEffectiveMonth = value || defaultEffectiveMonth;
+
+              setPendingEffectiveMonth(nextEffectiveMonth);
               onAccountTypeChange({
                 accountId: account.id,
                 creditCardTypeId: account.credit_card_type_id,
-                effectiveMonth: value || getCurrentMonthValue(),
-              })
-            }
+                effectiveMonth: nextEffectiveMonth,
+              });
+            }}
           />
         </div>
       )}
@@ -1802,7 +1333,7 @@ const AccountTile = ({
       />
       <PerkAwards
         cardType={cardType}
-        effectiveMonth={account.effective_month}
+        effectiveMonth={effectiveMonthValue}
         isUpdatingPerkCompletion={isUpdatingPerkCompletion}
         perkCompletions={account.perk_completions}
         onTogglePerk={({ perkAwardId, occurrenceIndex, completed }) =>
@@ -1893,22 +1424,17 @@ const AccountTile = ({
 const CreditCardRewardsPage = ({
   data,
   isLoading,
-  isCreatingCardType,
-  isDeletingCardType,
-  isCardTypeManager,
+  isOptimizationLoading = false,
   isUpdating,
-  isUpdatingCardType,
   isUpdatingPerkCompletion,
+  optimizationData = null,
+  optimizationError,
   error,
   onBackToDashboard,
-  onCreateCardType,
-  onUpdateCardType,
-  onDeleteCardType,
+  onLoadOptimization,
   onAccountTypeChange,
   onPerkCompletionChange,
 }: CreditCardRewardsPageProps) => {
-  const [isManageCardTypesModalOpen, setIsManageCardTypesModalOpen] =
-    useState(false);
   const [isOptimizationModalOpen, setIsOptimizationModalOpen] = useState(false);
   const [expandedAccountId, setExpandedAccountId] = useState<number | null>(
     null,
@@ -1932,16 +1458,6 @@ const CreditCardRewardsPage = ({
           <p>Assign card products to credit accounts and review configured benefits.</p>
         </div>
         <div className={styles.pageActions}>
-          {isCardTypeManager && (
-            <button
-              className={styles.primaryButton}
-              disabled={isLoading}
-              type="button"
-              onClick={() => setIsManageCardTypesModalOpen(true)}
-            >
-              Manage card types
-            </button>
-          )}
           <button
             className={styles.secondaryButton}
             type="button"
@@ -1955,7 +1471,10 @@ const CreditCardRewardsPage = ({
       <RewardsSummary
         data={data}
         isLoading={isLoading}
-        onOptimize={() => setIsOptimizationModalOpen(true)}
+        onOptimize={() => {
+          setIsOptimizationModalOpen(true);
+          onLoadOptimization?.();
+        }}
       />
 
       {isLoading ? (
@@ -1971,6 +1490,7 @@ const CreditCardRewardsPage = ({
               <AccountTile
                 account={account}
                 cardTypes={data.card_types}
+                selectedMonth={data.selected_month}
                 isExpanded={expandedAccountId === account.id}
                 isUpdating={isUpdating}
                 isUpdatingPerkCompletion={isUpdatingPerkCompletion}
@@ -1989,22 +1509,12 @@ const CreditCardRewardsPage = ({
         </>
       )}
 
-      {isCardTypeManager && isManageCardTypesModalOpen && (
-        <ManageCardTypesModal
-          cardTypes={data?.card_types || []}
-          isDeleting={isDeletingCardType}
-          isSaving={isCreatingCardType || isUpdatingCardType}
-          onClose={() => setIsManageCardTypesModalOpen(false)}
-          onCreateCardType={onCreateCardType}
-          onUpdateCardType={onUpdateCardType}
-          onDeleteCardType={onDeleteCardType}
-        />
-      )}
-
       {isOptimizationModalOpen && (
         <RewardsOptimizationModal
-          cardRecommendations={data?.card_recommendations}
-          optimization={data?.optimization}
+          cardRecommendations={optimizationData?.card_recommendations}
+          error={optimizationError}
+          isLoading={isOptimizationLoading}
+          optimization={optimizationData?.optimization}
           onClose={() => setIsOptimizationModalOpen(false)}
           onSelectGroup={setSelectedOptimizationGroup}
           onSelectRecommendation={setSelectedCardRecommendation}

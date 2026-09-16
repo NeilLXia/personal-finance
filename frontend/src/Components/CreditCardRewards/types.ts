@@ -3,6 +3,11 @@ export type CreditCardEarningReward = {
   category: string;
   reward_percent: number;
   keywords: string | null;
+  status?: "included" | "needs_review" | "excluded";
+  source?: "manual" | "vectormint" | string;
+  source_description?: string | null;
+  status_reason?: string | null;
+  match_strategy?: string | null;
 };
 
 export type CreditCardEarningRewardTotal = {
@@ -42,12 +47,22 @@ export type CreditCardPerkAward = {
   frequency_count: number;
   frequency_period: "per_year" | "per_quarter" | "per_month";
   auto_complete: boolean;
+  status?: "included" | "needs_review" | "excluded";
+  source?: "manual" | "vectormint" | string;
+  source_description?: string | null;
+  status_reason?: string | null;
+  match_strategy?: string | null;
 };
 
 export type CreditCardType = {
   id: number;
   name: string;
   annual_fee: number;
+  status?: "active" | "in_review";
+  source?: "manual" | "vectormint" | string;
+  review_reason?: string | null;
+  external_source?: string | null;
+  external_card_id?: string | null;
   earning_rewards: CreditCardEarningReward[];
   perk_awards: CreditCardPerkAward[];
 };
@@ -166,11 +181,21 @@ export type CreditCardRewardsData = {
   card_recommendations?: CreditCardNewCardRecommendations;
 };
 
+export type CreditCardRewardOptimizationData = {
+  optimization: CreditCardRewardOptimization;
+  card_recommendations: CreditCardNewCardRecommendations;
+};
+
 export type CreateCreditCardEarningRewardInput = {
   id?: number;
   category: string;
   reward_percent: number;
   keywords?: string | null;
+  status?: "included" | "needs_review" | "excluded";
+  source?: string;
+  source_description?: string | null;
+  status_reason?: string | null;
+  match_strategy?: string | null;
 };
 
 export type CreateCreditCardPerkAwardInput = {
@@ -180,6 +205,11 @@ export type CreateCreditCardPerkAwardInput = {
   frequency_count: number;
   frequency_period: "per_year" | "per_quarter" | "per_month";
   auto_complete: boolean;
+  status?: "included" | "needs_review" | "excluded";
+  source?: string;
+  source_description?: string | null;
+  status_reason?: string | null;
+  match_strategy?: string | null;
 };
 
 export type CreateCreditCardTypeInput = {
@@ -187,4 +217,22 @@ export type CreateCreditCardTypeInput = {
   annual_fee: number;
   earning_rewards: CreateCreditCardEarningRewardInput[];
   perk_awards: CreateCreditCardPerkAwardInput[];
+};
+
+export type VectorMintImportSummary = {
+  fetched_count: number;
+  matched_count: number;
+  created_review_count: number;
+  updated_count: number;
+  unchanged_count: number;
+  benefits_added_count: number;
+  benefits_updated_count: number;
+  benefits_preserved_count: number;
+  review_required_count: number;
+  warnings: string[];
+};
+
+export type VectorMintImportResult = {
+  import_summary: VectorMintImportSummary;
+  rewards: CreditCardRewardsData;
 };

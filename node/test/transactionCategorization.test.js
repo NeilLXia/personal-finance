@@ -18,6 +18,7 @@ const {
 } = require('../src/services/transactions/cashFlowClassification');
 const {
   normalizeTransactionRuleMatchType,
+  isManualCategoryRuleExcluded,
   findTransactionCategoryRule,
   applyTransactionCategoryRules,
 } = require('../src/services/transactions/categoryRules');
@@ -120,6 +121,26 @@ test('findTransactionCategoryRule prefers exact over contains', () => {
     { original_category: 'Shops', vendor_name: 'target', match_type: 'exact', manual_category: 'Household' },
   ];
   assert.equal(findTransactionCategoryRule(txn, rules).manual_category, 'Household');
+});
+
+test('Amazon transactions can use manual category rules', () => {
+  const txn = {
+    ...checking,
+    category: 'Shops',
+    name: 'Amazon Marketplace',
+    merchant_name: 'Amazon',
+  };
+  const rules = [
+    {
+      original_category: 'Shops',
+      vendor_name: 'amazon',
+      match_type: 'exact',
+      manual_category: 'Shopping',
+    },
+  ];
+
+  assert.equal(isManualCategoryRuleExcluded(txn), false);
+  assert.equal(findTransactionCategoryRule(txn, rules).manual_category, 'Shopping');
 });
 
 test('applyTransactionCategoryRules stamps display/cash-flow fields', () => {

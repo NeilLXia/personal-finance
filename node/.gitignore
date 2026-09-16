@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+/node_modules
 
 # Database TLS material (downloaded per environment)
 *.pem

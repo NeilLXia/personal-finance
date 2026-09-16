@@ -51,7 +51,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  overflow-x: auto;
   overflow-y: auto;
+  padding-left: var(--space-2xs);
   padding-right: var(--space-2xs);
 }
 
@@ -330,6 +332,11 @@
   height: min(72rem, calc(100vh - (var(--space-2xl) * 2)));
 }
 
+.vectorMintModal {
+  width: min(100%, 104rem);
+  height: min(76rem, calc(100vh - (var(--space-2xl) * 2)));
+}
+
 .modalHeader {
   display: flex;
   justify-content: space-between;
@@ -362,6 +369,166 @@
   font-size: var(--text-md);
   font-weight: var(--font-weight-control);
   padding: var(--space-xs) var(--space-md);
+}
+
+.vectorMintStatus {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+}
+
+.vectorMintContent {
+  min-height: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.vectorMintSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
+}
+
+.vectorMintSummaryGrid div {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  padding: var(--space-md);
+}
+
+.vectorMintSummaryGrid span {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-label);
+}
+
+.vectorMintSummaryGrid strong {
+  display: block;
+  margin-top: var(--space-2xs);
+  color: var(--color-ink);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-weight-value);
+}
+
+.vectorMintSection {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.vectorMintSection h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-title);
+}
+
+.vectorMintPillList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.vectorMintPillList span {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-canvas);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-label);
+  padding: var(--space-2xs) var(--space-sm);
+}
+
+.vectorMintTableWrap {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.vectorMintTable {
+  width: 100%;
+  min-width: 108rem;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.vectorMintTable th,
+.vectorMintTable td {
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-sm);
+  text-align: left;
+  vertical-align: top;
+}
+
+.vectorMintTable th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-label);
+}
+
+.vectorMintTable td {
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.vectorMintTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.vectorMintDetails {
+  min-width: 24rem;
+}
+
+.vectorMintDetails summary {
+  color: var(--color-accent);
+  cursor: pointer;
+  font-weight: var(--font-weight-control);
+}
+
+.vectorMintDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+}
+
+.vectorMintDetailGrid h4,
+.vectorMintExcludedDetails h4 {
+  margin: 0 0 var(--space-2xs);
+  color: var(--color-ink);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-title);
+}
+
+.vectorMintDetailList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  margin: 0;
+  padding-left: var(--space-md);
+}
+
+.vectorMintDetailList li {
+  color: var(--color-text);
+}
+
+.vectorMintEmptyText {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.vectorMintExcludedDetails {
+  margin-top: var(--space-md);
 }
 
 .ruleForm button {

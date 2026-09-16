@@ -9,6 +9,7 @@ import shared from "../dashboard.shared.module.css";
 import { getCategorySelectionKey } from "../shared/dashboardDataUtils";
 import TabRow from "../shared/TabRow";
 import ColumnControls from "./ColumnControls";
+import CategorizationAssistantModal from "./CategorizationAssistantModal";
 import PayslipRows from "./PayslipRows";
 import TransactionRows from "./TransactionRows";
 import {
@@ -31,6 +32,7 @@ import type {
 } from "../shared/types";
 
 type TransactionsModuleProps = {
+  selectedMonth: string;
   monthLabel: string;
   breakdownTab: BreakdownTab;
   activeTab: TransactionTableTab;
@@ -53,9 +55,11 @@ type TransactionsModuleProps = {
     manualCategory: string,
   ) => Promise<void>;
   onSaveManualDate: (transactionId: number, manualDate: string) => void;
+  onError: (message: string) => void;
 };
 
 const TransactionsModule = ({
+  selectedMonth,
   monthLabel,
   breakdownTab,
   activeTab,
@@ -75,6 +79,7 @@ const TransactionsModule = ({
   onSaveManualCategory,
   onBulkSaveManualCategory,
   onSaveManualDate,
+  onError,
 }: TransactionsModuleProps) => {
   const [sortColumn, setSortColumn] = useState<TransactionSortColumn>("date");
   const [sortDirection, setSortDirection] =
@@ -101,6 +106,10 @@ const TransactionsModule = ({
   >([]);
   const [bulkCategory, setBulkCategory] = useState("");
   const [isBulkSavingCategory, setIsBulkSavingCategory] = useState(false);
+  const [
+    isCategorizationAssistantOpen,
+    setIsCategorizationAssistantOpen,
+  ] = useState(false);
 
   const visibleTransactions = useMemo(
     () =>
@@ -311,6 +320,13 @@ const TransactionsModule = ({
           >
             Needs review
           </button>
+          <button
+            type="button"
+            className={styles.categoryActionButton}
+            onClick={() => setIsCategorizationAssistantOpen(true)}
+          >
+            Assist categorization
+          </button>
         </div>
       )}
       {activeTab !== "income" && (
@@ -414,6 +430,13 @@ const TransactionsModule = ({
           />
         )}
       </div>
+      {isCategorizationAssistantOpen && (
+        <CategorizationAssistantModal
+          month={selectedMonth}
+          onClose={() => setIsCategorizationAssistantOpen(false)}
+          onError={onError}
+        />
+      )}
     </section>
   );
 };

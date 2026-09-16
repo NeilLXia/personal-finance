@@ -22,16 +22,10 @@ const normalizeTransactionRuleMatchType = (matchType) =>
   transactionRuleMatchTypes.has(matchType) ? matchType : 'contains';
 
 const isManualCategoryRuleExcluded = (transaction) => {
-  const vendorName = normalizeCategoryRuleText(
-    getTransactionVendorName(transaction),
-  );
   const { isVenmo, isVenmoAccount, isVenmoStandardTransfer } =
     getTransactionProfile(transaction);
 
-  return (
-    vendorName === 'amazon' ||
-    (isVenmo && isVenmoAccount && !isVenmoStandardTransfer)
-  );
+  return isVenmo && isVenmoAccount && !isVenmoStandardTransfer;
 };
 
 const transactionCategoryRuleMatches = (transaction, rule) => {

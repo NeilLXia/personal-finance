@@ -1,3 +1,10 @@
+.chipMenu {
+  position: relative;
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+}
+
 .chipButton {
   border: 0;
   display: inline-flex;
@@ -23,4 +30,42 @@
 .chipButton:disabled {
   cursor: wait;
   opacity: 0.7;
+}
+
+.optionMenu {
+  position: absolute;
+  top: calc(100% + var(--space-2xs));
+  left: 0;
+  z-index: 30;
+  min-width: max(18rem, 100%);
+  max-width: min(32rem, 80vw);
+  max-height: 24rem;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-2xs);
+}
+
+.optionButton {
+  width: 100%;
+  min-height: 3rem;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-control);
+  line-height: 1.2;
+  padding: var(--space-xs) var(--space-sm);
+  text-align: left;
+}
+
+.optionButton:hover,
+.optionButton[aria-selected="true"] {
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
 }

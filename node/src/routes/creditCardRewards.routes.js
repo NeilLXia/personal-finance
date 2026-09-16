@@ -3,6 +3,9 @@
 const express = require('express');
 
 const creditCardRewardsService = require('../services/creditCardRewardsService');
+const {
+  previewVectorMintCardCatalog,
+} = require('../services/vectorMint/vectorMintCardCatalogService');
 const { route } = require('../http/asyncRoute');
 const { parseIdParam, rejectUnknownParams } = require('../http/requestParsers');
 const { monthPattern } = require('../http/patterns');
@@ -19,6 +22,7 @@ const {
 const router = express.Router();
 const CREDIT_CARD_REWARDS_PARAMS = new Set(['month']);
 const FREQUENCY_PERIODS = new Set(['per_year', 'per_quarter', 'per_month']);
+const BENEFIT_STATUSES = new Set(['included', 'needs_review', 'excluded']);
 const FREQUENCY_LIMITS = {
   per_year: 24,
   per_quarter: 6,
@@ -133,6 +137,19 @@ const validateFrequencyPeriod = (value, field) => {
   return period;
 };
 
+const validateBenefitStatus = (value, field) => {
+  const status = validateString(value, field, {
+    required: false,
+    maxLength: 20,
+  }) || 'included';
+
+  if (!BENEFIT_STATUSES.has(status)) {
+    throw createValidationError(`${field} is invalid.`);
+  }
+
+  return status;
+};
+
 const validateEarningRewards = ({ rewards }) =>
   validateArray(rewards, 'earning_rewards').map((reward, index) => {
     const field = `earning_rewards[${index}]`;
@@ -154,6 +171,24 @@ const validateEarningRewards = ({ rewards }) =>
       keywords: validateString(reward.keywords, `${field}.keywords`, {
         required: false,
         maxLength: 500,
+      }) || null,
+      status: validateBenefitStatus(reward.status, `${field}.status`),
+      source: validateString(reward.source, `${field}.source`, {
+        required: false,
+        maxLength: 40,
+      }) || 'manual',
+      sourceDescription: validateString(
+        reward.source_description,
+        `${field}.source_description`,
+        { required: false, maxLength: 1000 },
+      ) || null,
+      statusReason: validateString(reward.status_reason, `${field}.status_reason`, {
+        required: false,
+        maxLength: 500,
+      }) || null,
+      matchStrategy: validateString(reward.match_strategy, `${field}.match_strategy`, {
+        required: false,
+        maxLength: 80,
       }) || null,
     };
   });
@@ -191,6 +226,24 @@ const validatePerkAwards = ({ awards }) =>
       frequencyCount,
       frequencyPeriod,
       autoComplete: Boolean(award.auto_complete),
+      status: validateBenefitStatus(award.status, `${field}.status`),
+      source: validateString(award.source, `${field}.source`, {
+        required: false,
+        maxLength: 40,
+      }) || 'manual',
+      sourceDescription: validateString(
+        award.source_description,
+        `${field}.source_description`,
+        { required: false, maxLength: 1000 },
+      ) || null,
+      statusReason: validateString(award.status_reason, `${field}.status_reason`, {
+        required: false,
+        maxLength: 500,
+      }) || null,
+      matchStrategy: validateString(award.match_strategy, `${field}.match_strategy`, {
+        required: false,
+        maxLength: 80,
+      }) || null,
     };
   });
 
@@ -203,6 +256,40 @@ router.get(
       await creditCardRewardsService.getCreditCardRewards({
         selectedMonth: query.selectedMonth,
       }),
+    );
+  }),
+);
+
+router.get(
+  '/credit-card-rewards/optimization',
+  route(async (request, response) => {
+    const query = parseCreditCardRewardsQuery(request);
+
+    response.json(
+      await creditCardRewardsService.getCreditCardRewardOptimization({
+        selectedMonth: query.selectedMonth,
+      }),
+    );
+  }),
+);
+
+router.get(
+  '/credit-card-rewards/vector-mint/preview',
+  route(async (request, response) => {
+    response.json(await previewVectorMintCardCatalog());
+  }),
+);
+
+router.post(
+  '/credit-card-rewards/vector-mint/import',
+  mutationLimiter,
+  route(async (request, response) => {
+    const body = validateBody(request, (value) => ({
+      selectedMonth: validateSelectedMonth(value.selected_month),
+    }));
+
+    response.json(
+      await creditCardRewardsService.importVectorMintCreditCardTypes(body),
     );
   }),
 );

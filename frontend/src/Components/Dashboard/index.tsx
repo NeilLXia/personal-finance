@@ -145,18 +145,15 @@ const Dashboard = () => {
         <CreditCardRewardsPage
           data={creditCardRewards.data}
           error={creditCardRewards.error}
-          isCardTypeManager={isAdmin}
           isLoading={creditCardRewards.isLoading}
-          isCreatingCardType={creditCardRewards.isCreatingCardType}
-          isDeletingCardType={creditCardRewards.isDeletingCardType}
+          isOptimizationLoading={creditCardRewards.isOptimizationLoading}
           isUpdating={creditCardRewards.isUpdating}
-          isUpdatingCardType={creditCardRewards.isUpdatingCardType}
           isUpdatingPerkCompletion={creditCardRewards.isUpdatingPerkCompletion}
+          optimizationData={creditCardRewards.optimizationData}
+          optimizationError={creditCardRewards.optimizationError}
           onAccountTypeChange={creditCardRewards.updateAccountType}
-          onCreateCardType={creditCardRewards.createCardType}
-          onDeleteCardType={creditCardRewards.deleteCardType}
+          onLoadOptimization={creditCardRewards.loadOptimization}
           onPerkCompletionChange={creditCardRewards.updatePerkCompletion}
-          onUpdateCardType={creditCardRewards.updateCardType}
           onBackToDashboard={() => setActivePage("dashboard")}
         />
       ) : (
@@ -261,6 +258,7 @@ const Dashboard = () => {
         />
 
         <TransactionsModule
+          selectedMonth={selectedMonth}
           monthLabel={expenseBreakdown.transactionRangeLabel}
           breakdownTab={expenseBreakdown.activeBreakdownTab}
           activeTab={activeTransactionTab}
@@ -290,13 +288,28 @@ const Dashboard = () => {
           onSaveManualCategory={transactions.saveManualCategory}
           onBulkSaveManualCategory={transactions.saveBulkManualCategory}
           onSaveManualDate={transactions.saveManualDate}
+          onError={reportError}
         />
         </div>
       )}
       {isSettingsModalOpen && (
         <SettingsModal
+          cardTypes={creditCardRewards.data?.card_types || []}
+          isCardTypeManager={isAdmin}
+          isDeletingCardType={creditCardRewards.isDeletingCardType}
+          isImportingVectorMintCards={
+            creditCardRewards.isImportingVectorMintCards
+          }
+          isSavingCardType={
+            creditCardRewards.isCreatingCardType ||
+            creditCardRewards.isUpdatingCardType
+          }
           onClose={() => setIsSettingsModalOpen(false)}
+          onCreateCardType={creditCardRewards.createCardType}
+          onDeleteCardType={creditCardRewards.deleteCardType}
           onError={reportError}
+          onImportVectorMintCards={creditCardRewards.importVectorMintCards}
+          onUpdateCardType={creditCardRewards.updateCardType}
         />
       )}
       {isRealEstateModalOpen && (
