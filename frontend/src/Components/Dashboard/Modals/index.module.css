@@ -1,0 +1,1057 @@
+/* All dashboard modals. Grouped form selectors kept together on purpose. */
+
+.connectionsModal {
+  width: min(100%, 54rem);
+}
+
+.connectionModalActions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.connectionTileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: var(--space-md);
+}
+
+.connectionTile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-lg);
+}
+
+.staleConnectionTile {
+  border-color: var(--color-negative-border);
+  background: var(--color-negative-surface);
+}
+
+.connectionTileHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+
+.connectionTileHeader h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+
+.connectionTileHeader p {
+  margin: var(--space-3xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+}
+
+.connectionTileMeta {
+  margin: var(--space-3xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+}
+
+.connectionStatusBadge {
+  flex: 0 0 auto;
+  border-radius: var(--radius-pill);
+  background: var(--color-positive-surface);
+  color: var(--color-positive);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  line-height: 1;
+  padding: var(--space-xs) var(--space-xs);
+}
+
+.staleConnectionTile .connectionStatusBadge {
+  background: var(--color-negative-surface);
+  color: var(--color-negative);
+}
+
+.connectionTileActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: auto;
+}
+
+.connectionTileActions button {
+  min-height: 3.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.connectionTileActions button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.connectionTileActions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.connectionTileActions .connectionDangerButton {
+  border-color: var(--color-negative-border);
+  color: var(--color-negative);
+}
+
+.primaryActionButton {
+  min-height: 3.8rem;
+  border: 1px solid var(--color-inverse-surface);
+  border-radius: var(--radius-sm);
+  background: var(--color-inverse-surface);
+  color: var(--color-on-inverse);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-lg);
+  font-weight: 800;
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.primaryActionButton:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.primaryActionButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.institutions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+.institutionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.institutionHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  align-items: baseline;
+}
+
+.institutionHeader h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-3xl);
+  line-height: 1.3;
+}
+
+.institutionHeader strong {
+  color: var(--color-ink);
+  font-size: var(--text-2xl);
+}
+
+.accountsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  gap: var(--space-lg);
+}
+
+.accountCard {
+  min-height: 10.4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-xl);
+}
+
+.accountCard h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-2xl);
+  line-height: 1.3;
+}
+
+.accountCard p {
+  margin: var(--space-2xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+}
+
+.accountCard strong {
+  color: var(--color-ink);
+  font-size: var(--text-3xl);
+}
+
+.modalBackdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-overlay);
+  padding: var(--space-2xl);
+}
+
+.modalPanel {
+  width: min(100%, 82rem);
+  max-height: min(82rem, 90vh);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-xl);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  align-items: flex-start;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-3xl);
+  line-height: 1.2;
+}
+
+.modalHeader p {
+  margin: var(--space-2xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+}
+
+.modalHeader button {
+  min-height: 3.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.ruleForm button {
+  min-height: 3.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.budgetTargetForm button {
+  min-height: 3.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.realEstateForm button {
+  min-height: 3.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.payslipUploadForm button {
+  min-height: 3.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.modalHeader button:hover {
+  border-color: var(--color-accent);
+}
+
+.ruleForm button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.budgetTargetForm button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.realEstateForm button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.payslipUploadForm button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.ruleForm {
+  display: grid;
+  gap: var(--space-md);
+  align-items: end;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  padding: var(--space-md);
+}
+
+.budgetTargetForm {
+  display: grid;
+  gap: var(--space-md);
+  align-items: end;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  padding: var(--space-md);
+}
+
+.realEstateForm {
+  display: grid;
+  gap: var(--space-md);
+  align-items: end;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  padding: var(--space-md);
+}
+
+.payslipUploadForm {
+  display: grid;
+  gap: var(--space-md);
+  align-items: end;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  padding: var(--space-md);
+}
+
+.ruleForm {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+}
+
+.budgetTargetForm {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+}
+
+.realEstateForm {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+}
+
+.realEstateAddressField {
+  grid-column: 1 / -1;
+}
+
+.addressSearchField {
+  position: relative;
+}
+
+.addressSuggestionList {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + var(--space-2xs));
+  right: 0;
+  left: 0;
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.addressSuggestionOption {
+  min-height: 4.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  align-items: flex-start;
+  border: 0;
+  border-bottom: 1px solid var(--color-surface-muted);
+  border-radius: 0;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+}
+
+.addressSuggestionOption:last-child {
+  border-bottom: 0;
+}
+
+.addressSuggestionOption:hover {
+  background: var(--color-surface-muted);
+}
+
+.addressSuggestionOption strong {
+  font-size: var(--text-md);
+  line-height: 1.2;
+}
+
+.addressSuggestionOption span {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+}
+
+.addressSearchStatus {
+  min-height: 1.5rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ruleForm label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.budgetTargetForm label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.realEstateForm label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.payslipUploadForm label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: 800;
+}
+
+.ruleForm input {
+  width: 100%;
+  min-height: 3.4rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.ruleForm select {
+  width: 100%;
+  min-height: 3.4rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.budgetTargetForm input {
+  width: 100%;
+  min-height: 3.4rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.budgetTargetForm select {
+  width: 100%;
+  min-height: 3.4rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.realEstateForm input {
+  width: 100%;
+  min-height: 3.4rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.payslipUploadForm input {
+  width: 100%;
+  min-height: 3.4rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.ruleSearch {
+  width: 100%;
+  min-height: 3.4rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.ruleForm button {
+  background: var(--color-inverse-surface);
+  color: var(--color-on-inverse);
+}
+
+.budgetTargetForm button {
+  background: var(--color-inverse-surface);
+  color: var(--color-on-inverse);
+}
+
+.realEstateForm button {
+  background: var(--color-inverse-surface);
+  color: var(--color-on-inverse);
+}
+
+.payslipUploadForm button {
+  background: var(--color-inverse-surface);
+  color: var(--color-on-inverse);
+}
+
+.ruleForm button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.budgetTargetForm button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.realEstateForm button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.realEstateForm .addressSuggestionOption {
+  min-height: 4.8rem;
+  border: 0;
+  border-bottom: 1px solid var(--color-surface-muted);
+  border-radius: 0;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.realEstateForm .addressSuggestionOption:hover {
+  background: var(--color-surface-muted);
+}
+
+.payslipUploadForm button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.payslipUploadForm {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.propertyList {
+  display: grid;
+  gap: var(--space-md);
+  overflow: auto;
+}
+
+.propertyCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-xl);
+  align-items: center;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-lg);
+}
+
+.propertyCardHeader {
+  min-width: 0;
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.propertyCardHeader > div:first-child {
+  min-width: 0;
+}
+
+.propertyCard .modalRowActions {
+  align-self: center;
+  justify-self: end;
+}
+
+.propertyCard h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-lg);
+  line-height: 1.3;
+}
+
+.propertyCard p {
+  margin: var(--space-2xs) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.propertyCard dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(8rem, auto));
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.propertyCard dt {
+  color: var(--color-text-subtle);
+  font-size: var(--text-2xs);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.propertyCard dd {
+  margin: var(--space-3xs) 0 0;
+  color: var(--color-ink);
+  font-size: var(--text-md);
+  font-weight: 800;
+  text-align: left;
+}
+
+.filePicker {
+  position: relative;
+  min-height: 3.4rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.filePicker:hover {
+  border-color: var(--color-accent);
+}
+
+.filePicker input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.filePickerButton {
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  font-size: var(--text-md);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.filePickerName {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-subtle);
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payslipUploadSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+  align-items: center;
+  border: 1px solid var(--color-accent-weak);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-surface);
+  color: var(--color-text);
+  font-size: var(--text-md);
+  font-weight: 700;
+  padding: var(--space-md);
+}
+
+.payslipUploadSummary strong {
+  color: var(--color-ink);
+}
+
+.ruleList {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  overflow-y: auto;
+  padding-right: var(--space-2xs);
+}
+
+.ruleRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-md);
+  align-items: center;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  padding: var(--space-md);
+  text-align: left;
+}
+
+.budgetTargetRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-md);
+  align-items: center;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: var(--space-md);
+}
+
+.budgetTargetRow span {
+  color: var(--color-text);
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.budgetTargetFixedForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.budgetTargetHeaderRow {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(8rem, 11rem) minmax(
+      8rem,
+      11rem
+    );
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.budgetTargetFixedRow {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(8rem, 11rem) minmax(
+      8rem,
+      11rem
+    );
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.budgetTargetHeaderRow {
+  color: var(--color-text-subtle);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  padding: 0 var(--space-md);
+}
+
+.budgetTargetFixedRow {
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-md);
+}
+
+.budgetTargetFixedRow strong {
+  color: var(--color-ink);
+  font-size: var(--text-md);
+}
+
+.budgetTargetFixedRow input {
+  width: 100%;
+  min-height: 3.2rem;
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: var(--space-xs) var(--space-xs);
+}
+
+.budgetTargetFixedRow input:disabled {
+  background: var(--color-canvas);
+  color: var(--color-text-faint);
+}
+
+.budgetTargetFixedRow span {
+  color: var(--color-text);
+  font-size: var(--text-md);
+  font-weight: 800;
+  text-align: right;
+}
+
+.budgetTargetFixedForm > button {
+  width: fit-content;
+  min-height: 3.4rem;
+  align-self: flex-end;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-inverse-surface);
+  color: var(--color-on-inverse);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.budgetTargetFixedForm > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.payslipList {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  overflow-y: auto;
+  padding-right: var(--space-2xs);
+}
+
+.payslipRow {
+  display: grid;
+  grid-template-columns: 13rem minmax(18rem, 1fr) minmax(12rem, auto) minmax(
+      12rem,
+      auto
+    );
+  gap: var(--space-md);
+  align-items: center;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: var(--space-md);
+}
+
+.payslipRow div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+}
+
+.payslipRow strong {
+  font-size: var(--text-md);
+  overflow-wrap: anywhere;
+}
+
+.payslipRow span {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.ruleRow:hover {
+  border-color: var(--color-accent);
+  background: var(--color-canvas);
+}
+
+.ruleRow span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+}
+
+.ruleRow strong {
+  overflow-wrap: anywhere;
+}
+
+.ruleRow small {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.modalRowActions {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.modalActionButton {
+  min-height: 3rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 800;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.modalActionButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+.modalActionButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.modalDangerActionButton {
+  border-color: var(--color-negative-border);
+  color: var(--color-negative);
+}
+
+@media (max-width: 720px) {
+  .payslipRow {
+      grid-template-columns: 1fr;
+    }
+
+  .payslipRow {
+      gap: var(--space-sm);
+    }
+
+  .payslipDetails {
+      grid-template-columns: 1fr;
+    }
+
+  .ruleForm {
+      grid-template-columns: 1fr;
+    }
+
+  .payslipUploadForm {
+      grid-template-columns: 1fr;
+    }
+
+  .realEstateForm {
+      grid-template-columns: 1fr;
+    }
+
+  .propertyCard {
+      grid-template-columns: 1fr;
+    }
+
+  .propertyCardHeader {
+      flex-direction: column;
+    }
+
+  .propertyCard dl {
+      grid-template-columns: 1fr;
+    }
+
+  .propertyCard dd {
+      text-align: left;
+    }
+
+  .ruleRow {
+      grid-template-columns: 1fr;
+    }
+
+  .modalRowActions {
+      justify-content: flex-start;
+    }
+
+  .propertyCard .modalRowActions {
+      justify-self: start;
+    }
+
+  .modalHeader {
+      align-items: stretch;
+    }
+}

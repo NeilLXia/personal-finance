@@ -1,0 +1,125 @@
+# Personal Finance
+
+A personal finance dashboard with Google login, Plaid account linking, transaction categorization, income tracking, historical balances, and real estate equity tracking.
+
+## Project Structure
+
+- `frontend/` - React and Vite dashboard.
+- `node/` - Express API, Plaid integration, auth, migrations, and data services.
+- `scripts/` - Local setup and deployment helper scripts.
+
+## Setup
+
+Use Node `v26.7.0` or newer. Both `node/.nvmrc` and `frontend/.nvmrc` pin the
+version used during local development.
+
+Copy the example environment files and fill in local values:
+
+```bash
+cp .env.example .env
+cp node/.env.example node/.env
+cp frontend/.env.example frontend/.env
+```
+
+Install dependencies:
+
+```bash
+./scripts/install-backend.sh
+./scripts/install-frontend.sh
+```
+
+Start local Postgres:
+
+```bash
+docker compose up -d db
+```
+
+Run database migrations:
+
+```bash
+cd node
+npm run db:migrate
+```
+
+Run the app locally:
+
+```bash
+./node/start.sh
+```
+
+```bash
+cd frontend
+npm start
+```
+
+The backend runs on `http://localhost:8001` by default (`APP_PORT`). The frontend dev server runs on `http://localhost:3000` and proxies `/api` to the backend.
+
+## Health Checks
+
+- `GET /health` — liveness. Returns `200 {"status":"ok"}` whenever the process is serving. No auth, no rate limit, no I/O.
+- `GET /health/ready` — readiness. Returns `200 {"status":"ready"}` when the database is reachable, `503 {"status":"unavailable"}` otherwise. Point your load balancer / orchestrator health check here.
+
+## Plaid Sandbox
+
+In Sandbox, use `user_good` as the username and `pass_good` as the password. If prompted for a two-factor code, use `1234`.
+
+For richer Transactions test data, use a Transactions sandbox institution with `user_transactions_dynamic` and any non-empty password.
+
+## Token Encryption
+
+Plaid access tokens can be encrypted at rest with AWS KMS. Add the KMS configuration to `node/.env`:
+
+```bash
+AWS_REGION=us-east-1
+AWS_KMS_KEY_ID=your-kms-key-id-or-arn
+```
+
+Use a symmetric KMS key. In AWS, prefer an EC2/task role with `kms:Encrypt` and `kms:Decrypt` permissions for that key. For local development, use your normal AWS CLI/profile credentials rather than committing access keys.
+
+After setting the key, encrypt any existing plaintext Plaid tokens:
+
+```bash
+cd node
+npm run plaid:encrypt-existing-tokens
+```
+
+## Deployment
+
+The backend (`node/`) only serves `/api` and `/health` — it does **not** serve the
+frontend. Build the frontend (`cd frontend && npm run build`) and serve the
+static `frontend/build/` directory from your web server, CDN, or object store.
+
+The session cookie is `HttpOnly; SameSite=Lax; Secure`. `SameSite=Lax` means the
+browser will not attach it to cross-**site** API calls, so the frontend and the
+API must be served from the same site:
+
+- same origin (e.g. `app.example.com` serves the SPA and reverse-proxies `/api`
+  to the backend), or
+- sibling subdomains of one registrable domain (e.g. `app.example.com` +
+  `api.example.com`).
+
+A frontend and API on unrelated domains will not stay logged in. List every
+frontend origin you deploy in `CORS_ORIGINS` (exact scheme + host + port).
+
+There is no backend Dockerfile; `docker-compose.yml` only provisions Postgres for
+local development. Run the backend with `./node/start.sh production` (runs
+migrations then starts the server) or your own process manager.
+
+## Production Notes
+
+- `node/index.js` loads `node/.env` if present, but real environment variables
+  always take precedence. For a single-host deploy a `node/.env` file is fine;
+  on a platform with a secret manager, set the variables there and skip the file.
+- Set `SESSION_SECRET` to a random string of at least 32 characters and tune
+  `SESSION_MAX_AGE_SECONDS` for your session lifetime. The server refuses to
+  start in production if `SESSION_SECRET` is unset, a placeholder, or too short.
+- Set `DB_SSL=true` for hosted Postgres. Leave `DB_SSL_REJECT_UNAUTHORIZED=true` and provide `DB_SSL_CA_PATH` or `DB_SSL_CA` when your provider requires a custom CA.
+- Set `MAPBOX_ACCESS_TOKEN` to enable real estate address autocomplete, and
+  `RENTCAST_API_KEY` to enable automated property valuations. Both APIs are
+  proxied through the backend so the frontend is not coupled to their response
+  shapes. If a key is unset, that feature returns a 400 when used; the rest of
+  the app is unaffected.
+- Configure `CORS_ORIGINS` to the exact frontend origins you deploy.
+- Configure Google OAuth redirect origins in Google Cloud.
+- Configure Plaid redirect and webhook URLs in the Plaid Dashboard when deploying.
+- Use the EventBridge setup script for scheduled monthly syncs if deploying on AWS.

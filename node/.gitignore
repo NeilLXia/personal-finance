@@ -1,0 +1,6 @@
+.env
+.env.*
+!.env.example
+
+# Database TLS material (downloaded per environment)
+*.pem
