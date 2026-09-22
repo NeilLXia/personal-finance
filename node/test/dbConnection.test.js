@@ -12,6 +12,16 @@ const sslEnvKeys = [
   'DB_SSL_CA',
   'DB_SSL_CA_PATH',
   'DB_SSL_REJECT_UNAUTHORIZED',
+  // Also reset connection-targeting/credential keys — otherwise a value one
+  // test sets (e.g. DB_PASSWORD) leaks into a later test via originalEnv,
+  // since Object.assign only overwrites keys present in originalEnv rather
+  // than clearing ones added afterward.
+  'DB_PASSWORD',
+  'DB_USER',
+  'DB_HOST',
+  'DB_PORT',
+  'DB_NAME',
+  'DB_SECRET_ID',
 ];
 
 const restoreModuleState = () => {
@@ -82,6 +92,68 @@ test('database SSL accepts escaped CA certificates from env', async () => {
       rejectUnauthorized: true,
       ca: '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----',
     });
+  } finally {
+    await db.closePool();
+  }
+});
+
+test('password is a static function returning DB_PASSWORD when DB_SECRET_ID is unset', async () => {
+  const db = loadConnection({ DB_PASSWORD: 'from-env' });
+
+  try {
+    assert.equal(typeof db.pool.options.password, 'function');
+    assert.equal(await db.pool.options.password(), 'from-env');
+  } finally {
+    await db.closePool();
+  }
+});
+
+test('password falls back to the local dev default when unset', async () => {
+  const db = loadConnection({});
+
+  try {
+    assert.equal(await db.pool.options.password(), 'devpassword');
+  } finally {
+    await db.closePool();
+  }
+});
+
+test('query() refetches credentials and retries once after an auth failure', async () => {
+  const db = loadConnection({ DB_PASSWORD: 'stale' });
+
+  try {
+    let calls = 0;
+    db.pool.query = async () => {
+      calls += 1;
+      if (calls === 1) {
+        const error = new Error('password authentication failed');
+        error.code = '28P01';
+        throw error;
+      }
+      return { rows: [{ ok: true }] };
+    };
+
+    const result = await db.query('SELECT 1');
+
+    assert.equal(calls, 2);
+    assert.deepEqual(result, { rows: [{ ok: true }] });
+  } finally {
+    await db.closePool();
+  }
+});
+
+test('query() does not retry non-auth errors', async () => {
+  const db = loadConnection({ DB_PASSWORD: 'stale' });
+
+  try {
+    let calls = 0;
+    db.pool.query = async () => {
+      calls += 1;
+      throw new Error('connection terminated');
+    };
+
+    await assert.rejects(db.query('SELECT 1'), /connection terminated/);
+    assert.equal(calls, 1);
   } finally {
     await db.closePool();
   }

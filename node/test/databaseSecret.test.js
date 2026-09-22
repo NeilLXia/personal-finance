@@ -6,6 +6,7 @@ const assert = require('node:assert/strict');
 const {
   resolveDatabaseSecret,
   applySecretValue,
+  createPasswordProvider,
 } = require('../src/config/databaseSecret');
 
 test('resolveDatabaseSecret is a no-op when DB_SECRET_ID is unset', async () => {
@@ -106,4 +107,74 @@ test('applySecretValue does not overwrite an explicit DB_USER-only setup', () =>
 
   assert.equal(env.DB_USER, 'readonly');
   assert.equal(env.DB_PASSWORD, 'pw');
+});
+
+test('createPasswordProvider returns the static DB_PASSWORD when DB_SECRET_ID is unset', async () => {
+  const provider = createPasswordProvider({ env: { DB_PASSWORD: 'local' } });
+
+  assert.equal(await provider.getPassword(), 'local');
+});
+
+test('createPasswordProvider falls back to the dev default when nothing is set', async () => {
+  const provider = createPasswordProvider({ env: {} });
+
+  assert.equal(await provider.getPassword(), 'devpassword');
+});
+
+test('createPasswordProvider caches the fetched password within the TTL', async () => {
+  let calls = 0;
+  const provider = createPasswordProvider({
+    env: { DB_SECRET_ID: 'rds-secret' },
+    ttlMs: 60_000,
+    send: async () => {
+      calls += 1;
+      return { SecretString: JSON.stringify({ password: `pw-${calls}` }) };
+    },
+  });
+
+  assert.equal(await provider.getPassword(), 'pw-1');
+  assert.equal(await provider.getPassword(), 'pw-1');
+  assert.equal(calls, 1);
+});
+
+test('createPasswordProvider refetches immediately after invalidate()', async () => {
+  let calls = 0;
+  const provider = createPasswordProvider({
+    env: { DB_SECRET_ID: 'rds-secret' },
+    ttlMs: 60_000,
+    send: async () => {
+      calls += 1;
+      return { SecretString: JSON.stringify({ password: `pw-${calls}` }) };
+    },
+  });
+
+  assert.equal(await provider.getPassword(), 'pw-1');
+  provider.invalidate();
+  assert.equal(await provider.getPassword(), 'pw-2');
+  assert.equal(calls, 2);
+});
+
+test('createPasswordProvider refetches once the TTL has elapsed', async () => {
+  let calls = 0;
+  const provider = createPasswordProvider({
+    env: { DB_SECRET_ID: 'rds-secret' },
+    ttlMs: 10,
+    send: async () => {
+      calls += 1;
+      return { SecretString: JSON.stringify({ password: `pw-${calls}` }) };
+    },
+  });
+
+  assert.equal(await provider.getPassword(), 'pw-1');
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(await provider.getPassword(), 'pw-2');
+});
+
+test('createPasswordProvider accepts a raw (non-JSON) password string', async () => {
+  const provider = createPasswordProvider({
+    env: { DB_SECRET_ID: 'plain-secret' },
+    send: async () => ({ SecretString: 'raw-password' }),
+  });
+
+  assert.equal(await provider.getPassword(), 'raw-password');
 });

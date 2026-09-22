@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 const logger = require('../lib/logger');
+const { createPasswordProvider } = require('../config/databaseSecret');
 
 // node/ — a relative DB_SSL_CA_PATH resolves against this, not process.cwd(), so
 // the CA bundle is found regardless of where the process was launched from.
@@ -32,6 +33,11 @@ const buildSslConfig = () => {
 
 const ssl = buildSslConfig();
 
+// A function here (rather than a plain string) is called by pg per new
+// physical connection, so an RDS-managed secret rotation is picked up
+// without restarting the process — see createPasswordProvider's doc comment.
+const passwordProvider = createPasswordProvider();
+
 const poolConfig = process.env.DATABASE_URL
   ? {
       connectionString: process.env.DATABASE_URL,
@@ -42,21 +48,50 @@ const poolConfig = process.env.DATABASE_URL
       port: Number(process.env.DB_PORT || 5432),
       database: process.env.DB_NAME || 'finance',
       user: process.env.DB_USER || 'finance',
-      password: process.env.DB_PASSWORD || 'devpassword',
+      password: () => passwordProvider.getPassword(),
       ssl,
     };
 
 const pool = new Pool(poolConfig);
 
+const AUTH_FAILED_CODE = '28P01'; // Postgres: invalid_password
+
+const isAuthError = (error) => Boolean(error) && error.code === AUTH_FAILED_CODE;
+
 // Without this handler an error on an idle client (DB restart, failover, network
 // drop) is emitted as an unhandled 'error' event and crashes the process.
 pool.on('error', (error) => {
   logger.error('Unexpected database pool error', { message: error.message });
+
+  if (isAuthError(error)) {
+    passwordProvider.invalidate();
+  }
 });
 
-const query = (text, params) => pool.query(text, params);
+// A stale cached password (e.g. the secret rotated since it was last fetched)
+// surfaces here as a 28P01 on the next new connection. Force a fresh fetch
+// and retry once instead of failing every request until the process restarts.
+const withAuthRetry = async (attempt) => {
+  try {
+    return await attempt();
+  } catch (error) {
+    if (!isAuthError(error)) {
+      throw error;
+    }
 
-const getClient = () => pool.connect();
+    logger.warn(
+      'Database auth failed; refreshing credentials from Secrets Manager and retrying once',
+      { message: error.message },
+    );
+    passwordProvider.invalidate();
+
+    return attempt();
+  }
+};
+
+const query = (text, params) => withAuthRetry(() => pool.query(text, params));
+
+const getClient = () => withAuthRetry(() => pool.connect());
 
 const checkConnection = async () => {
   const { rows } = await query('SELECT NOW() AS now');
