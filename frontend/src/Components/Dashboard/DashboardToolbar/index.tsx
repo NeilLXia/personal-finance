@@ -18,11 +18,12 @@ import ThemeToggle from "../../ThemeToggle";
 import DashboardActionsMenu from "./DashboardActionsMenu";
 
 type DashboardToolbarProps = {
-  activePage: "dashboard" | "credit-card-rewards";
+  activePage: "dashboard" | "credit-card-rewards" | "retirement-projection";
   institutions: InstitutionStatus[];
   selectedMonth: string;
   areBalancesHidden: boolean;
   isCreditCardRewardsAvailable: boolean;
+  isRetirementProjectionAvailable: boolean;
   isManualRefreshLoading: boolean;
   isOwner: boolean;
   onSelectedMonthChange: (month: string) => void;
@@ -31,6 +32,7 @@ type DashboardToolbarProps = {
   onManualRefresh: () => void;
   onShowCreditCardRewards: () => void;
   onShowDashboard: () => void;
+  onShowRetirementProjection: () => void;
   onOpenSettings: () => void;
   onOpenRealEstate: () => void;
   onOpenPayslips: () => void;
@@ -43,6 +45,7 @@ const DashboardToolbar = ({
   selectedMonth,
   areBalancesHidden,
   isCreditCardRewardsAvailable,
+  isRetirementProjectionAvailable,
   isManualRefreshLoading,
   isOwner,
   onSelectedMonthChange,
@@ -51,6 +54,7 @@ const DashboardToolbar = ({
   onManualRefresh,
   onShowCreditCardRewards,
   onShowDashboard,
+  onShowRetirementProjection,
   onOpenSettings,
   onOpenRealEstate,
   onOpenPayslips,
@@ -219,9 +223,11 @@ const DashboardToolbar = ({
           <DashboardActionsMenu
             activePage={activePage}
             isCreditCardRewardsAvailable={isCreditCardRewardsAvailable}
+            isRetirementProjectionAvailable={isRetirementProjectionAvailable}
             onOpenConnections={() => setIsConnectionsModalOpen(true)}
             onShowCreditCardRewards={onShowCreditCardRewards}
             onShowDashboard={onShowDashboard}
+            onShowRetirementProjection={onShowRetirementProjection}
             onOpenSettings={onOpenSettings}
             onOpenRealEstate={onOpenRealEstate}
             onOpenPayslips={onOpenPayslips}

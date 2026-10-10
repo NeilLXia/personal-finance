@@ -3,11 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./index.module.css";
 
 type DashboardActionsMenuProps = {
-  activePage: "dashboard" | "credit-card-rewards";
+  activePage: "dashboard" | "credit-card-rewards" | "retirement-projection";
   isCreditCardRewardsAvailable: boolean;
+  isRetirementProjectionAvailable: boolean;
   onOpenConnections: () => void;
   onShowCreditCardRewards: () => void;
   onShowDashboard: () => void;
+  onShowRetirementProjection: () => void;
   onOpenSettings: () => void;
   onOpenRealEstate: () => void;
   onOpenPayslips: () => void;
@@ -17,9 +19,11 @@ type DashboardActionsMenuProps = {
 const DashboardActionsMenu = ({
   activePage,
   isCreditCardRewardsAvailable,
+  isRetirementProjectionAvailable,
   onOpenConnections,
   onShowCreditCardRewards,
   onShowDashboard,
+  onShowRetirementProjection,
   onOpenSettings,
   onOpenRealEstate,
   onOpenPayslips,
@@ -97,6 +101,22 @@ const DashboardActionsMenu = ({
               ? "Dashboard"
               : "Credit card rewards"}
           </button>
+          {isRetirementProjectionAvailable && (
+            <button
+              type="button"
+              onClick={() =>
+                runMenuAction(
+                  activePage === "retirement-projection"
+                    ? onShowDashboard
+                    : onShowRetirementProjection,
+                )
+              }
+            >
+              {activePage === "retirement-projection"
+                ? "Dashboard"
+                : "Retirement projection"}
+            </button>
+          )}
           <button type="button" onClick={() => runMenuAction(onOpenSettings)}>
             Settings
           </button>

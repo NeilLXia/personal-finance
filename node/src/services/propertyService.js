@@ -111,8 +111,10 @@ const getRentcastValueEstimate = async (address) => {
   return data;
 };
 
-const refreshPropertyValue = async (property) => {
-  const valuationMonth = moment().startOf('month').format('YYYY-MM-DD');
+const refreshPropertyValue = async (
+  property,
+  { valuationMonth = moment().startOf('month').format('YYYY-MM-DD') } = {},
+) => {
   const loanBalance = calculateLoanBalance(property, valuationMonth);
   const hasCurrentMonthValuation = await models.properties.hasMonthlyValuation({
     propertyId: property.id,
@@ -317,4 +319,5 @@ module.exports = {
   deleteProperty,
   refreshProperties,
   refreshPropertyById,
+  refreshPropertyValue,
 };

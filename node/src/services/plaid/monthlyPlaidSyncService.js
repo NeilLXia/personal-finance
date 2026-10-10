@@ -6,6 +6,7 @@ const logger = require('../../lib/logger');
 const { getPlaidClient, logPlaidResponse } = require('./client');
 const { syncTransactionsForItem } = require('./transactionSyncService');
 const { saveAccounts } = require('./persistenceService');
+const { refreshPropertyValue } = require('../propertyService');
 
 let isSnapshotRunInProgress = false;
 
@@ -63,6 +64,34 @@ const syncPlaidItemTransactions = async ({ plaidItem }) => {
     plaid_environment: plaidItem.plaid_environment,
     ...result,
   };
+};
+
+// Property values live outside Plaid, but the monthly snapshot is the only
+// scheduled job, so it also pulls each property's RentCast valuation for the
+// month. refreshPropertyValue skips properties already valued this month.
+const refreshPropertyValues = async ({ snapshotDate }) => {
+  const properties = await models.properties.findActiveNonDemo();
+  const results = [];
+
+  for (const property of properties) {
+    try {
+      results.push(
+        await refreshPropertyValue(property, { valuationMonth: snapshotDate }),
+      );
+    } catch (error) {
+      logger.warn('Monthly property valuation failed', {
+        property_id: property.id,
+        error: error.data || error.message || error,
+      });
+      results.push({
+        property_id: property.id,
+        status: 'failed',
+        error: error.message,
+      });
+    }
+  }
+
+  return results;
 };
 
 const runMonthlyPlaidSync = async ({
@@ -140,6 +169,8 @@ const runMonthlyPlaidSync = async ({
       }
     }
 
+    const propertyResults = await refreshPropertyValues({ snapshotDate });
+
     return {
       status: 'completed',
       balance_date: snapshotDate,
@@ -157,6 +188,12 @@ const runMonthlyPlaidSync = async ({
         modified: transactionResults.reduce((total, result) => total + Number(result.modified || 0), 0),
         removed: transactionResults.reduce((total, result) => total + Number(result.removed || 0), 0),
         items: transactionResults,
+      },
+      properties: {
+        refreshed: propertyResults.filter((result) => result.status === 'refreshed').length,
+        skipped: propertyResults.filter((result) => result.status === 'skipped').length,
+        failed: propertyResults.filter((result) => result.status === 'failed').length,
+        items: propertyResults,
       },
     };
   } finally {

@@ -70,6 +70,25 @@ const findByUserId = async (userId) => {
   return rows;
 };
 
+// Used by the monthly sync to decide which properties get a paid RentCast
+// valuation. The DB-backed tests (ownership, categorizationSuggestionModel)
+// create @test.local users with fake addresses; never value those.
+const findActiveNonDemo = async () => {
+  const { rows } = await db.query(
+    `
+      SELECT properties.*
+      FROM properties
+      INNER JOIN users ON users.id = properties.user_id
+      WHERE properties.is_active = TRUE
+        AND users.is_demo = FALSE
+        AND users.email NOT LIKE '%@test.local'
+      ORDER BY properties.id ASC
+    `,
+  );
+
+  return rows;
+};
+
 const findByIdForUser = async ({ id, userId }) => {
   const { rows } = await db.query(
     `
@@ -272,6 +291,7 @@ const updateMonthlyLoanBalance = async ({
 module.exports = {
   upsert,
   findByUserId,
+  findActiveNonDemo,
   findByIdForUser,
   updateByIdForUser,
   deactivateByIdForUser,

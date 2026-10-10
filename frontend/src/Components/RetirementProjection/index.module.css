@@ -1,0 +1,570 @@
+.retirementPage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+.pageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pageTitle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.pageTitle h1 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--text-5xl);
+  font-weight: var(--font-weight-title);
+  line-height: 1.1;
+}
+
+.pageTitle p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-label);
+}
+
+.pageActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
+
+.pageActions button,
+.calculateAssumption button,
+.inputShell,
+.inputLabel select {
+  min-height: 3.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-control);
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.pageActions button:hover,
+.calculateAssumption button:hover,
+.inputShell:focus-within,
+.inputShell:hover,
+.inputLabel select:hover {
+  border-color: var(--color-accent);
+}
+
+.calculateAssumption button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.statusText,
+.assumptionsPanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.statusText {
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-label);
+  padding: var(--space-xl);
+}
+
+.projectionWorkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(28rem, 36rem);
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.projectionColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.retirementChartFrame {
+  --retirement-chart-text-scale: 1;
+  max-width: none;
+  align-self: start;
+  min-height: 0;
+  gap: var(--space-sm);
+  margin-inline: 0;
+  padding: var(--space-lg);
+}
+
+.savingsRateSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-md);
+}
+
+.savingsRateSummary > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.savingsRateSummary span {
+  color: var(--color-text-muted);
+  font-size: var(--dashboard-label-size);
+  font-weight: var(--font-weight-label);
+}
+
+.savingsRateSummary strong {
+  color: var(--color-ink);
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-title);
+  line-height: 1;
+}
+
+.savingsRateSummary small {
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-label);
+}
+
+.savingsBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3xs);
+  margin: var(--space-xs) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.savingsBreakdown li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-xs);
+  align-items: baseline;
+}
+
+.savingsBreakdownHeader {
+  padding-top: var(--space-2xs);
+  border-top: 1px solid var(--color-border);
+}
+
+.savingsBreakdown span,
+.savingsBreakdown strong {
+  font-size: var(--text-xs);
+  line-height: 1.25;
+}
+
+.savingsBreakdown span {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.savingsBreakdownHeader span {
+  color: var(--color-ink);
+  font-weight: var(--font-weight-label);
+}
+
+.savingsBreakdown strong {
+  color: var(--color-text);
+  font-weight: var(--font-weight-label);
+  white-space: nowrap;
+}
+
+.sensitivityAssumptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  padding: var(--space-md);
+}
+
+.sensitivityAssumptionsHeader span {
+  color: var(--color-ink);
+  font-size: var(--dashboard-label-size);
+  font-weight: var(--font-weight-title);
+}
+
+.sensitivityAssumptionsTable {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) repeat(3, minmax(10rem, 1fr));
+  overflow-x: auto;
+}
+
+.sensitivityAssumptionLabel,
+.sensitivityScenarioHeading,
+.sensitivityAssumptionValue {
+  min-width: 0;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  line-height: 1.25;
+  padding: var(--space-2xs) var(--space-xs);
+}
+
+.sensitivityScenarioHeading {
+  display: flex;
+  gap: var(--space-2xs);
+  align-items: center;
+  color: var(--color-ink);
+  font-weight: var(--font-weight-label);
+  white-space: nowrap;
+}
+
+.sensitivityScenarioSwatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.sensitivityAssumptionLabel {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-label);
+}
+
+.sensitivityAssumptionValue {
+  white-space: nowrap;
+}
+
+.chartPanelLoading {
+  border-color: var(--color-surface-muted);
+}
+
+.retirementChartFrame svg {
+  aspect-ratio: 4 / 2;
+}
+
+.chartHeader {
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.chartYAxisText {
+  font-size: calc(0.4rem * var(--retirement-chart-text-scale));
+}
+
+.chartXAxisText {
+  font-size: calc(0.27rem * var(--retirement-chart-text-scale));
+}
+
+.chartPanelLoading svg {
+  opacity: 0.42;
+  filter: grayscale(1);
+}
+
+.assetLine {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.scenarioLine {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.portfolioArea,
+.realEstateArea {
+  opacity: 0.24;
+}
+
+.placeholderLine {
+  fill: none;
+  stroke: var(--color-text-faint);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.markerLine {
+  stroke: var(--color-text-muted);
+  stroke-dasharray: 2 2;
+  stroke-width: 0.35;
+  opacity: 0.6;
+}
+
+.edgeMarkerLine {
+  stroke: var(--color-ink);
+  stroke-width: 0.45;
+  opacity: 0.7;
+}
+
+.retirementMarker {
+  pointer-events: none;
+}
+
+.retirementMarker circle {
+  fill: var(--color-accent-surface);
+  stroke: var(--color-accent);
+  stroke-width: 0.55;
+  vector-effect: non-scaling-stroke;
+}
+
+.retirementMarker path {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 0.55;
+  vector-effect: non-scaling-stroke;
+}
+
+.hoverPoint {
+  cursor: pointer;
+  outline: none;
+}
+
+.hoverBand {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.snapshotDot {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.hoverPoint:hover .snapshotDot {
+  fill: var(--color-ink);
+  stroke: var(--color-surface);
+}
+
+.hoverLine,
+.selectedLine {
+  stroke: var(--color-ink);
+  stroke-dasharray: 2 2;
+  stroke-width: 0.35;
+  opacity: 0.36;
+}
+
+.selectedLine {
+  stroke: var(--color-accent);
+  opacity: 0.5;
+}
+
+.hoverDot,
+.selectedDot {
+  fill: var(--color-ink);
+  stroke: var(--color-surface);
+  stroke-width: 0.55;
+}
+
+.selectedDot {
+  fill: var(--color-accent);
+}
+
+.snapshotTooltip {
+  pointer-events: none;
+}
+
+.snapshotTooltipBox {
+  fill: var(--color-scrim);
+  stroke: var(--color-border);
+  stroke-width: 0.45;
+}
+
+.snapshotTooltipTitle,
+.snapshotTooltipTotal,
+.snapshotTooltipSection,
+.snapshotTooltipNote,
+.snapshotTooltipText,
+.snapshotTooltipValue {
+  fill: var(--color-ink);
+  font-weight: 800;
+}
+
+.snapshotTooltipTitle,
+.snapshotTooltipTotal,
+.snapshotTooltipSection {
+  font-size: calc(0.39rem * var(--retirement-chart-text-scale));
+}
+
+.snapshotTooltipText,
+.snapshotTooltipValue {
+  font-size: calc(0.33rem * var(--retirement-chart-text-scale));
+}
+
+.snapshotTooltipTotal,
+.snapshotTooltipValue {
+  text-anchor: end;
+}
+
+.snapshotTooltipSection {
+  fill: var(--color-text-muted);
+}
+
+.snapshotTooltipNote {
+  fill: var(--color-accent);
+  font-size: calc(0.33rem * var(--retirement-chart-text-scale));
+}
+
+.assumptionsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--summary-card-padding);
+}
+
+.assumptionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.assumptionGroup h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: var(--dashboard-card-title-size);
+  font-weight: var(--font-weight-title);
+}
+
+.assumptionGroupFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.conditionalInputSlot {
+  min-height: calc(3.8rem + var(--dashboard-label-size) + var(--space-2xs));
+}
+
+.inputLabel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  color: var(--color-text);
+  font-size: var(--dashboard-label-size);
+  font-weight: var(--font-weight-label);
+}
+
+.inputLabel select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inputShell {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-md);
+}
+
+.inputShell input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  appearance: textfield;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  padding: var(--space-sm) 0;
+}
+
+.inputShell input::-webkit-inner-spin-button,
+.inputShell input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.derivedAssumption {
+  min-width: 0;
+  min-height: 3.8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-2xs);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.derivedAssumption span {
+  color: var(--color-text-muted);
+  font-size: var(--dashboard-label-size);
+  font-weight: var(--font-weight-label);
+}
+
+.derivedAssumption strong {
+  color: var(--color-ink);
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-control);
+}
+
+.inputAffix {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-label);
+}
+
+.calculateAssumption {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.calculateAssumption p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-label);
+}
+
+@media (max-width: 1023px) {
+  .projectionWorkspace {
+    grid-template-columns: 1fr;
+  }
+
+  .assumptionsPanel {
+    order: 2;
+  }
+}
+
+@media (max-width: 720px) {
+  .pageTitle h1 {
+    font-size: var(--text-4xl);
+  }
+
+  .assumptionGroupFields {
+    grid-template-columns: 1fr;
+  }
+
+  .savingsRateSummary {
+    grid-template-columns: 1fr;
+  }
+}

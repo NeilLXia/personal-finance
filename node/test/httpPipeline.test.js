@@ -48,7 +48,18 @@ const dbConnectionStub = {
   pool: { on: () => {} },
 };
 
-const testUser = { id: 1, email: 'owner@test.local', is_demo: false };
+const testUser = {
+  id: 1,
+  email: 'owner@test.local',
+  is_demo: false,
+  account_type: 'user',
+};
+const adminUser = {
+  id: 2,
+  email: 'admin@test.local',
+  is_demo: false,
+  account_type: 'admin',
+};
 
 stubModule('../src/db/connection', dbConnectionStub);
 stubModule('../src/lib/logger', {
@@ -58,7 +69,8 @@ stubModule('../src/lib/logger', {
 });
 stubModule('../src/models', {
   users: {
-    findById: async (id) => (Number(id) === testUser.id ? testUser : null),
+    findById: async (id) =>
+      [testUser, adminUser].find((user) => user.id === Number(id)) || null,
     isExpiredDemoUser: () => false,
   },
 });
@@ -73,6 +85,9 @@ stubModule('../src/services/dashboard/dashboardService', {
   getDashboard: async () => ({ ok: true }),
   getDashboardIncomeAllocation: async () => ({ income_allocation: {} }),
   getDashboardTransactions: async () => ({ items: [] }),
+});
+stubModule('../src/services/retirement/retirementProjectionService', {
+  getRetirementProjection: async () => ({ retirement: true }),
 });
 
 const { createApp } = require('../src/app');
@@ -93,6 +108,15 @@ const validSessionCookie = () =>
   signSessionCookie({
     user_id: testUser.id,
     email: testUser.email,
+    is_demo: false,
+    created_at: Date.now(),
+    expires_at: Date.now() + 60 * 60 * 1000,
+  });
+
+const validAdminSessionCookie = () =>
+  signSessionCookie({
+    user_id: adminUser.id,
+    email: adminUser.email,
     is_demo: false,
     created_at: Date.now(),
     expires_at: Date.now() + 60 * 60 * 1000,
@@ -146,6 +170,23 @@ test('protected route with a valid session cookie reaches the handler', async ()
   });
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true });
+});
+
+test('retirement projection route rejects non-admin users', async () => {
+  const response = await call('/api/retirement-projection', {
+    headers: { cookie: validSessionCookie() },
+  });
+  assert.equal(response.status, 403);
+  const body = await response.json();
+  assert.equal(body.error.error_message, 'Admin access required.');
+});
+
+test('retirement projection route accepts admin users', async () => {
+  const response = await call('/api/retirement-projection', {
+    headers: { cookie: validAdminSessionCookie() },
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { retirement: true });
 });
 
 // --- Public routes & path normalization --------------------------------

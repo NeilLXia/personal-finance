@@ -12,6 +12,7 @@ const creditCardRewardsRoutes = require('./creditCardRewards.routes');
 const propertyRoutes = require('./properties.routes');
 const payslipRoutes = require('./payslips.routes');
 const diagnosticsRoutes = require('./diagnostics.routes');
+const retirementProjectionRoutes = require('./retirementProjection.routes');
 
 // Mounted at /api by index.js. Each sub-router owns one URL resource; paths here
 // are relative (no /api prefix).
@@ -27,5 +28,6 @@ router.use(creditCardRewardsRoutes);
 router.use(propertyRoutes);
 router.use(payslipRoutes);
 router.use(diagnosticsRoutes);
+router.use(retirementProjectionRoutes);
 
 module.exports = router;
