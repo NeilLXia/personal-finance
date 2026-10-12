@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const rootEnv = loadEnv(mode, resolve(process.cwd(), ".."), "");
-  const apiHost = process.env.API_HOST;
+  const apiHost = process.env.API_HOST || env.API_HOST;
   const backendPort =
     process.env.APP_PORT || env.APP_PORT || rootEnv.APP_PORT || "8001";
 
