@@ -138,6 +138,9 @@ const findInstitutionStatusesByUserIdAndEnvironment = async (
   return decryptPlaidItems(rows);
 };
 
+// Used by the scheduled syncs and webhook maintenance. The DB-backed tests
+// create @test.local users whose Items carry fake access tokens; never sync
+// those (same rule as properties.findActiveNonDemo).
 const findActiveNonDemoItems = async () => {
   const { rows } = await db.query(
     `
@@ -146,6 +149,7 @@ const findActiveNonDemoItems = async () => {
       INNER JOIN users ON users.id = plaid_items.user_id
       WHERE plaid_items.is_active = TRUE
         AND users.is_demo = FALSE
+        AND users.email NOT LIKE '%@test.local'
       ORDER BY plaid_items.updated_at DESC
     `,
   );

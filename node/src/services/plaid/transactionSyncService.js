@@ -1,6 +1,7 @@
 'use strict';
 
 const models = require('../../models');
+const logger = require('../../lib/logger');
 const { parsePositiveNumber } = require('../../lib/httpTimeout');
 const { getPlaidClient, logPlaidResponse } = require('./client');
 const {
@@ -152,6 +153,29 @@ const emptySyncResult = (status) => ({
   removed: 0,
 });
 
+// Sync one Item without letting its failure reject the whole batch: the
+// other Items still save, and the failure is reported in that Item's result.
+const syncItemReportingFailure = async (plaidItem, options) => {
+  try {
+    return await syncTransactionsForItem(plaidItem, options);
+  } catch (error) {
+    logger.warn('Transaction sync item failed', {
+      plaid_item_id: plaidItem.plaid_item_id,
+      institution_name: plaidItem.institution_name,
+      error: error.response?.data || error.message || error,
+    });
+
+    return {
+      plaid_item_id: plaidItem.plaid_item_id,
+      added: 0,
+      modified: 0,
+      removed: 0,
+      status: 'failed',
+      error: error.response?.data?.error_message || error.message,
+    };
+  }
+};
+
 const syncCurrentTransactions = async () => {
   const user = await getCurrentUser();
 
@@ -160,7 +184,9 @@ const syncCurrentTransactions = async () => {
   }
 
   const plaidItems = await getCurrentPlaidItems();
-  const results = await Promise.all(plaidItems.map(syncTransactionsForItem));
+  const results = await Promise.all(
+    plaidItems.map((plaidItem) => syncItemReportingFailure(plaidItem)),
+  );
 
   return {
     status: 'synced',
@@ -168,6 +194,7 @@ const syncCurrentTransactions = async () => {
     added: results.reduce((total, result) => total + result.added, 0),
     modified: results.reduce((total, result) => total + result.modified, 0),
     removed: results.reduce((total, result) => total + result.removed, 0),
+    failed: results.filter((result) => result.status === 'failed').length,
   };
 };
 
@@ -181,7 +208,7 @@ const backfillAllTransactions = async () => {
   const plaidItems = await getCurrentPlaidItems();
   const results = await Promise.all(
     plaidItems.map((plaidItem) =>
-      syncTransactionsForItem(plaidItem, {
+      syncItemReportingFailure(plaidItem, {
         fromBeginning: true,
         logResponses: false,
       }),
@@ -195,6 +222,7 @@ const backfillAllTransactions = async () => {
     added: results.reduce((total, result) => total + result.added, 0),
     modified: results.reduce((total, result) => total + result.modified, 0),
     removed: results.reduce((total, result) => total + result.removed, 0),
+    failed: results.filter((result) => result.status === 'failed').length,
   };
 };
 

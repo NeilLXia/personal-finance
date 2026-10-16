@@ -66,6 +66,36 @@ const syncPlaidItemTransactions = async ({ plaidItem }) => {
   };
 };
 
+const syncPlaidItemTransactionsReportingFailure = async ({ plaidItem }) => {
+  try {
+    return await syncPlaidItemTransactions({ plaidItem });
+  } catch (error) {
+    logger.warn('Scheduled transaction sync item failed', {
+      plaid_item_id: plaidItem.plaid_item_id,
+      institution_name: plaidItem.institution_name,
+      error: error.response?.data || error.message || error,
+    });
+
+    return {
+      plaid_item_id: plaidItem.plaid_item_id,
+      institution_name: plaidItem.institution_name,
+      plaid_environment: plaidItem.plaid_environment,
+      status: 'failed',
+      error: error.response?.data?.error_message || error.message,
+    };
+  }
+};
+
+const summarizeTransactionResults = (transactionResults) => ({
+  synced: transactionResults.filter((result) => result.status === 'synced').length,
+  pending: transactionResults.filter((result) => result.status === 'pending').length,
+  failed: transactionResults.filter((result) => result.status === 'failed').length,
+  added: transactionResults.reduce((total, result) => total + Number(result.added || 0), 0),
+  modified: transactionResults.reduce((total, result) => total + Number(result.modified || 0), 0),
+  removed: transactionResults.reduce((total, result) => total + Number(result.removed || 0), 0),
+  items: transactionResults,
+});
+
 // Property values live outside Plaid, but the monthly snapshot is the only
 // scheduled job, so it also pulls each property's RentCast valuation for the
 // month. refreshPropertyValue skips properties already valued this month.
@@ -147,26 +177,9 @@ const runMonthlyPlaidSync = async ({
         });
       }
 
-      try {
-        transactionResults.push(
-          await syncPlaidItemTransactions({
-            plaidItem,
-          }),
-        );
-      } catch (error) {
-        logger.warn('Monthly transaction sync item failed', {
-          plaid_item_id: plaidItem.plaid_item_id,
-          institution_name: plaidItem.institution_name,
-          error: error.response?.data || error.message || error,
-        });
-        transactionResults.push({
-          plaid_item_id: plaidItem.plaid_item_id,
-          institution_name: plaidItem.institution_name,
-          plaid_environment: plaidItem.plaid_environment,
-          status: 'failed',
-          error: error.response?.data?.error_message || error.message,
-        });
-      }
+      transactionResults.push(
+        await syncPlaidItemTransactionsReportingFailure({ plaidItem }),
+      );
     }
 
     const propertyResults = await refreshPropertyValues({ snapshotDate });
@@ -180,15 +193,7 @@ const runMonthlyPlaidSync = async ({
         failed: balanceResults.filter((result) => result.status === 'failed').length,
         items: balanceResults,
       },
-      transactions: {
-        synced: transactionResults.filter((result) => result.status === 'synced').length,
-        pending: transactionResults.filter((result) => result.status === 'pending').length,
-        failed: transactionResults.filter((result) => result.status === 'failed').length,
-        added: transactionResults.reduce((total, result) => total + Number(result.added || 0), 0),
-        modified: transactionResults.reduce((total, result) => total + Number(result.modified || 0), 0),
-        removed: transactionResults.reduce((total, result) => total + Number(result.removed || 0), 0),
-        items: transactionResults,
-      },
+      transactions: summarizeTransactionResults(transactionResults),
       properties: {
         refreshed: propertyResults.filter((result) => result.status === 'refreshed').length,
         skipped: propertyResults.filter((result) => result.status === 'skipped').length,
@@ -201,6 +206,46 @@ const runMonthlyPlaidSync = async ({
   }
 };
 
+// Safety net for missed webhooks: Plaid only pushes SYNC_UPDATES_AVAILABLE to
+// the URL stored on each Item, so if that URL is unreachable nothing imports
+// until the next run. Scheduled daily, this caps the gap at a day. Items are
+// synced sequentially to stay well under Plaid rate limits.
+let isDailySyncInProgress = false;
+
+const runDailyTransactionSync = async ({ date = new Date() } = {}) => {
+  const checkedAt = moment(date).format();
+
+  if (isDailySyncInProgress) {
+    return {
+      status: 'skipped',
+      reason: 'Daily transaction sync is already running',
+      checked_at: checkedAt,
+    };
+  }
+
+  isDailySyncInProgress = true;
+
+  try {
+    const plaidItems = await models.plaidItems.findActiveNonDemoItems();
+    const transactionResults = [];
+
+    for (const plaidItem of plaidItems) {
+      transactionResults.push(
+        await syncPlaidItemTransactionsReportingFailure({ plaidItem }),
+      );
+    }
+
+    return {
+      status: 'completed',
+      checked_at: checkedAt,
+      transactions: summarizeTransactionResults(transactionResults),
+    };
+  } finally {
+    isDailySyncInProgress = false;
+  }
+};
+
 module.exports = {
+  runDailyTransactionSync,
   runMonthlyPlaidSync,
 };

@@ -105,6 +105,21 @@ const validateConfig = ({ env = process.env } = {}) => {
     warnings.push(`PLAID_ENV is "${plaidEnv}" while NODE_ENV is production.`);
   }
 
+  // Plaid stores the webhook URL on each Item at link time, so a tunnel URL
+  // silently stops transaction updates once the tunnel goes down.
+  if (isPlaceholder(env.PLAID_WEBHOOK_URL)) {
+    warnings.push(
+      'PLAID_WEBHOOK_URL is unset — newly linked Items will not receive transaction webhooks.',
+    );
+  } else if (
+    looksLikeLocalhost(env.PLAID_WEBHOOK_URL) ||
+    /ngrok/i.test(env.PLAID_WEBHOOK_URL)
+  ) {
+    warnings.push(
+      'PLAID_WEBHOOK_URL points at localhost or an ngrok tunnel — Plaid webhooks will fail when it is down.',
+    );
+  }
+
   // Token encryption (KMS)
   require('AWS_KMS_KEY_ID');
   if (isPlaceholder(env.AWS_REGION) && isPlaceholder(env.AWS_DEFAULT_REGION)) {

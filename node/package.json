@@ -13,6 +13,8 @@
     "ngrok:auth": "ngrok config add-authtoken",
     "ngrok:webhook": "node scripts/start-ngrok.js",
     "plaid:sync-monthly": "node scripts/runMonthlyPlaidSync.js",
+    "plaid:sync-daily": "node scripts/runDailyTransactionSync.js",
+    "plaid:update-webhooks": "node scripts/updatePlaidWebhooks.js",
     "db:migrate": "node scripts/runMigrations.js",
     "db:seed-demo": "node scripts/seedDemoData.js",
     "db:reset-demo": "node scripts/seedDemoData.js --reset",
